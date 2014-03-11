@@ -74,7 +74,13 @@ class clusterassignment extends elis_data_object {
     public function delete() {
         $this->load(); // The object must be loaded before sending through to any event handlers -- ELIS-6567
         $status = parent::delete();
-        events_trigger('cluster_deassigned', $this->to_object());
+
+        $eventdata = array(
+            'context' => context_system::instance(),
+            'other' => $this->to_array()
+        );
+        $event = \local_elisprogram\event\cluster_assigned::create($eventdata);
+        $event->trigger();
         return $status;
 	}
 
@@ -108,11 +114,15 @@ class clusterassignment extends elis_data_object {
         parent::save();
 
         if ($trigger) {
-            $usass = new stdClass;
-            $usass->userid = $this->userid;
-            $usass->clusterid = $this->clusterid;
-
-            events_trigger('cluster_assigned', $usass);
+            $eventdata = array(
+                'context' => context_system::instance(),
+                'other' => array(
+                    'userid' => $this->userid,
+                    'clusterid' => $this->clusterid
+                )
+            );
+            $event = \local_elisprogram\event\cluster_assigned::create($eventdata);
+            $event->trigger();
         }
     }
 

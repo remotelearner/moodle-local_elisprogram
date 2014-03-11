@@ -329,7 +329,12 @@ class user extends data_object_with_custom_fields {
         $this->synchronize_moodle_user(true, $isnew, $strict_match);
     }
 
-    function save_field_data() {
+    /**
+     * save_field_data method to save user's custom field settings
+     * triggers user_updated event
+     * @return bool true
+     */
+    public function save_field_data() {
         static $loopdetect;
 
         if(!empty($loopdetect)) {
@@ -339,7 +344,14 @@ class user extends data_object_with_custom_fields {
         field_data::set_for_context_from_datarecord('user', $this);
 
         $loopdetect = true;
-        events_trigger('user_updated', $this->get_moodleuser());
+        $mdluser = $this->get_moodleuser();
+        $usercontext = context_user::instance($mdluser->id);
+        $eventdata = array(
+            'context' => $usercontext,
+            'objectid' => $mdluser->id
+        );
+        $event = \core\event\user_updated::create($eventdata);
+        $event->trigger();
         $loopdetect = false;
 
         return true;
@@ -368,7 +380,7 @@ class user extends data_object_with_custom_fields {
      *                               than just check idnumbers when comparing to Moodle users
      *
      */
-    function synchronize_moodle_user($tomoodle = true, $createnew = false, $strict_match = true) {
+    public function synchronize_moodle_user($tomoodle = true, $createnew = false, $strict_match = true) {
         global $CFG;
         require_once($CFG->dirroot.'/admin/tool/uploaduser/locallib.php');
         require_once(elispm::lib('data/usermoodle.class.php'));
@@ -504,9 +516,14 @@ class user extends data_object_with_custom_fields {
             $record = uu_pre_process_custom_profile_data($record);
             profile_save_data($record);
 
+            $eventdata = array(
+                'context' => context_user::instance($record->id),
+                'objectid' => $record->id
+            );
             if ($muserid) {
                 if ($changed) {
-                    events_trigger('user_updated', $record);
+                    $event = \core\event\user_updated::create($eventdata);
+                    $event->trigger();
                 }
             } else {
                 // if no user association record exists, create one
@@ -516,7 +533,8 @@ class user extends data_object_with_custom_fields {
                 $um->idnumber = $this->idnumber;
                 $um->save();
 
-                events_trigger('user_created', $record);
+                $event = \core\event\user_created::create($eventdata);
+                $event->trigger();
             }
 
             unset($mu_loop_detect[$this->id]);
@@ -1334,16 +1352,15 @@ class user extends data_object_with_custom_fields {
      * @param object $user  The Moodle user that was deleted
      * @return boolean true is successful, otherwise FALSE
      */
-    static function user_deleted_handler($user) {
+    public static function user_deleted_handler($user) {
         global $DB;
-
+        $userid = $user->objectid;
         require_once(elis::lib('data/data_filter.class.php'));
         require_once(elispm::lib('data/usermoodle.class.php'));
 
-        usermoodle::delete_records(new field_filter('muserid', $user->id), $DB);
+        usermoodle::delete_records(new field_filter('muserid', $userid), $DB);
     }
 }
-
 
 /**
  * "Show inactive users" filter type.

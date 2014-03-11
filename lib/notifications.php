@@ -359,6 +359,9 @@ class notification extends message {
  */
 function pm_notify_send_handler($eventdata){
     global $CFG, $SITE;
+    if (method_exists($eventdata, 'trigger')) {
+        $eventdata = (object)$eventdata->other;
+    }
 
     require_once($CFG->dirroot.'/message/lib.php');
 
@@ -408,7 +411,6 @@ function pm_notify_send_handler($eventdata){
  *
  */
 function pm_assign_instructor_from_mdl($eventdata) {
-
     global $CFG, $DB;
 
     //make sure we have course manager roles defined
@@ -552,12 +554,29 @@ function pm_assign_student_from_mdl($eventdata) {
  * takes place. Users will be ones configured for the context, which can include the user that is assigned and users
  * assigned to configured roles for that context. The message template used should be the one configured as well.
  *
- * @param object $eventdata the role assignment record
- * @return boolean success
+ * @param object $eventdata the event data
+ * @return bool true
  *
  */
 function pm_notify_role_assign_handler($eventdata){
     global $CFG, $DB, $USER;
+    if ((empty($eventdata->userid) || empty($eventdata->contextid) || empty($eventdata->roleid)) && method_exists($eventdata, 'trigger')) {
+        $eventdata = (object)$eventdata->other;
+    }
+    $rarec = false;
+    if ((empty($eventdata->userid) || empty($eventdata->contextid) || empty($eventdata->roleid)) &&
+            !($rarec = $DB->get_record('role_assignments', array('id' => $eventdata->id)))) {
+        if (debugging('', DEBUG_DEVELOPER)) {
+            ob_start();
+            var_dump($eventdata);
+            $tmp = ob_get_contents();
+            ob_end_clean();
+            error_log("/local/elisprogram/lib/notifications.php::pm_notify_role_assign_handler() - error retrieving role_assignments record: {$tmp}");
+        }
+        return true;
+    } else if ($rarec) {
+        $eventdata = $rarec;
+    }
 
     pm_assign_instructor_from_mdl($eventdata);
     pm_assign_student_from_mdl($eventdata);
@@ -599,7 +618,7 @@ function pm_notify_role_assign_handler($eventdata){
     }
 
     /// Make sure this is a valid user.
-    if (!($enroluser = $DB->get_record('user', array('id'=> $eventdata->userid)))) {
+    if (!($enroluser = $DB->get_record('user', array('id' => $eventdata->userid)))) {
         if (in_cron()) {
            mtrace(get_string('nomoodleuser', 'local_elisprogram'));
         } else {
@@ -677,11 +696,28 @@ function pm_notify_role_assign_handler($eventdata){
 /**
  *
  * Triggered when a role unassignment takes place.
- * @param $eventdata
- * @return unknown_type
+ * @param object $eventdata the event data
+ * @return bool true
  */
 function pm_notify_role_unassign_handler($eventdata){
     global $CFG, $DB;
+    if ((empty($eventdata->userid) || empty($eventdata->contextid) || empty($eventdata->roleid)) && method_exists($eventdata, 'trigger')) {
+        $eventdata = (object)$eventdata->other;
+    }
+    $rarec = false;
+    if ((empty($eventdata->userid) || empty($eventdata->contextid) || empty($eventdata->roleid)) &&
+            !($rarec = $DB->get_record('role_assignments', array('id' => $eventdata->id)))) {
+        if (debugging('', DEBUG_DEVELOPER)) {
+            ob_start();
+            var_dump($eventdata);
+            $tmp = ob_get_contents();
+            ob_end_clean();
+            error_log("/local/elisprogram/lib/notifications.php::pm_notify_role_unassign_handler() - error retrieving role_assignments record: {$tmp}");
+        }
+        return true;
+    } else if ($rarec) {
+        $eventdata = $rarec;
+    }
 
     //make sure we have course manager roles defined
     if(empty($CFG->coursecontact)) {
@@ -692,7 +728,7 @@ function pm_notify_role_unassign_handler($eventdata){
     $valid_instructor_roles = explode(',', $CFG->coursecontact);
 
     //make sure we actually care about the current role
-    if(!in_array($eventdata->roleid, $valid_instructor_roles)) {
+    if (!in_array($eventdata->roleid, $valid_instructor_roles)) {
         return true;
     }
 
@@ -746,6 +782,7 @@ function pm_notify_role_unassign_handler($eventdata){
  */
 function pm_notify_track_assign_handler($eventdata){
     global $CFG, $DB, $USER;
+    $eventdata = (object)$eventdata->other;
 
     /// Does the user receive a notification?
     $sendtouser       = isset(elis::$config->local_elisprogram->notify_trackenrol_user) ? elis::$config->local_elisprogram->notify_trackenrol_user : '';
@@ -840,6 +877,7 @@ function pm_notify_track_assign_handler($eventdata){
  */
 function pm_notify_instructor_assigned_handler($eventdata) {
     global $CFG, $DB;
+    $eventdata = (object)$eventdata->other;
 
     require_once elispm::lib('data/user.class.php');
 
@@ -907,8 +945,8 @@ function pm_notify_instructor_assigned_handler($eventdata) {
  * @return bool always returns true
  */
 function pm_notify_instructor_unassigned_handler($eventdata) {
-
     global $CFG, $DB;
+    $eventdata = (object)$eventdata->other;
 
     require_once elispm::lib('data/user.class.php');
 

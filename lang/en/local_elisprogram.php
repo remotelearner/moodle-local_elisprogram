@@ -165,8 +165,10 @@ $string['class'] = 'Class Instance';
 $string['classcompletionreport'] = 'Class Instance Completion Report';
 $string['classreportlinks'] = 'Reports';
 $string['classrosterreport'] = 'Class Instance Roster Report';
+$string['class_assigned'] = 'Class assigned';
 $string['class_assigntrackhead'] = 'Assigned Tracks';
 $string['class_attached_course'] = 'This class instance is already attached to the Moodle course';
+$string['class_completed'] = 'Class completed';
 $string['class_course'] = 'Course Description';
 $string['class_enddate'] = 'End Date';
 $string['class_endtime'] = 'End Time';
@@ -174,6 +176,8 @@ $string['class_idnumber'] = 'ID Number';
 $string['class_limit'] = 'Class Limit';
 $string['class_maxstudents'] = 'Max # of Students';
 $string['class_moodle_course'] = 'Moodle Course';
+$string['class_notstarted'] = 'Class not started';
+$string['class_notcompleted'] = 'Class not completed';
 $string['class_role_help'] = 'This is the default role to assign to a Program Management user in any class instances they create.
 This type of role assignment will not take place for a particular class instance if that user is already permitted to edit that class instance.
 To disable this functionality, select "N/A" from the list.';
@@ -189,6 +193,8 @@ $string['clustcpycurr'] = 'Program {$a->name} copied to {$a->newname}';
 $string['cluster'] = 'User Set';
 $string['clusters'] = 'User Sets';
 $string['cluster_assigned'] = 'User subset assigned to user set';
+$string['cluster_deassigned'] = 'User subset unassigned from user set';
+$string['cluster_deleted'] = 'User set deleted';
 $string['cluster_role_help'] = 'This is the default role to assign to a Program Management user in any user sets they create.
 This type of role assignment will not take place for a particular user set if that user is already permitted to edit that user set.
 To disable this functionality, select "N/A" from the list.';
@@ -279,6 +285,7 @@ $string['course_code'] = 'Code';
 $string['course_curricula'] = 'Programs';
 $string['course_idnumber'] = 'ID Number';
 $string['course_name'] = 'Name';
+$string['course_recurrence'] = 'Course recurrence';
 $string['course_role_help'] = 'This is the default role to assign to a Program Management user in any course descriptions they create.
 This type of role assignment will not take place for a particular course description if that user is already permitted to edit that course description.
 To disable this functionality, select "N/A" from the list.';
@@ -290,6 +297,7 @@ $string['coursetemplate'] = 'Course Template in Moodle';
 $string['credits'] = 'Credits';
 $string['credits_rec'] = 'Credits Rec\'vd.';
 $string['crlm_admin_blk_settings'] = 'Program Management Block Settings';
+$string['crlm_curriculum_course_associated'] = 'Program course associated.';
 $string['crlm_expire_setting'] = 'Enable program expiration';
 $string['cron_notrun'] = '<b>Never!</b>';
 $string['currentcourses'] = 'Current Classes';
@@ -338,12 +346,14 @@ $string['curriculumcourseform:required'] = 'Required';
 $string['curriculumcourseform:required_help'] = '<p>If enabled, completion of the associated course description is required in order for students to complete the selected program.</p>';
 $string['curriculumcourseform:time_period'] = 'Time Period';
 $string['curriculumcourseform:time_period_help'] = '<p>The units used in specifying the course description frequency.</p>';
+$string['curriculum_completed'] = 'Curriculum completed';
 $string['curriculum_expire_enrol_start'] = 'enrolled into a program';
 $string['curriculum_expire_enrol_complete'] = 'completed a program';
-
 $string['curriculum_idnumber'] = 'ID Number';
 $string['curriculum_description'] = 'Long description';
 $string['curriculum_name'] = 'Name';
+$string['curriculum_notcompleted'] = 'Curriculum not completed';
+$string['curriculum_recurrence'] = 'Curriculum recurrence';
 $string['curriculum_reqcredits'] = ' Required Credits';
 $string['curriculum_role_help'] = 'This is the default role to assign to a Program Management user in any programs they create.
 This type of role assignment will not take place for a particular program if that user is already permitted to edit that program.
@@ -718,6 +728,7 @@ $string['informationalelements'] = 'Information Elements';
 $string['instructedcourses'] = 'Instructed Class Instances';
 $string['instructor'] = 'Instructor';
 $string['instructor_add'] = 'Add Instructor';
+$string['instructor_assigned'] = 'Instructor assigned';
 $string['instructor_assignment'] = 'Assignment Time';
 $string['instructor_completion'] = 'Completion Time';
 $string['instructor_deleted'] = 'Instructor: {$a->name} deleted.';
@@ -728,6 +739,7 @@ $string['instructor_role_help'] = 'The default role assigned to instructors when
 This synchronization typically takes place when user is assigned as an instructor of a class instance or when a class instance becomes associated with a Moodle course.
 If this setting not associated with a valid Moodle role, instructors will not be assigned roles when this synchonization takes place.';
 $string['instructor_role_setting'] = 'Default Instructor Role';
+$string['instructor_unassigned'] = 'Instructor unassigned';
 $string['instructors'] = 'Instructors';
 $string['interface_settings'] = 'Interface Settings';
 $string['invalid_category_id'] = 'Invalid category ID';
@@ -964,6 +976,7 @@ $string['over_enrol'] = 'Over Enrol';
 $string['passed'] = 'Passed';
 $string['phone2'] = 'Phone 2';
 $string['pluginname'] = 'ELIS Program';
+$string['pm_classinstance_associated'] = 'Class instance associated';
 $string['pm_date_format'] = '%b %d, %Y';
 $string['pm_datetime_format'] = '%b %d, %Y %r';
 $string['pm_duplicate_idnumber_changed'] = 'Generated new idnumber for user with username {$a->username} as shown here: {$a->url}.
@@ -973,6 +986,13 @@ $string['pm_duplicate_idnumber_unchanged'] = 'Found multiple Program Management 
 
 Left idnumber unchanged on least recently modified user with username {$a->username} as shown here: {$a->url}.
 ';
+$string['pm_site_course_userset_groups_enabled'] = 'Site course Userset groups enabled';
+$string['pm_track_class_associated'] = 'Track and class associated';
+$string['pm_userset_created'] = 'Userset created';
+$string['pm_userset_groups_enabled'] = 'Userset groups enabled';
+$string['pm_userset_groupings_enabled'] = 'Userset groupings enabled';
+$string['pm_userset_updated'] = 'Userset updated';
+$string['pm_userset_track_associated'] = 'Userset and track associated';
 $string['pmclassform:class_idnumber'] = 'ID Number';
 $string['pmclassform:class_idnumber_help'] = '<p>Class Instance ID number.</p>';
 $string['pmclassform:class_startdate'] = 'Start Date';
@@ -1208,6 +1228,7 @@ $string['trackform:track_startdate_help'] = '<p>Start and end date for the track
 $string['tracks'] = 'Tracks';
 $string['trackuserset_auto_enrol'] = 'Auto-enrol';
 $string['track_assign_users'] = 'Assign users';
+$string['track_assigned'] = 'Track assigned';
 $string['track_autocreate'] = 'Create all class instances';
 $string['track_autocreate_button'] = 'Auto-create class instances';
 $string['track_auto_enrol'] = 'Auto-enrol';

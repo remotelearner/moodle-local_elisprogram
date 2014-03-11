@@ -3,7 +3,7 @@
  * Contains definitions for notification events.
  *
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,112 +18,116 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$handlers = array (
-    'message_send' => array (
-         'handlerfile'      => '/local/elisprogram/lib/notifications.php',
-         'handlerfunction'  => 'pm_notify_send_handler',
-         'schedule'         => 'instant'
-     ),
-    'role_assigned' => array (
-         'handlerfile'      => '/local/elisprogram/lib/notifications.php',
-         'handlerfunction'  => 'pm_notify_role_assign_handler',
-         'schedule'         => 'instant'
-     ),
-    'role_unassigned' => array (
-         'handlerfile'      => '/local/elisprogram/lib/notifications.php',
-         'handlerfunction'  => 'pm_notify_role_unassign_handler',
-         'schedule'         => 'instant'
-     ),
-    'track_assigned' => array (
-         'handlerfile'      => '/local/elisprogram/lib/notifications.php',
-         'handlerfunction'  => 'pm_notify_track_assign_handler',
-         'schedule'         => 'instant'
-     ),
-    'class_completed' => array (
-         'handlerfile'      => '/local/elisprogram/lib/notifications.php',
-         'handlerfunction'  => 'pm_notify_class_completed_handler',
-         'schedule'         => 'instant'
-     ),
-    'class_notcompleted' => array (
-         'handlerfile'      => '/local/elisprogram/lib/data/student.class.php',
-         'handlerfunction'  => array('student', 'class_notcompleted_handler'),
-         'schedule'         => 'instant'
-     ),
-    'class_notstarted' => array (
-         'handlerfile'      => '/local/elisprogram/lib/data/student.class.php',
-         'handlerfunction'  => array('student', 'class_notstarted_handler'),
-         'schedule'         => 'instant'
-     ),
-    'course_recurrence' => array (
-         'handlerfile'      => '/local/elisprogram/lib/data/course.class.php',
-         'handlerfunction'  => array('course', 'course_recurrence_handler'),
-         'schedule'         => 'instant'
-     ),
-    'curriculum_completed' => array (
-         'handlerfile'      => '/local/elisprogram/lib/data/curriculumstudent.class.php',
-         'handlerfunction'  => array('curriculumstudent', 'curriculum_completed_handler'),
-         'schedule'         => 'instant'
-     ),
-    'curriculum_notcompleted' => array (
-         'handlerfile'      => '/local/elisprogram/lib/data/curriculumstudent.class.php',
-         'handlerfunction'  => array('curriculumstudent', 'curriculum_notcompleted_handler'),
-         'schedule'         => 'instant'
-     ),
-    'curriculum_recurrence' => array (
-         'handlerfile'      => '/local/elisprogram/lib/data/curriculum.class.php',
-         'handlerfunction'  => array('curriculum', 'curriculum_recurrence_handler'),
-         'schedule'         => 'instant'
-     ),
-    // triggered when a user is assigned to a cluster
-    'cluster_assigned' => array (
-         'handlerfile'      => '/local/elisprogram/lib/data/userset.class.php',
-         'handlerfunction'  => array('userset', 'cluster_assigned_handler'),
-         'schedule'         => 'instant'
-     ),
-    // triggered when a user is deassigned from a cluster
-    'cluster_deassigned' => array (
-         'handlerfile'      => '/local/elisprogram/lib/data/userset.class.php',
-         'handlerfunction'  => array('userset', 'cluster_deassigned_handler'),
-         'schedule'         => 'instant'
-     ),
-
-    'user_created' => array (
-        'handlerfile'       => '/local/elisprogram/lib/lib.php',
-        'handlerfunction'   => 'pm_moodle_user_to_pm',
-        'schedule'          => 'instant'
-     ),
-
-    'local_elisprogram_cls_completed' => array (
-        'handlerfile'       => '/local/elisprogram/lib/lib.php',
-        'handlerfunction'   => 'pm_course_complete',
-        'schedule'          => 'instant'
-     ),
-
-     'crlm_instructor_assigned' => array (
-        'handlerfile'       => '/local/elisprogram/lib/notifications.php',
-        'handlerfunction'   => 'pm_notify_instructor_assigned_handler',
-        'schedule'          => 'instant'
-     ),
-
-     'crlm_instructor_unassigned' => array (
-        'handlerfile'       => '/local/elisprogram/lib/notifications.php',
-        'handlerfunction'   => 'pm_notify_instructor_unassigned_handler',
-        'schedule'          => 'instant'
-     ),
-
-     'user_deleted' => array (
-         'handlerfile' => '/local/elisprogram/lib/data/user.class.php',
-         'handlerfunction' => array('user', 'user_deleted_handler'),
-         'schedule' => 'instant'
-     ),
+$observers = array(
+        array (
+            'eventname'   => '\core\event\role_assigned',
+            'includefile' => '/local/elisprogram/lib/notifications.php',
+            'callback'    => 'pm_notify_role_assign_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\core\event\role_unassigned',
+            'includefile' => '/local/elisprogram/lib/notifications.php',
+            'callback'    => 'pm_notify_role_unassign_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\track_assigned',
+            'includefile' => '/local/elisprogram/lib/notifications.php',
+            'callback'    => 'pm_notify_track_assign_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\class_completed',
+            'includefile' => '/local/elisprogram/lib/notifications.php',
+            'callback'    => 'pm_notify_class_completed_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\class_notcompleted',
+            'includefile' => '/local/elisprogram/lib/data/student.class.php',
+            'callback'    => 'student::class_notcompleted_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\class_notstarted',
+            'includefile' => '/local/elisprogram/lib/data/student.class.php',
+            'callback'    => 'student::class_notstarted_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\course_recurrence',
+            'includefile' => '/local/elisprogram/lib/data/course.class.php',
+            'callback'    => 'course::course_recurrence_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\curriculum_completed',
+            'includefile' => '/local/elisprogram/lib/data/curriculumstudent.class.php',
+            'callback'    => 'curriculumstudent::curriculum_completed_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\curriculum_notcompleted',
+            'includefile' => '/local/elisprogram/lib/data/curriculumstudent.class.php',
+            'callback'    => 'curriculumstudent::curriculum_notcompleted_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\curriculum_recurrence',
+            'includefile' => '/local/elisprogram/lib/data/curriculum.class.php',
+            'callback'    => 'curriculum::curriculum_recurrence_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\cluster_assigned',
+            'includefile' => '/local/elisprogram/lib/data/userset.class.php',
+            'callback'    => 'userset::cluster_assigned_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\cluster_deassigned',
+            'includefile' => '/local/elisprogram/lib/data/userset.class.php',
+            'callback'    => 'userset::cluster_deassigned_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\crlm_class_completed',
+            'includefile' => '/local/elisprogram/lib/lib.php',
+            'callback'    => 'pm_course_complete',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\crlm_instructor_assigned',
+            'includefile' => '/local/elisprogram/lib/notifications.php',
+            'callback'    => 'pm_notify_instructor_assigned_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\crlm_instructor_unassigned',
+            'includefile' => '/local/elisprogram/lib/notifications.php',
+            'callback'    => 'pm_notify_instructor_unassigned_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\core\event\user_created',
+            'includefile' => '/local/elisprogram/lib/lib.php',
+            'callback'    => 'pm_moodle_user_to_pm',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\core\event\user_deleted',
+            'includefile' => '/local/elisprogram/lib/data/user.class.php',
+            'callback'    => 'user::user_deleted_handler',
+            'internal'    => false
+        ),
 );

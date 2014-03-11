@@ -196,7 +196,13 @@ class user_testcase extends elis_database_test {
         $src->email = 'jdoe@phpunit.example.com';
         $src->country = 'CA';
         $src->id = $DB->insert_record('user', $src);
-        events_trigger('user_created', $src);
+        $usercontext = context_user::instance($src->id);
+        $eventdata = array(
+            'context' => $usercontext,
+            'objectid' => $src->id
+        );
+        $event = \core\event\user_created::create($eventdata);
+        $event->trigger();
 
         // Map PM user fields to Moodle user fields.
         $fields = array(
@@ -241,7 +247,13 @@ class user_testcase extends elis_database_test {
         $mcopy = clone($src);
         $mcopy = uu_pre_process_custom_profile_data($mcopy);
         profile_save_data($mcopy);
-        events_trigger('user_updated', $mdluser);
+        $usercontext = context_user::instance($mdluser->id);
+        $eventdata = array(
+            'context' => $usercontext,
+            'objectid' => $mdluser->id
+        );
+        $event = \core\event\user_updated::create($eventdata);
+        $event->trigger();
 
         // Read the PM user and compare.
         $retr = new user(103, null, array(), false, array());
@@ -359,7 +371,13 @@ class user_testcase extends elis_database_test {
         $src->email = 'jdoe@phpunit.example.com';
         $src->country = 'CA';
         $src->id = $DB->insert_record('user', $src);
-        events_trigger('user_created', $src);
+        $usercontext = context_user::instance($src->id);
+        $eventdata = array(
+            'context' => $usercontext,
+            'objectid' => $src->id
+        );
+        $event = \core\event\user_created::create($eventdata);
+        $event->trigger();
 
         // Get the PM user
         $retr = user::find(new field_filter('idnumber', $src->idnumber), array(), 0, 0);

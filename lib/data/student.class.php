@@ -241,9 +241,8 @@ class student extends elis_data_object {
      * @throws Exception
      * @uses $DB
      * @uses $USER
-     * @uses events_trigger()
      */
-    function save() {
+    public function save() {
         global $DB, $USER;
 
         try {
@@ -319,19 +318,31 @@ class student extends elis_data_object {
                 }
             }
         } else {
-            $sturole = get_config('elisprogram_enrolrolesync', 'student_role');
             // ELIS-3397: must still trigger events for notifications
-            $sturole = get_config('elisprogram_enrolrolesync', 'student_role');
-            $ra = new stdClass();
-            $ra->roleid       = !empty($sturole)
-                                ? $sturole
-                                : $DB->get_field('role', 'id', array('shortname' => 'student'));
-            $ra->contextid    = \local_elisprogram\context\pmclass::instance($this->classid)->id;
-            $ra->userid       = cm_get_moodleuserid($this->userid);
-            $ra->component    = 'enrol_elis';
-            $ra->timemodified = time();
-            $ra->modifierid   = empty($USER->id) ? 0 : $USER->id;
-            events_trigger('role_assigned', $ra);
+            $sturoleid = get_config('elisprogram_enrolrolesync', 'student_role');
+            if ($moodlecourseid && ($muser = $this->users->get_moodleuser()) && ($roleid = !empty($sturoleid) ? $sturoleid
+                    : $DB->get_field('role', 'id', array('shortname' => 'student')))) {
+                $context = context_course::instance($moodlecourseid);
+                // error_log("\nstudent.class.php::save(): Checking for role_assignment record\n");
+                if ($ra = $DB->get_record('role_assignments', array('roleid' => $roleid, 'userid' => $muser->id, 'contextid' => $context->id))) {
+                    // error_log("\nstudent.class.php::save(): triggering role_assignment event\n");
+                    $eventdata = array(
+                        'context' => $context,
+                        'objectid' => $roleid,
+                        'other' => array(
+                            'id' => $ra->id,
+                            'roleid' => $roleid,
+                            'contextid' => \local_elisprogram\context\pmclass::instance($this->classid)->id, // TBD
+                            'userid' => $muser->id,
+                            'component' => 'enrol_elis',
+                            'timemodified' => time(),
+                            'modifierid' => empty($USER->id) ? 0 : $USER->id
+                          )
+                    );
+                    $event = \core\event\role_assigned::create($eventdata);
+                    $event->trigger();
+                }
+            }
         }
 
         return;
@@ -411,9 +422,8 @@ class student extends elis_data_object {
     /**
      * Perform all necessary tasks to update a student enrolment.
      * @return bool true on success, false on error
-     * @uses events_trigger()
      */
-    function update() {
+    public function update() {
         $statusupdatedtocomplete = false;
 
         // Determine whether the the completion status is being changed to a complete status (passed/failed).
@@ -434,7 +444,12 @@ class student extends elis_data_object {
         parent::save(); // no return val
         if ($statusupdatedtocomplete === true) {
             require_once elispm::lib('notifications.php');
-            events_trigger('local_elisprogram_cls_completed', $this);
+            $eventdata = array(
+                'context' => context_system::instance(),
+                'other' => $this->to_array()
+            );
+            $event = \local_elisprogram\event\crlm_class_completed::create($eventdata);
+            $event->trigger();
 
             // Does the user receive a notification?
             $sendtouser       = elis::$config->local_elisprogram->notify_classcompleted_user;
@@ -2162,6 +2177,8 @@ class student extends elis_data_object {
 
     public static function class_notstarted_handler($student) {
         global $CFG, $DB;
+        $student = new student($student->other);
+        $student->load();
 
         require_once elispm::lib('notifications.php');
 
@@ -2257,6 +2274,8 @@ class student extends elis_data_object {
 
     public static function class_notcompleted_handler($student) {
         global $CFG, $DB;
+        $student = new student($student->other);
+        $student->load();
         require_once elispm::lib('notifications.php');
 
         /// Does the user receive a notification?

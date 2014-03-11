@@ -64,7 +64,10 @@ class configpage extends pm_page {
         }
     }
 
-    function do_default() {
+    /**
+     * do_default method
+     */
+    public function do_default() {
         global $CFG, $DB;
 
         $target = $this->get_new_page(array('action' => 'default'));
@@ -184,17 +187,21 @@ class configpage extends pm_page {
             // autocreate settings
             self::config_set_value($configdata, 'autocreated_unknown_is_yes', 0);
 
-            //trigger events
-            if(!empty($configdata->cluster_groups) && empty($old_cluster_groups)) {
-                events_trigger('crlm_cluster_groups_enabled', 0);
+            // trigger events
+            $eventdata = array('context' => context_system::instance());
+            if (!empty($configdata->cluster_groups) && empty($old_cluster_groups)) {
+                $event = \local_elisprogram\event\pm_userset_groups_enabled::create($eventdata);
+                $event->trigger();
             }
 
-            if(!empty($configdata->site_course_cluster_groups) && empty($old_site_course_cluster_groups)) {
-                events_trigger('crlm_site_course_cluster_groups_enabled', 0);
+            if (!empty($configdata->site_course_cluster_groups) && empty($old_site_course_cluster_groups)) {
+                $event = \local_elisprogram\event\pm_site_course_userset_groups_enabled::create($eventdata);
+                $event->trigger();
             }
 
-            if(!empty($configdata->cluster_groupings) && empty($old_cluster_groupings)) {
-                events_trigger('crlm_cluster_groupings_enabled', 0);
+            if (!empty($configdata->cluster_groupings) && empty($old_cluster_groupings)) {
+                $event = \local_elisprogram\event\pm_userset_groupings_enabled::create($eventdata);
+                $event->trigger();
             }
         }
 

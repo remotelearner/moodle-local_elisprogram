@@ -659,7 +659,7 @@ class trackassignment extends elis_data_object {
      *
      * @return TODO: add meaningful return value
      */
-    function save() { //add()
+    public function save() { //add()
 
         if (empty($this->courseid)) {
             $this->courseid = $this->_db->get_field(pmclass::TABLE, 'courseid', array('id' => $this->classid));
@@ -731,7 +731,12 @@ class trackassignment extends elis_data_object {
             }
         }
 
-        events_trigger('pm_track_class_associated', $this);
+        $eventdata = array(
+            'context' => context_system::instance(),
+            'other' => $this->to_array()
+        );
+        $event = \local_elisprogram\event\pm_track_class_associated::create($eventdata);
+        $event->trigger();
     }
 
     /**

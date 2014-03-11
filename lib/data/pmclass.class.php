@@ -586,8 +586,12 @@ class pmclass extends data_object_with_custom_fields {
             $moodleuserid = (empty($rec->muserid)) ? false : $rec->muserid;
 
             mtrace("Triggering class_notstarted event.\n");
-//            events_trigger('class_notstarted', $student);
-            events_trigger('class_notstarted', $rec);
+            $eventdata = array(
+                'context' => context_system::instance(),
+                'other' => (array)$rec
+            );
+            $event = \local_elisprogram\event\class_notstarted::create($eventdata);
+            $event->trigger();
         }
         $rs->close();
         return true;
@@ -667,7 +671,12 @@ class pmclass extends data_object_with_custom_fields {
             $moodleuserid = (empty($rec->muserid)) ? false : $rec->muserid;
 
             mtrace("Triggering class_notcompleted event.\n");
-            events_trigger('class_notcompleted', $rec);
+            $eventdata = array(
+                'context' => context_system::instance(),
+                'other' => (array)$rec
+            );
+            $event = \local_elisprogram\event\class_notcompleted::create($eventdata);
+            $event->trigger();
         }
         $rs->close();
         return true;

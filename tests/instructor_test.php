@@ -44,6 +44,13 @@ require_once(elispm::file('tests/other/datagenerator.php'));
 class instructor_testcase extends elis_database_test {
 
     /**
+     * Called once before any tests run
+     */
+    public static function setUpBeforeClass() {
+        fclose(STDERR); // suppress error_log() output
+    }
+
+    /**
      * Load ELIS config data before every test.
      * (otherwise config setting changes are lost when loading csv data during group testing)
      */

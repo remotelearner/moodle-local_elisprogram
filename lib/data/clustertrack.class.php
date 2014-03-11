@@ -121,8 +121,12 @@ class clustertrack extends elis_data_object {
         }
         unset($users);
 
-        events_trigger('pm_userset_track_associated', $record);
-
+        $eventdata = array(
+            'context' => context_system::instance(),
+            'other' => $record->to_array()
+        );
+        $event = \local_elisprogram\event\pm_userset_track_associated::create($eventdata);
+        $event->trigger();
     }
 
     /**

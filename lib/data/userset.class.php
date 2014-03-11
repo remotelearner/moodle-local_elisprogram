@@ -86,7 +86,7 @@ class userset extends data_object_with_custom_fields {
      * @param none
      * @return bool True on success, False otherwise.
      */
-    function delete() {
+    public function delete() {
         require_once elis::lib('data/data_filter.class.php');
 
         if ($this->deletesimple) {
@@ -116,7 +116,12 @@ class userset extends data_object_with_custom_fields {
             $userset_context = $contextclass::instance($this->id);
             $userset_context->delete();
 
-            events_trigger('cluster_deleted', $this->id);
+            $eventdata = array(
+                'context' => context_system::instance(),
+                'other' => array('id' => $this->id)
+            );
+            $event = \local_elisprogram\event\cluster_deleted::create($eventdata);
+            $event->trigger();
 
             return;
         }
@@ -187,6 +192,9 @@ class userset extends data_object_with_custom_fields {
         return validate_is_unique($this, array('name'));
     }
 
+    /**
+     * save method
+     */
     public function save() {
         $plugins = get_plugin_list(self::ENROL_PLUGIN_TYPE);
         foreach ($plugins as $plugin => $plugindir) {
@@ -240,11 +248,17 @@ class userset extends data_object_with_custom_fields {
             call_user_func('userset_' . $plugin . '_update', $this);
         }
 
+        $eventdata = array(
+            'context' => context_system::instance(),
+            'other' => $this->to_array()
+        );
+
         if (isset($old))  {
-            //signal that the cluster was created
-            events_trigger('pm_userset_updated', $this);
+            $event = \local_elisprogram\event\pm_userset_updated::create($eventdata);
+            $event->trigger();
         } else {
-            events_trigger('pm_userset_created', $this);
+            $event = \local_elisprogram\event\pm_userset_created::create($eventdata);
+            $event->trigger();
         }
     }
 
@@ -279,7 +293,13 @@ class userset extends data_object_with_custom_fields {
         return $obj;
     }
 
-    static function cluster_assigned_handler($eventdata) {
+    /**
+     * cluster/userset assigned handler callback
+     * @param object $eventdata the event object
+     * @return bool true
+     */
+    public static function cluster_assigned_handler($eventdata) {
+        $eventdata = (object)$eventdata->other;
         require_once(elispm::lib('data/clusterassignment.class.php'));
         require_once(elispm::lib('data/clustercurriculum.class.php'));
         require_once(elispm::lib('data/curriculumstudent.class.php'));
@@ -322,7 +342,12 @@ class userset extends data_object_with_custom_fields {
         return true;
     }
 
-    static function cluster_deassigned_handler($eventdata) {
+    /**
+     * cluster/userset de-assigned handler callback
+     * @param object $eventdata the event object
+     * @return bool true
+     */
+    public static function cluster_deassigned_handler($eventdata) {
         return true;
     }
 
@@ -808,7 +833,12 @@ function cluster_assign_to_user($clusterid, $userid, $autoenrol=true, $leader=fa
     $usass->clusterid = $clusterid;
     $usass->save();
 
-    events_trigger('cluster_assigned', $usass);
+    $eventdata = array(
+        'context' => context_system::instance(),
+        'other' => $usass->to_array()
+    );
+    $event = \local_elisprogram\event\cluster_assigned::create($eventdata);
+    $event->trigger();
 
     return true;
 }
@@ -822,8 +852,13 @@ function cluster_deassign_user($clusterid, $userid) {
                                              new field_filter('clusterid', $clusterid)));
 
     foreach ($records as $rec) {
+        $eventdata = array(
+            'context' => context_system::instance(),
+            'other' => (array)$rec
+        );
         $rec->delete();
-        events_trigger('cluster_deassigned', $rec);
+        $event = \local_elisprogram\event\cluster_deassigned::create($eventdata);
+        $event->trigger();
     }
 
     return true;

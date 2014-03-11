@@ -301,6 +301,9 @@ function userset_moodleprofile_update($cluster) {
 
 function cluster_profile_update_handler($userdata) {
     global $DB, $CFG;
+    if (method_exists($userdata, 'trigger')) { // event object
+        $userdata = $DB->get_record('user', array('id' => $userdata->objectid));
+    }
 
     if (!empty($userdata->deleted)) {
         return true;

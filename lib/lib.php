@@ -27,24 +27,27 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 require_once($CFG->libdir .'/gradelib.php');
 
-/**Callback function for ELIS Config/admin: Cluster Group Settings
+/**
+ * Callback function for ELIS Config/admin: Cluster Group Settings
  *
- * @param string $name  the fullname of the parameter that changed
+ * @param string $name the name of the userset group parameter that changed
  * @uses  $DB
  */
 function cluster_groups_changed($name) {
     global $DB;
-    $shortname = substr($name, strpos($name, 'local_elisprogram_') + strlen('local_elisprogram_'));
-    // TBD: following didn't work?
-    //$value = elis::$config->local_elisprogram->$shortname;
-    $value = $DB->get_field('config_plugins', 'value',
-                            array('plugin' => 'local_elisprogram',
-                                  'name'   => $shortname));
-    //error_log("/local/elisprogram/lib/lib.php::cluster_groups_changed({$name}) {$shortname} = '{$value}'");
+    if (($pos = strpos($name, 'elisprogram')) !== false) { // could be elisprogram_, elisprogram: or elisprogram/ or no prefix
+        $name = substr($name, $pos + strlen('elisprogram_'));
+    }
+    $value = $DB->get_field('config_plugins', 'value', array('plugin' => 'elisprogram_usetgroups', 'name' => $name));
     if (!empty($value)) {
-        $event = 'crlm_'. $shortname .'_enabled';
-        error_log("Triggering event: $event");
-        events_trigger($event, 0);
+        $eventclass = "\local_elisprogram\event\pm_{$name}_enabled";
+        // error_log("/elis/program/lib/lib.php::cluster_groups_changed({$name}) => '{$value}'; eventclass = {$eventclass}");
+        if (class_exists($eventclass)) {
+            error_log("/elis/program/lib/lib.php::trigger event: pm_{$name}_enabled");
+            $eventdata = array('context' => context_system::instance());
+            $event = $eventclass::create($eventdata);
+            $event->trigger();
+        }
     }
 }
 
@@ -401,12 +404,16 @@ function pm_moodle_user_to_pm($mu) {
     require_once($CFG->dirroot . '/user/profile/lib.php');
     require_once(elis::lib('lib.php'));
 
-    if (!isset($mu->id)) {
+    if (method_exists($mu, 'trigger')) { // from user_created event
+        $uid = $mu->objectid;
+    } else if (isset($mu->id)) { // called directly
+        $uid = $mu->id;
+    } else {
         return true;
     }
 
     // re-fetch, in case this is from a stale event
-    $mu = $DB->get_record('user', array('id' => $mu->id));
+    $mu = $DB->get_record('user', array('id' => $uid));
 
     if (user_not_fully_set_up($mu)) {
         //prevent the sync if a bare-bones user record is being created
@@ -708,8 +715,27 @@ function pm_cron() {
     $status = pm_issue_certificates() && $status;
     $status = pm_check_for_nags() && $status;
     $status = pm_update_student_enrolment() && $status;
+    $status = pm_check_userset_groups_changed() && $status;
 
     return $status;
+}
+
+/**
+ * pm_check_userset_groups_changed
+ *
+ * @return bool true
+ */
+function pm_check_userset_groups_changed() {
+    global $DB;
+    $usetgroupsettings = array('site_course_userset_groups', 'userset_groupings', 'userset_groups');
+    foreach ($usetgroupsettings as $usetgroupsetting) {
+        $curval = get_config('elisprogram_usetgroups', $usetgroupsetting);
+        if (get_config('elisprogram_usetgroups', 'old_'.$usetgroupsetting) != $curval) {
+            cluster_groups_changed($usetgroupsetting);
+        }
+        set_config('old_'.$usetgroupsetting, $curval, 'elisprogram_usetgroups');
+    }
+    return true;
 }
 
 /**
@@ -756,8 +782,13 @@ function pm_check_for_nags() {
 
 /*
  * Check for autoenrol after course completion
+ * @param object $enrolment The event objectq
+ * @return bool true
  */
 function pm_course_complete($enrolment) {
+    if (method_exists($enrolment, 'trigger')) {
+        $enrolment = new student($enrolment->other);
+    }
     track::check_autoenrol_after_course_completion($enrolment);
     waitlist::check_autoenrol_after_course_completion($enrolment);
 

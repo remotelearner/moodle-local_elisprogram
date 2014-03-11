@@ -54,6 +54,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Prevent events magic from happening.
         $DB->delete_records('events_handlers');
+        \core\event\manager::phpunit_replace_observers(array());
     }
 
     /**

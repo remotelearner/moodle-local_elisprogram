@@ -145,7 +145,12 @@ class usertrack extends elis_data_object {
             $curstu->save();
         }
 
-        events_trigger('track_assigned', $record);
+        $eventdata = array(
+            'context' => context_system::instance(),
+            'other' => $record->to_array()
+        );
+        $event = \local_elisprogram\event\track_assigned::create($eventdata);
+        $event->trigger();
 
         /**
          * Get autoenrollable classes in the track.  Classes are autoenrollable

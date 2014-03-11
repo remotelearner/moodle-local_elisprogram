@@ -282,10 +282,13 @@ class curriculum extends data_object_with_custom_fields {
 
                 $daysfrom = ($reqcompletetime - $timenow) / $secondsinaday;
                 if ($daysfrom <= elis::$config->local_elisprogram->notify_curriculumnotcompleted_days) {
-//                    $curstudent = new curriculumstudent($rec);
                     mtrace("Triggering curriculum_notcompleted event.\n");
-//                    events_trigger('curriculum_notcompleted', $curstudent);
-                    events_trigger('curriculum_notcompleted', $rec);
+                    $eventdata = array(
+                        'context' => context_system::instance(),
+                        'other' => (array)$rec
+                    );
+                    $event = \local_elisprogram\event\curriculum_notcompleted::create($eventdata);
+                    $event->trigger();
                 }
             }
         }
@@ -331,7 +334,12 @@ class curriculum extends data_object_with_custom_fields {
         if ($rs) {
             foreach ($rs as $rec) {
                 mtrace("Triggering curriculum_recurrence event.\n");
-                events_trigger('curriculum_recurrence', $rec);
+                $eventdata = array(
+                    'context' => context_system::instance(),
+                    'other' => (array)$rec
+                );
+                $event = \local_elisprogram\event\curriculum_recurrence::create($eventdata);
+                $event->trigger();
             }
         }
 
@@ -356,6 +364,7 @@ class curriculum extends data_object_with_custom_fields {
 
     public static function curriculum_recurrence_handler($user) {
         global $CFG, $DB;
+        $user = (object)$user->other;
 
         require_once elispm::lib('notifications.php');
 

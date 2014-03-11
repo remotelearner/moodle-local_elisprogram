@@ -430,6 +430,7 @@ function moodle_attach_class($clsid, $mdlid, $siteconfig = '', $enrolinstructor 
 
     } else {
         $clsmdl = new classmoodlecourse($clsmdl->id);
+        $clsmdl->load();
     }
 
     if ($enrolinstructor) {
@@ -440,7 +441,12 @@ function moodle_attach_class($clsid, $mdlid, $siteconfig = '', $enrolinstructor 
         $clsmdl->data_enrol_students();
     }
 
-    events_trigger('pm_classinstance_associated', $clsmdl);
+    $eventdata = array(
+        'context' => context_system::instance(),
+        'other' => $clsmdl->to_array()
+    );
+    $event = \local_elisprogram\event\pm_classinstance_associated::create($eventdata);
+    $event->trigger();
 
     return true;
 }

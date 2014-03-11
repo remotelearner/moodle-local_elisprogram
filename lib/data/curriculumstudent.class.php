@@ -241,6 +241,8 @@ class curriculumstudent extends elis_data_object {
      * @return  boolean                      TRUE is successful, otherwise FALSE
      */
     public static function curriculum_completed_handler($student) {
+        $student = new student($student->other);
+        $student->load();
         return $student->complete();
     }
 
@@ -250,6 +252,7 @@ class curriculumstudent extends elis_data_object {
      */
     public static function curriculum_notcompleted_handler($curstudent) {
         global $CFG, $DB;
+        $curstudent = (object)$curstudent->other;
 
         require_once elispm::lib('notifications.php');
 

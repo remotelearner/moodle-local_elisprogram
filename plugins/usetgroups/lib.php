@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    elisprogram_usetgroups
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -40,29 +40,31 @@ require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 /**
  * Handler that gets called when a cm user gets assigned to a cluster
  *
- * @param  object   $cluster_assignment  The appropriate user-cluster association record
- * @return boolean                       Whether the association was successful
+ * @param object $clusterassevent The cluster event object
+ * @return boolean Whether the association was successful
  *
  */
-function userset_groups_userset_assigned_handler($cluster_assignment) {
-    $attributes = array('mdlusr.cuserid' =>  $cluster_assignment->userid,
-                        'clst.id' => $cluster_assignment->clusterid);
+function userset_groups_userset_assigned_handler($clusterassevent) {
+    $clusterassignment = (object)$clusterassevent->other;
+    $attributes = array('mdlusr.cuserid' =>  $clusterassignment->userid,
+        'clst.id' => $clusterassignment->clusterid);
 
     $result = userset_groups_update_groups($attributes);
-    $result = $result && userset_groups_update_user_site_course($cluster_assignment->userid, $cluster_assignment->clusterid);
+    $result = $result && userset_groups_update_user_site_course($clusterassignment->userid, $clusterassignment->clusterid);
     return $result;
 }
 
 /**
  * Handler that gets called when a cm class get associated with a Moodle course
  *
- * @param  classmoddlecourse  $class_association  The appropriate class-course association record
- * @return boolean                                Whether the association was successful
+ * @param object $classassevent the class event object
+ * @return boolean Whether the association was successful
  *
  */
-function userset_groups_pm_classinstance_associated_handler($class_association) {
-    $attributes = array('cls.id' => $class_association->classid,
-                        'crs.id' => $class_association->moodlecourseid);
+function userset_groups_pm_classinstance_associated_handler($classassevent) {
+    $classassociation = (object)$classassevent->other;
+    $attributes = array('cls.id' => $classassociation->classid,
+        'crs.id' => $classassociation->moodlecourseid);
 
     return userset_groups_update_groups($attributes);
 }
@@ -70,12 +72,13 @@ function userset_groups_pm_classinstance_associated_handler($class_association) 
 /**
  * Handler that gets called when a class gets associated with a track
  *
- * @param  trackassignmentclass   $track_class_association  The appropriate track-class association record
- * @return boolean                                          Whether the association was successful
+ * @param object trackclassevent The event object
+ * @return boolean Whether the association was successful
  */
-function userset_groups_pm_track_class_associated_handler($track_class_association) {
-    $attributes = array('trk.id' => $track_class_association->trackid,
-                        'cls.id' => $track_class_association->classid);
+function userset_groups_pm_track_class_associated_handler($trackclassevent) {
+    $trackclassassociation = (object)$trackclassevent->other;
+    $attributes = array('trk.id' => $trackclassassociation->trackid,
+        'cls.id' => $trackclassassociation->classid);
 
     return userset_groups_update_groups($attributes);
 }
@@ -83,12 +86,13 @@ function userset_groups_pm_track_class_associated_handler($track_class_associati
 /**
  * Handler that gets called when a cluster gets associated with a track
  *
- * @param  object   $cluster_track_association  The appropriate cluster-track association record
- * @return boolean                              Whether the association was successful
+ * @param object $clustertrackassevent The event object
+ * @return boolean Whether the association was successful
  */
-function userset_groups_pm_userset_track_associated_handler($cluster_track_association) {
-    $attributes = array('clst.id' => $cluster_track_association->clusterid,
-                        'trk.id' => $cluster_track_association->trackid);
+function userset_groups_pm_userset_track_associated_handler($clustertrackassevent) {
+    $clustertrackassociation = (object)$clustertrackassevent->other;
+    $attributes = array('clst.id' => $clustertrackassociation->clusterid,
+        'trk.id' => $clustertrackassociation->trackid);
 
     return userset_groups_update_groups($attributes);
 }
@@ -96,11 +100,11 @@ function userset_groups_pm_userset_track_associated_handler($cluster_track_assoc
 /**
  * Handler that gets called when a cluster is updated
  *
- * @param  cluster   $cluster  The appropriate cluster record
- *
- * @return boolean              Whether the association was successful
+ * @param object $clusterevent The event object
+ * @return boolean Whether the association was successful
  */
-function userset_groups_pm_userset_updated_handler($cluster) {
+function userset_groups_pm_userset_updated_handler($clusterevent) {
+    $cluster = (object)$clusterevent->other;
     $attributes = array('clst.id' => $cluster->id);
 
     $result = userset_groups_update_groups($attributes);
@@ -111,28 +115,29 @@ function userset_groups_pm_userset_updated_handler($cluster) {
 
 /**
  * Handler that gets called when group syncing is enabled
- *
- * @return boolean  Whether the association was successful
+ * @param object $event the event object
+ * @return bool Whether the association was successful
  */
-function userset_groups_pm_userset_groups_enabled_handler() {
+function userset_groups_pm_userset_groups_enabled_handler($event) {
     return userset_groups_update_groups();
 }
 
 /**
  * Handler that gets called when site-course group syncing is enabled
- *
- * @return  boolean  Whether the association was successful
+ * @param object $event the event object
+ * @return bool Whether the association was successful
  */
-function userset_groups_pm_site_course_userset_groups_enabled_handler() {
+function userset_groups_pm_site_course_userset_groups_enabled_handler($event) {
     return userset_groups_update_site_course(0, true);
 }
 
 /**
  * Handler that gets called when a cluster is created
- *
- * @return  boolean  Whether the association was successful
+ * @param obejct $clusterevent The event object
+ * @return bool Whether the association was successful
  */
-function userset_groups_pm_userset_created_handler($cluster) {
+function userset_groups_pm_userset_created_handler($clusterevent) {
+    $cluster = (object)$clusterevent->other;
     $result = userset_groups_update_site_course($cluster->id);
     $result = $result && userset_groups_update_grouping_closure($cluster->id);
     return $result;
@@ -140,21 +145,27 @@ function userset_groups_pm_userset_created_handler($cluster) {
 
 /**
  * Handler that gets called when a role assignment takes place
+ * @param obejct $roleassevent The event object
+ * @return bool the outcome, true on success, false otherwise
  */
-function userset_groups_role_assigned_handler($role_assignment) {
+function userset_groups_role_assigned_handler($roleassevent) {
+    global $DB;
+    $roleassignment = $DB->get_record('role_assignments', array('id' => $roleassevent->other['id']));
 
     //update non-site courses for that user
-    $result = userset_groups_update_groups(array('mdlusr.muserid' => $role_assignment->userid));
+    $result = userset_groups_update_groups(array('mdlusr.muserid' => $roleassignment->userid));
     //update site course for that user
-    $result = $result && userset_groups_update_site_course(0, true, $role_assignment->userid);
+    $result = $result && userset_groups_update_site_course(0, true, $roleassignment->userid);
 
     return $result;
 }
 
 /**
  * Handler that gets called when cluster-based groupings are enabled
+ * @param object $event the event object
+ * @return bool true
  */
-function userset_groups_pm_userset_groupings_enabled() {
+function userset_groups_pm_userset_groupings_enabled($event) {
     global $DB;
 
     $result = true;
@@ -403,7 +414,7 @@ function userset_groups_update_user_site_course($userid, $clusterid) {
  * in which they are enrolled in order to be added to the Moodle userset group
  *
  * @param   array    $attributes  Conditions to apply to the SQL query
- * @return  boolean               Returns true to appease events_trigger
+ * @return  boolean               Returns true to satisfy event handlers
  *
  */
 function userset_groups_update_groups($attributes = array()) {

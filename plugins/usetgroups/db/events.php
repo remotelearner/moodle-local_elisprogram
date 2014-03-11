@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,56 +19,71 @@
  * @package    elisprogram_usetgroups
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$handlers = array(
-    'cluster_assigned' => array (
-        'handlerfile'     => '/local/elisprogram/plugins/usetgroups/lib.php',
-        'handlerfunction' => 'userset_groups_userset_assigned_handler',
-        'schedule'        => 'instant'
-    ),
-    'pm_classinstance_associated' => array (
-        'handlerfile'     => '/local/elisprogram/plugins/usetgroups/lib.php',
-        'handlerfunction' => 'userset_groups_pm_classinstance_associated_handler',
-        'schedule'        => 'instant'
-    ),
-    /*'pm_program_coursedescription_associated' => array (
-        'handlerfile'     => '/local/elisprogram/plugins/usetgroups/lib.php',
-        'handlerfunction' => 'userset_groups_pm_program_coursedescription_associated_handler',
-        'schedule'        => 'instant'
-    ),
-    'pm_userset_program_associated' => array (
-        'handlerfile'     => '/local/elisprogram/plugins/usetgroups/lib.php',
-        'handlerfunction' => 'userset_groups_pm_userset_program_associated_handler',
-        'schedule'        => 'instant'
-    ),*/
-    'pm_track_class_associated' => array (
-        'handlerfile'     => '/local/elisprogram/plugins/usetgroups/lib.php',
-        'handlerfunction' => 'userset_groups_pm_track_class_associated_handler',
-        'schedule'        => 'instant'
-    ),
-    'pm_userset_track_associated' => array (
-        'handlerfile'     => '/local/elisprogram/plugins/usetgroups/lib.php',
-        'handlerfunction' => 'userset_groups_pm_userset_track_associated_handler',
-        'schedule'        => 'instant'
-    ),
-    'pm_userset_updated' => array (
-        'handlerfile'     => '/local/elisprogram/plugins/usetgroups/lib.php',
-        'handlerfunction' => 'userset_groups_pm_userset_updated_handler',
-        'schedule'        => 'instant'
-    ),
-     'pm_userset_created'  => array (
-         'handlerfile'     => '/local/elisprogram/plugins/usetgroups/lib.php',
-         'handlerfunction' => 'userset_groups_pm_userset_created_handler',
-         'schedule'        => 'instant'
-     ),
-     'role_assigned'       => array (
-         'handlerfile'     => '/local/elisprogram/plugins/usetgroups/lib.php',
-         'handlerfunction' => 'userset_groups_role_assigned_handler',
-         'schedule'        => 'instant'
-     ),
+$observers = array(
+        array (
+            'eventname'   => '\local_elisprogram\event\cluster_assigned',
+            'includefile' => '/local/elisprogram/plugins/usetgroups/lib.php',
+            'callback'    => 'userset_groups_userset_assigned_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\pm_classinstance_associated',
+            'includefile' => '/local/elisprogram/plugins/usetgroups/lib.php',
+            'callback'    => 'userset_groups_pm_classinstance_associated_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\pm_track_class_associated',
+            'includefile' => '/local/elisprogram/plugins/usetgroups/lib.php',
+            'callback'    => 'userset_groups_pm_track_class_associated_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\pm_userset_track_associated',
+            'includefile' => '/local/elisprogram/plugins/usetgroups/lib.php',
+            'callback'    => 'userset_groups_pm_userset_track_associated_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\pm_userset_updated',
+            'includefile' => '/local/elisprogram/plugins/usetgroups/lib.php',
+            'callback'    => 'userset_groups_pm_userset_updated_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\local_elisprogram\event\pm_userset_created',
+            'includefile' => '/local/elisprogram/plugins/usetgroups/lib.php',
+            'callback'    => 'userset_groups_pm_userset_created_handler',
+            'internal'    => false
+        ),
+        array (
+            'eventname'   => '\core\event\role_assigned',
+            'includefile' => '/local/elisprogram/plugins/usetgroups/lib.php',
+            'callback'    => 'userset_groups_role_assigned_handler',
+            'internal'    => false
+        ),
+        array(
+            'eventname'   => '\local_elisprogram\evemt\pm_userset_groups_enabled',
+            'includefile' => '/local/elisprogram/plugins/usetgroups/lib.php',
+            'callback'    => 'userset_groups_pm_userset_groups_enabled_handler',
+            'internal'    => false
+        ),
+        array(
+            'eventname'   => '\local_elisprogram\evemt\pm_site_course_userset_groups_enabled',
+            'includefile' => '/local/elisprogram/plugins/usetgroups/lib.php',
+            'callback'    => 'userset_groups_pm_site_course_userset_groups_enabled_handler',
+            'internal'    => false
+        ),
+        array(
+            'eventname'   => '\local_elisprogram\evemt\pm_userset_groupings_enabled',
+            'includefile' => '/local/elisprogram/plugins/usetgroups/lib.php',
+            'callback'    => 'userset_groups_pm_userset_groupings_enabled',
+            'internal'    => false
+        )
 );

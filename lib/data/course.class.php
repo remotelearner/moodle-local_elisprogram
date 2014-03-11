@@ -541,7 +541,12 @@ class course extends data_object_with_custom_fields {
         if ($rs) {
             foreach ($rs as $rec) {
                 mtrace("Triggering course_recurrence event.\n");
-                events_trigger('course_recurrence', $rec);
+                $eventdata = array(
+                    'context' => context_system::instance(),
+                    'other' => (array)$rec
+                );
+                $event = \local_elisprogram\event\course_recurrence::create($eventdata);
+                $event->trigger();
             }
         }
         return true;
@@ -565,7 +570,7 @@ class course extends data_object_with_custom_fields {
 
     public static function course_recurrence_handler($user) {
         global $DB;
-
+        $user = (object)$user->other;
         require_once elispm::lib('notifications.php');
 
         /// Does the user receive a notification?

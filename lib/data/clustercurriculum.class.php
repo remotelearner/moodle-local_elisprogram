@@ -127,8 +127,6 @@ class clustercurriculum extends elis_data_object {
             $params = array($cluster);
             $DB->execute($sql,$params);
         }
-
-//        events_trigger('pm_userset_program_associated', $record);
     }
 
     /// collection fetching functions. (These may be able to replaced by a generic container/listing class)
