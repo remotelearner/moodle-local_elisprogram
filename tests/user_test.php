@@ -195,6 +195,7 @@ class user_testcase extends elis_database_test {
         $src->lastname = 'Doe';
         $src->email = 'jdoe@phpunit.example.com';
         $src->country = 'CA';
+        $src->confirmed = 1;
         $src->id = $DB->insert_record('user', $src);
         $usercontext = context_user::instance($src->id);
         $eventdata = array(
@@ -370,6 +371,7 @@ class user_testcase extends elis_database_test {
         $src->lastname = 'Doe';
         $src->email = 'jdoe@phpunit.example.com';
         $src->country = 'CA';
+        $src->confirmed = 1;
         $src->id = $DB->insert_record('user', $src);
         $usercontext = context_user::instance($src->id);
         $eventdata = array(
