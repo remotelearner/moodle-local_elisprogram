@@ -1,18 +1,19 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * Manipulate CM context levels.
  *
  * The CM context level hierarchy looks like this:
  * System
- * +- Curriculum --.
- * |  `- Track --. |
- * +- Course <---+-'
- * |  `- Class <-'
- * +- Cluster -.
- * `- User   <-'
+ * +- Curriculum --.-.
+ * |  `- Track --. | |
+ * +- Course <---+-' |
+ * |  `- Class <-'   |
+ * +- Cluster -.     |
+ * |- User   <-'     |
+ * `- CourseSet <----'
  *
  * (ASCII arrows represent "fake" hierarchies)
  *
@@ -31,17 +32,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once elis::lib('data/data_filter.class.php');
+require_once(elis::lib('data/data_filter.class.php'));
 
 function get_contexts_by_capability_for_user($contextlevel, $capability, $userid, $doanything=true) {
     return pm_context_set::for_user_with_capability($contextlevel, $capability, $userid, $doanything);
@@ -73,10 +73,13 @@ class pm_context_set {
     static function for_user_with_capability($contextlevel, $capability, $userid=null, $doanything=true) {
         global $USER, $DB;
 
-        static $pm_context_parents = array('track' => array('curriculum'),
-                                           'course' => array('curriculum'),
-                                           'class' => array('course','track'),
-                                           'user' => array('cluster'));
+        static $pm_context_parents = array(
+            'track' => array('curriculum'),
+            'course' => array('curriculum'),
+            'class' => array('course', 'track'),
+            'user' => array('cluster'),
+            'courseset' => array('curriculum')
+        );
 
         if ($userid === null) {
             $userid = $USER->id;
@@ -200,6 +203,24 @@ class pm_context_set {
         return $where;
     }
 
+    /**
+     * _filter_for_courseset method
+     * @param string $idfieldname the identifying field name
+     * @return array an array of SQL where fragments
+     */
+    public function _filter_for_courseset($idfieldname) {
+        $where = array();
+        if (isset($this->contexts['courseset'])) {
+            $where[] = new in_list_filter($idfieldname, $this->contexts['courseset']);
+        }
+        if (isset($this->contexts['curriculum'])) {
+            // uncomment below when local/elisprogram/lib/data/programcrsset.class.php is defined
+            // $where[] = new join_filter($idfieldname, programcrsset::TABLE, 'crssetid', new in_list_filter('prgid', $this->contexts['curriculum']),
+            //        false, false);
+        }
+        return $where;
+    }
+
     function _filter_for_class($idfieldname) {
         $where = array();
         if (isset($this->contexts['class'])) {
@@ -285,6 +306,22 @@ class pm_context_set {
             && $DB->record_exists_select('local_elisprogram_pgm_crs',
                                                "courseid = $id AND curriculumid IN (".implode(',',$this->contexts['curriculum']).')')) {
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * _courseset_allowed method
+     * @param int $id the courseset DB id
+     * @return bool true if allowed, false otherwise
+     */
+    public function _courseset_allowed($id) {
+        global $DB;
+        if (isset($this->contexts['curriculum'])) {
+            // uncomment below when local/elisprogram/lib/data/programcrsset.class.php is defined
+            // if ($DB->record_exists_select(programcrsset::TABLE, "crssetid = $id AND prgid IN (".implode(',', $this->contexts['curriculum']).')')) {
+            //     return true;
+            // }
         }
         return false;
     }
@@ -408,6 +445,20 @@ function _cmctx_get_curriculum_containing_course($instance_id) {
     require_once elispm::lib('data/curriculumcourse.class.php');
     $result =$DB->get_recordset(curriculumcourse::TABLE, array('courseid' => $instance_id), '', 'curriculumid');
     return ($result->valid() === true) ? $result : array();
+}
+
+/**
+ * _cmctx_get_curriculum_containing_courseset function to determine curriculum for courseset
+ * @param int $instanceid the instance id of the courseset entitiy
+ * @return object|array recordset of programs containing courseset, or empty array if none
+ */
+function _cmctx_get_curriculum_containing_courseset($instanceid) {
+    global $DB;
+    $result = false;
+    // uncomment below when local/elisprogram/lib/data/programcrsset.class.php is defined
+    // require_once elispm::lib('data/programcrsset.class.php');
+    // $result = $DB->get_recordset(programcrsset::TABLE, array('crssetid' => $instanceid), '', 'prgid');
+    return ($result && $result->valid() === true) ? $result : array();
 }
 
 function _cmctx_get_track_containing_class($instance_id) {

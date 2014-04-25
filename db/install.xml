@@ -600,7 +600,7 @@
         <INDEX NAME="ent_id_type_idx" UNIQUE="true" FIELDS="entity_id, entity_type" COMMENT="Entity id and type unique index"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="local_elisprogram_certissued" COMMENT="Certificates that have been issued." PREVIOUS="local_elisprogram_certcfg">
+    <TABLE NAME="local_elisprogram_certissued" COMMENT="Certificates that have been issued." PREVIOUS="local_elisprogram_certcfg" NEXT="local_elisprogram_crsset">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="cm_userid"/>
         <FIELD NAME="cm_userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ELIS curriculum user id" PREVIOUS="id" NEXT="cert_setting_id"/>
@@ -615,6 +615,59 @@
       <INDEXES>
         <INDEX NAME="cert_code_idx" UNIQUE="true" FIELDS="cert_code" COMMENT="Certificate code index" NEXT="cm_userid_idx"/>
         <INDEX NAME="cm_userid_idx" UNIQUE="false" FIELDS="cm_userid" COMMENT="Curriculum user index" PREVIOUS="cert_code_idx"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_elisprogram_crsset" COMMENT="CourseSet entities." PREVIOUS="local_elisprogram_certissued" NEXT="local_elisprogram_crssetsrc">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="idnumber"/>
+        <FIELD NAME="idnumber" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="Idnumber" PREVIOUS="id" NEXT="name"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Name of Courseset" PREVIOUS="idnumber" NEXT="description"/>
+        <FIELD NAME="description" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" COMMENT="Text field for further description of the element." PREVIOUS="name" NEXT="priority"/>
+        <FIELD NAME="priority" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Display priority" PREVIOUS="description" NEXT="timemodified"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time modified" PREVIOUS="description" NEXT="timecreated"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time created field" PREVIOUS="timemodified"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idnumber_ix" UNIQUE="true" FIELDS="idnumber"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_elisprogram_crssetcrs" COMMENT="CourseSet courses." PREVIOUS="local_elisprogram_crsset" NEXT="local_elisprogram_prgcrsset">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="crssetid"/>
+        <FIELD NAME="crssetid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="courseid"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="crssetid" NEXT="timemodified"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time modified" PREVIOUS="courseid" NEXT="timecreated"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time created field" PREVIOUS="timemodified"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="crssetid_ix" UNIQUE="false" FIELDS="crssetid"/>
+        <INDEX NAME="crssetcrs_ix" UNIQUE="true" FIELDS="crssetid,courseid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_elisprogram_prgcrsset" COMMENT="CourseSet courses." PREVIOUS="local_elisprogram_crssetcrs">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="crssetid"/>
+        <FIELD NAME="crssetid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="prgid"/>
+        <FIELD NAME="prgid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="crssetid" NEXT="reqcredits"/>
+        <FIELD NAME="reqcredits" TYPE="number" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" DECIMALS="2" COMMENT="Credits required." PREVIOUS="prgid" NEXT="reqcourses"/>
+        <FIELD NAME="reqcourses" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Courses required." PREVIOUS="reqcredits" NEXT="andor"/>
+        <FIELD NAME="andor" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Boolean 0=OR 1=AND" PREVIOUS="reqcourses" NEXT="timemodified"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time modified" PREVIOUS="andor" NEXT="timecreated"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time created field" PREVIOUS="timemodified"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="crssetid_ix" UNIQUE="false" FIELDS="crssetid"/>
+        <INDEX NAME="prgid_ix" UNIQUE="false" FIELDS="prgid"/>
+        <INDEX NAME="crssetprg_ix" UNIQUE="true" FIELDS="crssetid,prgid"/>
       </INDEXES>
     </TABLE>
   </TABLES>
