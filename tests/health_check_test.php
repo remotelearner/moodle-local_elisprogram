@@ -127,9 +127,20 @@ class user_activity_health_testcase extends elis_database_test {
         $this->assertEquals(225, $etlumacnt);
     }
 
+    /**
+     * Test for duplicate profile fields.
+     */
     public function test_duplicate_profile_data() {
         global $DB;
         require_once(elispm::file('healthpage.class.php'));
+
+        // Drop the table index so that we can insert a duplicate record.
+        $table = new xmldb_table('user_info_data');
+        $index = new xmldb_index('userid_fieldid_ix', XMLDB_INDEX_UNIQUE, array('userid', 'fieldid'));
+        $dbman = $DB->get_manager();
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
 
         // Set up data.
         $record = new stdClass;

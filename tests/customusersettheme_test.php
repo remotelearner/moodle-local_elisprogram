@@ -68,7 +68,7 @@ class customusersettheme_testcase extends elis_database_test {
 
         // Userset with a custom theme.
         $userset = new userset(1);
-        $userset->field__elis_userset_theme = 'formal_white';
+        $userset->field__elis_userset_theme = 'bootstrapbase';
         $userset->field__elis_userset_themepriority = 1;
         $userset->save();
 
@@ -86,7 +86,7 @@ class customusersettheme_testcase extends elis_database_test {
         $page->initialise_theme_and_output();
 
         // Assert we have our theme.
-        $this->assertEquals('formal_white', $page->theme->name);
+        $this->assertEquals('bootstrapbase', $page->theme->name);
 
         $this->setUser(null);
     }
