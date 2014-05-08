@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -35,6 +35,9 @@ require_once elispm::lib('data/waitlist.class.php');
 require_once elispm::lib('data/instructor.class.php');
 require_once elispm::lib('data/curriculumstudent.class.php');
 require_once elispm::lib('data/usertrack.class.php');
+require_once(elispm::lib('data/courseset.class.php'));
+require_once(elispm::lib('data/crssetcourse.class.php'));
+require_once(elispm::lib('data/programcrsset.class.php'));
 require_once $CFG->dirroot . '/user/filters/text.php';
 require_once $CFG->dirroot . '/user/filters/date.php';
 require_once $CFG->dirroot . '/user/filters/select.php';
@@ -551,25 +554,26 @@ class user extends data_object_with_custom_fields {
     static function get_current_classes_in_curriculum($userid, $curid) {
         global $DB;
         // ELIS-8525: added cls.* as tables require startdate, enddate ...
-        $sql = 'SELECT DISTINCT CONCAT(curcrs.id, ".", cls.id),
-                       curcrs.*, crs.name AS coursename, cls.id AS classid, cls.*
-                  FROM {'.curriculumcourse::TABLE.'} curcrs
-                  JOIN {'.course::TABLE.'} crs ON curcrs.courseid = crs.id
+        $sql = 'SELECT DISTINCT clsenrol.id AS stuid, curcrs.*, crs.name AS coursename, cls.id AS classid, cls.*, crs.id AS courseid
+                  FROM {'.curriculum::TABLE.'} cur
+             LEFT JOIN {'.curriculumcourse::TABLE.'} curcrs ON curcrs.curriculumid = cur.id
+             LEFT JOIN {'.programcrsset::TABLE.'} prgcrsset ON prgcrsset.prgid = cur.id
+             LEFT JOIN {'.crssetcourse::TABLE.'} crssetcrs ON prgcrsset.crssetid = crssetcrs.crssetid
+                  JOIN {'.course::TABLE.'} crs ON (curcrs.courseid = crs.id OR crssetcrs.courseid = crs.id)
                        -- Next two are to limit to currently enrolled courses
                   JOIN {'.pmclass::TABLE.'} cls ON cls.courseid = crs.id
                   JOIN {'.student::TABLE.'} clsenrol ON cls.id = clsenrol.classid
-                 WHERE curcrs.curriculumid = ?
-                   AND clsenrol.userid = ?
-                   AND clsenrol.completestatusid = ?
-              ORDER BY curcrs.position';
+                 WHERE cur.id = ?
+                       AND clsenrol.userid = ?
+                       AND clsenrol.completestatusid = ?
+              ORDER BY curcrs.position'; // TBD
 
         return $DB->get_recordset_sql($sql,
                         array($curid, $userid, student::STUSTATUS_NOTCOMPLETE));
     }
 
     /**
-     * Retrieves a list of classes the specified user is currently enrolled in that don't fall under a
-     * curriculum the user is assigned to.
+     * Retrieves a list of classes the specified user is currently enrolled in that don't fall under a curriculum the user is assigned to.
      * @param $userid ID of the user
      * @param $curid  ID of the curriculum
      * @param $cnt    Optional return count
@@ -578,7 +582,7 @@ class user extends data_object_with_custom_fields {
      */
     static function get_non_curriculum_classes($userid, &$cnt = null) {
         global $DB;
-        $select = 'SELECT curcrs.*, crs.name AS coursename, crs.id AS courseid, cls.id AS classid';
+        $select = 'SELECT clsenrol.id AS stuid, crs.name AS coursename, cls.id AS classid, crs.id AS courseid';
         $sql = '  FROM {'.student::TABLE.'} clsenrol
                   JOIN {'.pmclass::TABLE.'} cls ON cls.id = clsenrol.classid
                   JOIN {'.course::TABLE.'} crs ON crs.id = cls.courseid
@@ -586,9 +590,16 @@ class user extends data_object_with_custom_fields {
                           FROM {'.curriculumcourse::TABLE.'} curcrs
                           JOIN {'.curriculumstudent::TABLE.'} curass ON curass.curriculumid = curcrs.curriculumid AND curass.userid = ?) curcrs
                        ON curcrs.courseid = crs.id
-                 WHERE clsenrol.userid = ? AND curcrs.courseid IS NULL';
+             LEFT JOIN (SELECT crssetcrs.courseid
+                          FROM {'.programcrsset::TABLE.'} prgcrsset
+                          JOIN {'.crssetcourse::TABLE.'} crssetcrs ON prgcrsset.crssetid = crssetcrs.crssetid
+                          JOIN {'.curriculumstudent::TABLE.'} curass ON curass.curriculumid = prgcrsset.prgid AND curass.userid = ?) curcrssetcrs
+                       ON curcrssetcrs.courseid = crs.id
+                 WHERE clsenrol.userid = ?
+                       AND curcrs.courseid IS NULL
+                       AND curcrssetcrs.courseid IS NULL';
 
-        $params = array($userid, $userid);
+        $params = array($userid, $userid, $userid);
         $rs = $DB->get_recordset_sql($select . $sql, $params);
         if ($cnt !== null) {
             $cnt = $rs->valid() ? $DB->count_records_sql("SELECT COUNT('x') {$sql}", $params)
@@ -608,9 +619,13 @@ class user extends data_object_with_custom_fields {
      */
     static function get_user_course_curriculum($userid, $curid) {
         global $DB;
-        $sql = 'SELECT DISTINCT curcrs.*, crs.name AS coursename, cls.count as classcount, prereq.count as prereqcount, enrol.completestatusid as completionid, waitlist.courseid as waiting
-                  FROM {'.curriculumcourse::TABLE.'} curcrs
-                  JOIN {'.course::TABLE.'} crs ON curcrs.courseid = crs.id
+        $sql = 'SELECT DISTINCT crs.id AS courseid, curcrs.*, crs.name AS coursename, cls.count as classcount, prereq.count as prereqcount,
+                       enrol.completestatusid as completionid, waitlist.courseid as waiting, crsset.idnumber AS crssetidnumber, crsset.name AS crssetname
+                  FROM {'.curriculum::TABLE.'} cur
+             LEFT JOIN {'.curriculumcourse::TABLE.'} curcrs ON curcrs.curriculumid = cur.id
+             LEFT JOIN {'.programcrsset::TABLE.'} prgcrsset ON prgcrsset.prgid = cur.id
+             LEFT JOIN {'.crssetcourse::TABLE.'} crssetcrs ON prgcrsset.crssetid = crssetcrs.crssetid
+                  JOIN {'.course::TABLE.'} crs ON (curcrs.courseid = crs.id OR crssetcrs.courseid = crs.id)
                        -- limit to non-enrolled courses
                   LEFT JOIN (SELECT cls.courseid, clsenrol.completestatusid FROM {'.pmclass::TABLE.'} cls
                           JOIN {'.student::TABLE.'} clsenrol ON cls.id = clsenrol.classid AND clsenrol.userid = :userida) enrol
@@ -640,7 +655,7 @@ class user extends data_object_with_custom_fields {
                          WHERE cls.courseid IS NULL
                       GROUP BY prereq.curriculumcourseid) prereq
                        ON prereq.curriculumcourseid = curcrs.id
-                 WHERE curcrs.curriculumid = :curid
+                 WHERE cur.id = :curid
               ORDER BY curcrs.position';
 
         $time_now = time();
@@ -757,7 +772,7 @@ class user extends data_object_with_custom_fields {
                     $totalcourses = 0;
                     $completecourses = 0;
 
-                    $courses = curriculumcourse_get_listing($usercur->curid, 'curcrs.position, crs.name', 'ASC');
+                    $courses = curriculumcourse_get_listing($usercur->curid, 'crssetname, curcrs.position, crs.name', 'ASC', 0, 0, '', '', array('coursesets' => true)); // TBD
                     foreach ($courses as $course) {
                         $course_obj = new course($course->courseid);
                         $coursedesc = $course_obj->syllabus;
@@ -826,7 +841,7 @@ class user extends data_object_with_custom_fields {
                 } else {
 
                     // Keep note of the classid's regardless if set archived or not for later use in determining non-curricula courses
-                    $courses = curriculumcourse_get_listing($usercur->curid, 'curcrs.position, crs.name', 'ASC');
+                    $courses = curriculumcourse_get_listing($usercur->curid, 'crssetname, curcrs.position, crs.name', 'ASC', 0, 0, '', '', array('coursesets' => true)); // TBD
                     foreach ($courses as $course) {
                         $cdata = student_get_class_from_course($course->courseid, $this->id);
                         foreach ($cdata as $classdata) {
@@ -923,18 +938,21 @@ class user extends data_object_with_custom_fields {
             //querying for all non-program info
 
             //fragment used in both queries
-            $query_body = 'FROM {'.student::TABLE.'} stu
-                           INNER JOIN {'.pmclass::TABLE.'} cls ON cls.id = stu.classid
-                           INNER JOIN {'.course::TABLE.'} crs ON crs.id = cls.courseid
-                           WHERE userid = ?
-                           AND NOT EXISTS (
-                             SELECT *
-                             FROM {'.curriculumstudent::TABLE.'} ca
-                             JOIN {'.curriculumcourse::TABLE.'} cc
-                               ON ca.curriculumid = cc.curriculumid
-                             WHERE ca.userid = stu.userid
-                               AND crs.id = cc.courseid
-                           )';
+            $query_body = '  FROM {'.student::TABLE.'} stu
+                       INNER JOIN {'.pmclass::TABLE.'} cls ON cls.id = stu.classid
+                       INNER JOIN {'.course::TABLE.'} crs ON crs.id = cls.courseid
+                            WHERE userid = ?
+                                  AND NOT EXISTS (SELECT \'x\'
+                                                    FROM {'.curriculumstudent::TABLE.'} ca
+                                                    JOIN {'.curriculumcourse::TABLE.'} cc ON ca.curriculumid = cc.curriculumid
+                                                   WHERE ca.userid = stu.userid
+                                                         AND crs.id = cc.courseid)
+                                  AND NOT EXISTS (SELECT \'x\'
+                                                    FROM {'.curriculumstudent::TABLE.'} ca
+                                                    JOIN {'.programcrsset::TABLE.'} prgcrsset ON prgcrsset.prgid = ca.curriculumid
+                                                    JOIN {'.crssetcourse::TABLE.'} crssetcrs ON crssetcrs.crssetid = prgcrsset.crssetid
+                                                   WHERE ca.userid = stu.userid
+                                                         AND crs.id = crssetcrs.courseid)';
 
             //query for fetching data
             $sql = "SELECT stu.id, stu.classid, crs.name as coursename, cls.idnumber,

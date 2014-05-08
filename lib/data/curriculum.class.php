@@ -33,7 +33,9 @@ require_once(elispm::lib('lib.php'));
 require_once(elispm::lib('data/course.class.php'));
 require_once(elispm::lib('data/curriculumcourse.class.php'));
 require_once(elispm::lib('data/curriculumstudent.class.php'));
+require_once(elispm::lib('data/courseset.class.php'));
 require_once(elispm::lib('data/programcrsset.class.php'));
+require_once(elispm::lib('data/crssetcourse.class.php'));
 require_once(elispm::lib('data/user.class.php'));
 require_once(elispm::lib('datedelta.class.php'));
 
@@ -568,6 +570,8 @@ class curriculum extends data_object_with_custom_fields {
             clustercurriculum::associate($userset->id, $clone->id);
         }
 
+        $courseids = array(); // save created courses
+
         if (!empty($options['courses'])) {
             // copy courses
             $currcrs = curriculumcourse_get_list_by_curr($this->id);
@@ -576,6 +580,7 @@ class curriculum extends data_object_with_custom_fields {
                 $objs['classes'] = array();
                 foreach ($currcrs as $currcrsdata) {
                     $course = new course($currcrsdata->courseid);
+                    $courseids[$currcrsdata->courseid] = true;
                     $rv = $course->duplicate($options);
                     if (isset($rv['errors']) && !empty($rv['errors'])) {
                         $objs['errors'] = array_merge($objs['errors'], $rv['errors']);
@@ -598,6 +603,55 @@ class curriculum extends data_object_with_custom_fields {
                 }
             }
             unset($currcrs);
+            // Copy courses in coursesets
+            foreach ($this->crssets as $prgcrsset) {
+                // Create new courseset
+                $crssetdata = $prgcrsset->crsset->to_object();
+                unset($crssetdata->id);
+                $idnumber = $crssetdata->idnumber;
+                $name = $crssetdata->name;
+                // Get a unique idnumber
+                $crssetdata->idnumber = generate_unique_identifier(courseset::TABLE, 'idnumber', $idnumber, array('idnumber' => $idnumber));
+                if ($crssetdata->idnumber != $idnumber) {
+                    // Get the suffix appended and add it to the name
+                    $parts = explode('.', $crssetdata->idnumber);
+                    $suffix = end($parts);
+                    $crssetdata->name = $name.'.'.$suffix;
+                } else {
+                    $crssetdata->name = $name;
+                }
+                $dupcrsset = new courseset($crssetdata);
+                // Create courseset courses and courseset-course associations
+                foreach ($prgcrsset->crsset->courses as $crssetcrs) {
+                    $course = $crssetcrs->course;
+                    if (empty($courseids[$course->id])) {
+                        $courseids[$course->id] = true;
+                        $rv = $course->duplicate($options);
+                        if (isset($rv['errors']) && !empty($rv['errors'])) {
+                            $objs['errors'] = array_merge($objs['errors'], $rv['errors']);
+                        }
+                        if (isset($rv['courses'])) {
+                            $objs['courses'] = $objs['courses'] + $rv['courses'];
+                        }
+                        if (isset($rv['classes'])) {
+                            $objs['classes'] = $objs['classes'] + $rv['classes'];
+                        }
+                    }
+                    // Create new crssetcourse association on new courseset & dup'd course ???
+                    $crssetcrsdata = $crssetcrs->to_object();
+                    unset($crssetcrsdata->id);
+                    $crssetcrsdata['crssetid'] = $dupcrsset->id;
+                    $crssetcrsdata['courseid'] = $rv['courses'][$course->id];
+                    $dupcrssetcrs = new crssetcourse($crssetcrsdata);
+                }
+                // Create new programcrsset association with cloned program & duplicated courseset ???
+                $prgcrssetdata = $prgcrsset->to_object();
+                unset($prgcrssetdata->id);
+                $prgcrssetdata->prgid = $clone->id;
+                $prgcrssetdata->crssetid = $dupcrsset->id;
+                $prgcrsset = new programcrsset($prgcrssetdata);
+                $prgcrsset->save();
+            }
         }
 
         if (!empty($objs['errors'])) {

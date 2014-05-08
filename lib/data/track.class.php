@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -33,6 +33,9 @@ require_once elispm::lib('data/classmoodlecourse.class.php');
 require_once elispm::lib('data/clustertrack.class.php');
 require_once elispm::lib('data/course.class.php');
 require_once elispm::lib('data/coursetemplate.class.php');
+require_once(elispm::lib('data/courseset.class.php'));
+require_once(elispm::lib('data/crssetcourse.class.php'));
+require_once(elispm::lib('data/programcrsset.class.php'));
 require_once elispm::lib('data/curriculum.class.php');
 require_once elispm::lib('data/pmclass.class.php');
 require_once elispm::lib('data/user.class.php');
@@ -108,8 +111,7 @@ class track extends data_object_with_custom_fields {
     function track_auto_create() {
         // Had to load $this due to lazy-loading
         $this->load();
-        if (empty($this->curid) or
-            empty($this->id)) {
+        if (empty($this->curid) || empty($this->id)) {
             cm_error('trackid and curid have not been properly initialized');
             return false;
         }
@@ -135,6 +137,9 @@ class track extends data_object_with_custom_fields {
         if (!empty($this->enddate)) {
             $classparams['enddate'] = $this->enddate;
         }
+
+        $trkid = false;
+        $createdcourseids = array();
 
         // For every course of the curricula determine which ones need -
         // to have their auto enrol flag set
@@ -179,10 +184,12 @@ class track extends data_object_with_custom_fields {
 
             // Create class
             $classparams['courseid'] = $curcourec->courseid;
-            if (!($classid = $classojb->auto_create_class($classparams))) {
+            if (empty($classojb) || !($classid = $classojb->auto_create_class($classparams))) {
                 cm_error(get_string('error_creating_class', 'local_elisprogram', $curcourec->name));
                 continue;
             }
+
+            $createdcourseids[$curcourec->courseid] = true;
 
             // attach course to moodle template
             if ($usetemplate) {
@@ -227,6 +234,79 @@ class track extends data_object_with_custom_fields {
             $autoenrol = false;
         }
         unset($curcourse);
+
+        // Now create any courseset classes (not created above)
+        foreach ($this->curriculum->crssets as $prgcrsset) {
+            foreach ($prgcrsset->crsset->courses as $crssetcrs) {
+                $course = $crssetcrs->course;
+                if (!empty($createdcourseids[$course->id])) {
+                    continue; // class for course already created
+                }
+
+                // get a unique idnumber
+                $idnumber = $this->idnumber;
+                if (!empty($course->idnumber)) {
+                    $idnumber = append_once($idnumber, $course->idnumber.'-', array('prepend' => true, 'maxlength' => 95, 'strict' => true));
+                }
+
+                generate_unique_identifier(pmclass::TABLE, 'idnumber', $idnumber, array('idnumber' => $idnumber), 'pmclass', $classojb,
+                        array('courseid' => $course->id, 'idnumber' => $idnumber));
+
+                // Attempt to obtain the course template
+                $cortemplate = coursetemplate::find(new field_filter('courseid', $course->id));
+                if ($cortemplate->valid()) {
+                    $cortemplate = $cortemplate->current();
+                }
+
+                // Course is using a Moodle template
+                if (!empty($cortemplate->location)) {
+                    // Parse the course id from the template location
+                    $classname = $cortemplate->templateclass;
+                    $templateobj = new $classname();
+                    $templatecorid = $cortemplate->location;
+                    $usetemplate = true;
+                }
+
+                // Create class
+                $classparams['courseid'] = $course->id;
+                if (empty($classojb) || !($classid = $classojb->auto_create_class($classparams))) {
+                    cm_error(get_string('error_creating_class', 'local_elisprogram', $course->name));
+                    continue;
+                }
+
+                // attach course to moodle template
+                if ($usetemplate) {
+                    moodle_attach_class($classid, 0, '', false, false, true);
+                }
+
+                $trackclassobj = new trackassignment(array(
+                    'courseid' => $course->id,
+                    'trackid'  => $this->id,
+                    'classid'  => $classojb->id
+                ));
+
+                // Assign class to track
+                $trackclassobj->save();
+
+                // Create and assign class to default system track
+                // TODO: for now, use elis::$config->local_elisprogram in place of $CURMAN->config
+                if (!empty(elis::$config->local_elisprogram->userdefinedtrack)) {
+                    if (empty($trkid)) {
+                        $trkid = $this->create_default_track();
+                    }
+                    $trackclassobj = new trackassignment(array(
+                        'courseid' => $course->id,
+                        'trackid'  => $trkid,
+                        'classid'  => $classojb->id
+                    ));
+
+                    // Assign class to default system track
+                    $trackclassobj->save();
+                }
+                $usetemplate = false;
+                $createdcourseids[$course->id] = true;
+            }
+        }
     }
 
     /**

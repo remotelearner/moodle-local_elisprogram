@@ -29,6 +29,10 @@ require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 
 // Data objects.
 require_once(elispm::lib('data/courseset.class.php'));
+require_once(elispm::lib('data/programcrsset.class.php'));
+require_once(elispm::lib('data/crssetcourse.class.php'));
+require_once(elispm::lib('data/curriculumcourse.class.php'));
+require_once(elispm::lib('data/user.class.php'));
 
 /**
  * Test courseset data object.
@@ -114,6 +118,17 @@ class courseset_testcase extends elis_database_test {
      */
     public function test_program_courseset_associations() {
         require_once(elispm::lib('data/programcrsset.class.php'));
+        // Course Description
+        $cddata = array(
+            'name' => 'Course Description 1',
+            'code' => 'CD1',
+            'idnumber' => 'CD1',
+            'syllabus' => 'CD1:Syllabus',
+            'credits' => 2.0,
+            'completion_grade' => 55
+        );
+        $cd = new course($cddata);
+        $cd->save();
 
         // CourseSet
         $crsset1 = array(
@@ -124,6 +139,9 @@ class courseset_testcase extends elis_database_test {
         );
         $courseset = new courseset($crsset1);
         $courseset->save();
+
+        $crssetcrs = new crssetcourse(array('courseid' => $cd->id, 'crssetid' => $courseset->id));
+        $crssetcrs->save();
 
         // Program
         $program1 = array(
@@ -148,13 +166,144 @@ class courseset_testcase extends elis_database_test {
         $this->assertNotEmpty($prgcrsset->id);
 
         // Attempt duplicate - should fail validation
-        $prgcrsset = new programcrsset($prgcrssetdata);
+        $prgcrsset2 = new programcrsset($prgcrssetdata);
         $failed = false;
         try {
-            $prgcrsset->save();
+            $prgcrsset2->save();
         } catch (data_object_validation_exception $e) {
             $failed = true;
         }
         $this->assertTrue($failed);
+
+        // Verify cannot safely remove only course from courseset
+        $this->assertEquals(crssetcourse::CAN_SAFELY_DELETE_ERROR_COURSES, $crssetcrs->can_safely_delete());
+
+        // Attempt requiring more courses than in courseset
+        $prgcrssetdata = array(
+            'reqcredits' => 2.0,
+            'reqcourses' => 2,
+            'andor' => 1,
+            'prgid' => $program->id,
+            'crssetid' => $courseset->id
+        );
+        $prgcrsset3 = new programcrsset($prgcrssetdata);
+        $failed = false;
+        try {
+            $prgcrsset3->save();
+        } catch (data_object_validation_exception $e) {
+            $failed = true;
+        }
+        $this->assertTrue($failed);
+
+        // Attempt requiring more credits than in courseset
+        $prgcrssetdata = array(
+            'reqcredits' => 2.5,
+            'reqcourses' => 1,
+            'andor' => 1,
+            'prgid' => $program->id,
+            'crssetid' => $courseset->id
+        );
+        $prgcrsset4 = new programcrsset($prgcrssetdata);
+        $failed = false;
+        try {
+            $prgcrsset4->save();
+        } catch (data_object_validation_exception $e) {
+            $failed = true;
+        }
+        $this->assertTrue($failed);
+
+        // 2nd Course Description
+        $cd2data = array(
+            'name' => 'Course Description 2',
+            'code' => 'CD2',
+            'idnumber' => 'CD2',
+            'syllabus' => 'CD2:Syllabus',
+            'credits' => 1.1,
+            'completion_grade' => 55
+        );
+        $cd2 = new course($cd2data);
+        $cd2->save();
+        // Add 2nd course to courseset
+        $crssetcrs2 = new crssetcourse(array('courseid' => $cd2->id, 'crssetid' => $courseset->id));
+        $crssetcrs2->save();
+
+        $this->assertEquals(2, $courseset->total_courses());
+        $this->assertEquals(3.1, $courseset->total_credits());
+
+        // Verify cannot safely remove 1st course from courseset
+        $this->assertEquals(crssetcourse::CAN_SAFELY_DELETE_ERROR_CREDITS, $crssetcrs->can_safely_delete());
+
+        // Enrol an ELIS user into Class Instance of 2nd course
+        $elisuser = new user(array(
+            'idnumber' => 'testuserid',
+            'username' => 'testuser',
+            'firstname' => 'testuser',
+            'lastname' => 'testuser',
+            'email' => 'testuser@testuserdomain.com',
+            'country' => 'CA'
+        ));
+        $elisuser->save();
+
+        $pmclass = new pmclass(array('idnumber' => 'CI222'));
+        $pmclass->auto_create_class(array('courseid' => $cd2->id));
+        $student = new student(array('userid' => $elisuser->id, 'classid' => $pmclass->id));
+        $student->save();
+
+        // Verify can safely remove 2nd course from courseset
+        $this->assertEquals(crssetcourse::CAN_SAFELY_DELETE_SUCCESS, $crssetcrs2->can_safely_delete());
+
+        // Enrol elisuser into program
+        $prgstu = new curriculumstudent(array('userid' => $elisuser->id, 'curriculumid' => $program->id));
+        $prgstu->save();
+
+        // Verify cannot safely remove 2nd course from courseset
+        $this->assertEquals(crssetcourse::CAN_SAFELY_DELETE_ERROR_ACTIVE, $crssetcrs2->can_safely_delete());
+
+        // Enrol user in other Class Instance of 1st course
+        $pmclass = new pmclass(array('idnumber' => 'CI1A'));
+        $pmclass->auto_create_class(array('courseid' => $cd->id));
+        $student2 = new student(array('userid' => $elisuser->id, 'classid' => $pmclass->id));
+        $student2->save();
+        $this->assertFalse($prgcrsset->is_complete($elisuser->id));
+
+        // Complete both classes for ELIS user
+        $student->complete(STUSTATUS_PASSED, time(), 60.2, 1.0, true);
+        $student2->complete(STUSTATUS_PASSED, time(), 55.1, 2.0, true);
+        $this->assertTrue($prgcrsset->is_complete($elisuser->id));
+
+        // Enrol user in a non-Program course
+        $cd3data = array(
+            'name' => 'Course Description 3',
+            'code' => 'CD3',
+            'idnumber' => 'CD3',
+            'syllabus' => 'CD3:Syllabus',
+            'credits' => 1.5,
+            'completion_grade' => 65
+        );
+        $cd3 = new course($cd3data);
+        $cd3->save();
+        $pmclass = new pmclass(array('idnumber' => 'CI3'));
+        $pmclass->auto_create_class(array('courseid' => $cd3->id));
+        $student = new student(array('userid' => $elisuser->id, 'classid' => $pmclass->id));
+        $student->save();
+
+        $this->assertEquals(0, curriculumcourse_count_records($program->id));
+        $this->assertEquals(2, curriculumcourse_count_records($program->id, '', '', array('coursesets' => true)));
+        $cnt = -1;
+        $rs = user::get_non_curriculum_classes($program->id, $cnt);
+        $this->assertEquals(1, $cnt);
+
+        // Mark one program class as incomplete
+        $student2->completestatusid = STUSTATUS_NOTCOMPLETE;
+        $student2->locked = false;
+        $student2->save();
+        $rs = user::get_current_classes_in_curriculum($elisuser->id, $program->id);
+        $cnt = 0;
+        if ($rs && $rs->valid()) {
+            foreach ($rs as $el) {
+                $cnt++;
+            }
+        }
+        $this->assertEquals(1, $cnt);
     }
 }

@@ -30,6 +30,8 @@ require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 require_once(elis::lib('data/data_object_with_custom_fields.class.php'));
 require_once(elis::lib('data/customfield.class.php'));
 require_once(elispm::lib('lib.php'));
+require_once(elispm::lib('data/crssetcourse.class.php'));
+require_once(elispm::lib('data/programcrsset.class.php'));
 
 class courseset extends data_object_with_custom_fields {
     /* @const string the DB table */
@@ -45,12 +47,10 @@ class courseset extends data_object_with_custom_fields {
             'class' => 'programcrsset',
             'foreignidfield' => 'crssetid'
         ),
-      /*
         'courses' => array(
             'class' => 'crssetcourse',
             'foreignidfield' => 'crssetid'
         )
-      */
     );
 
     // DB fields:
@@ -89,19 +89,35 @@ class courseset extends data_object_with_custom_fields {
     }
 
     /**
+     * Method can_safely_delete checks if courseset is in use and has active enrolments
+     * @param object $returnprgcrsset optional reference to return programcrsset object, on error, that failed
+     * @return bool true if courseset can be safely deleted, false otherwise
+     */
+    public function can_safely_delete(&$returnprgcrsset = null) {
+        foreach ($this->programs as $programcrsset) {
+            if ($returnprgcrsset != null) {
+                $returnprgcrsset = $programcrsset;
+            }
+            if ($programcrsset->is_active()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * delete method
      */
     public function delete() {
         // delete associated data
         require_once(elis::lib('data/data_filter.class.php'));
-        // uncomment code lines once courseset association classes have been defined
         require_once(elis::lib('data/programcrsset.class.php'));
-        // require_once elis::lib('data/crssetcourse.class.php');
+        require_once(elis::lib('data/crssetcourse.class.php'));
 
-        // filter specific for tracks, due to different field name
+        // filter specific for courseset
         $filter = new field_filter('crssetid', $this->id);
         programcrsset::delete_records($filter, $this->_db);
-        // crssetcourse::delete_records($filter, $this->_db);
+        crssetcourse::delete_records($filter, $this->_db);
 
         parent::delete();
 
@@ -198,6 +214,26 @@ class courseset extends data_object_with_custom_fields {
     public function get_verbose_name() {
         return $this->verbose_name;
     }
+
+    /**
+     * Method total_courses to return number of courses in courseset
+     * @return int number of courses in courseset
+     */
+    public function total_courses() {
+        return $this->count_courses();
+    }
+
+    /**
+     * Method total_credits to return number of credits available in courseset
+     * @return float total number of credits in courseset
+     */
+    public function total_credits() {
+        $totcredits = 0.0;
+        foreach ($this->courses as $crssetcrs) {
+            $totcredits += $crssetcrs->course->credits;
+        }
+        return $totcredits;
+    }
 }
 
 // Non-class supporting functions. (These may be able to replaced by a generic container/listing class)
@@ -224,8 +260,7 @@ function courseset_get_listing($sort = 'name', $dir = 'ASC', $startrec = 0, $per
     require_once(elis::lib('data/programcrsset.class.php'));
 
     $select = 'SELECT crsset.*';
-    // Uncomment lines below when courseset associations classes created
-    // $select .= ', (SELECT COUNT(*) FROM {'.crssetcourse::TABLE.'} WHERE crssetid = crsset.id) as courses';
+    $select .= ', (SELECT COUNT(*) FROM {'.crssetcourse::TABLE.'} WHERE crssetid = crsset.id) as courses';
     $select .= ', (SELECT COUNT(*) FROM {'.programcrsset::TABLE.'} WHERE crssetid = crsset.id) as programs';
     $tables = '  FROM {'.courseset::TABLE.'} crsset ';
     $join   = ' ';

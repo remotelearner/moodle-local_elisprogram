@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -837,6 +837,20 @@ class course extends data_object_with_custom_fields {
             }
         }
         return $objs;
+    }
+
+    /**
+     * Method to return a listing of all coursesets that this course is in
+     * @return recordset all coursesets this course belongs to
+     */
+    public function get_coursesets() {
+        require_once(elispm::lib('data/courseset.class.php'));
+        require_once(elispm::lib('data/crssetcourse.class.php'));
+        $sql = 'SELECT cs.*
+                  FROM {'.crssetcourse::TABLE.'} csc
+                  JOIN {'.courseset::TABLE.'} cs ON csc.crssetid = cs.id
+                 WHERE csc.courseid = ?';
+        return $this->_db->get_recordset_sql($sql, array($this->id));
     }
 }
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -30,6 +29,9 @@ require_once(dirname(__FILE__).'/../../../../config.php');
 require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 require_once elis::lib('data/data_object_with_custom_fields.class.php');
 require_once elispm::lib('data/course.class.php');
+require_once(elispm::lib('data/courseset.class.php'));
+require_once(elispm::lib('data/crssetcourse.class.php'));
+require_once(elispm::lib('data/programcrsset.class.php'));
 require_once elispm::lib('data/curriculum.class.php');
 require_once elispm::lib('data/pmclass.class.php');
 require_once elispm::lib('data/student.class.php');
@@ -666,6 +668,7 @@ class curriculumcourse extends elis_data_object {
 
 /**
  * Gets a curriculum course listing with specific sort and other filters.
+ * ELIS-8776: addition - setting array param index $extrafilters['coursesets'] to a non-empty value will include courseset courses in listing
  *
  * @param int $curid The curriculum ID.
  * @param string $sort Field to sort on.
@@ -682,13 +685,17 @@ function curriculumcourse_get_listing($curid, $sort='position', $dir='ASC', $sta
                                       $extrafilters = array()) {
     global $DB;
 
-    $select = 'SELECT curcrs.*, crs.name AS coursename ';
-    $tables = 'FROM {'.curriculumcourse::TABLE.'} curcrs ';
-    $join   = 'INNER JOIN {'.course::TABLE.'} crs ';
-    $on     = 'ON curcrs.courseid = crs.id ';
-    $where  = 'curcrs.curriculumid = ?';
+    $select = 'SELECT DISTINCT crs.id AS courseid, curcrs.id, curcrs.curriclumid, curcrs.required, curcrs.frequency, curcrs.timeperiod, curcrs.position,
+                      crs.name AS coursename, crsset.name AS crssetname, crsset.idnumber AS crssetidnumber
+                 FROM {'.curriculum::TABLE.'} cur
+            LEFT JOIN {'.curriculumcourse::TABLE.'} curcrs ON curcrs.curriculumid = cur.id
+            LEFT JOIN {'.programcrsset::TABLE.'} prgcrsset ON prgcrsset.prgid = ?
+            LEFT JOIN {'.crssetcourse::TABLE.'} crssetcrs ON crssetcrs.crssetid = prgcrsset.crssetid
+            LEFT JOIN {'.courseset::TABLE.'} crsset ON crsset.id = crssetcrs.crssetid
+           INNER JOIN {'.course::TABLE.'} crs ON (curcrs.courseid = crs.id OR crssetcrs.courseid = crs.id) ';
+    $where  = 'cur.id = ?';
 
-    $params = array($curid);
+    $params = array(empty($extrafilters['coursesets']) ? 0 : $curid, $curid);
 
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
@@ -721,16 +728,17 @@ function curriculumcourse_get_listing($curid, $sort='position', $dir='ASC', $sta
     }
 
     if ($sort) {
-        $sort = 'ORDER BY '.$sort .' '. $dir.' ';
+        $sort = 'ORDER BY '.($sort != 'crssetname' ? 'crssetname ASC,' : '').$sort.' '. $dir.' '; // TBD: sort coursesets to bottom of listing?
     }
 
-    $sql = $select.$tables.$join.$on.$where.$sort;
+    $sql = $select.$where.$sort;
 
     return $DB->get_recordset_sql($sql, $params, $startrec, $perpage);
 }
 
 /**
  * Gets the number of courses assigned to a particular curriculum
+ * ELIS-8776: addition - setting array param index $extrafilters['coursesets'] to a non-empty value will include courseset courses in count
  *
  * @param   int     $curid         The id of the curriculum to obtain the listing for
  * @param   string  $namesearch    Search string for course name
@@ -743,13 +751,16 @@ function curriculumcourse_count_records($curid, $namesearch = '', $alpha = '', $
 
     $select = '';
 
-    $select = 'SELECT COUNT(curcrs.id) ';
-    $tables = 'FROM {'.curriculumcourse::TABLE.'} curcrs ';
-    $join   = 'INNER JOIN {'.course::TABLE.'} crs ';
-    $on     = 'ON curcrs.courseid = crs.id ';
-    $where  = 'curcrs.curriculumid = ?';
+    $select = 'SELECT DISTINCT COUNT(crs.id)
+                 FROM {'.curriculum::TABLE.'} cur
+            LEFT JOIN {'.curriculumcourse::TABLE.'} curcrs ON curcrs.curriculumid = cur.id
+            LEFT JOIN {'.programcrsset::TABLE.'} prgcrsset ON prgcrsset.prgid = ?
+            LEFT JOIN {'.crssetcourse::TABLE.'} crssetcrs ON crssetcrs.crssetid = prgcrsset.crssetid
+            LEFT JOIN {'.courseset::TABLE.'} crsset ON crsset.id = crssetcrs.crssetid
+           INNER JOIN {'.course::TABLE.'} crs ON (curcrs.courseid = crs.id OR crssetcrs.courseid = crs.id) ';
+    $where  = 'cur.id = ?';
 
-    $params = array($curid);
+    $params = array(empty($extrafilters['coursesets']) ? 0 : $curid, $curid);
 
     if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
@@ -781,8 +792,7 @@ function curriculumcourse_count_records($curid, $namesearch = '', $alpha = '', $
         $where = 'WHERE '.$where.' ';
     }
 
-    $sql = $select . $tables . $join . $on . $where;
-
+    $sql = $select.$where;
     return $DB->count_records_sql($sql, $params);
 }
 
@@ -898,7 +908,7 @@ function curriculumcourse_count_curriculum_records($crsid, $namesearch = '', $al
  */
 function curriculumcourse_get_list_by_course($courseid) {
     global $DB;
-    return $DB->get_recordset(curriculumcourse::TABLE, array('courseid'=>$courseid));
+    return $DB->get_recordset(curriculumcourse::TABLE, array('courseid' => $courseid)); // TBD: Do we need an options to include coursesets?
 }
 
 /**
@@ -909,7 +919,7 @@ function curriculumcourse_get_list_by_course($courseid) {
  */
 function curriculumcourse_get_list_by_curr($curriculumid) {
     global $DB;
-    return $DB->get_recordset(curriculumcourse::TABLE, array('curriculumid'=>$curriculumid));
+    return $DB->get_recordset(curriculumcourse::TABLE, array('curriculumid' => $curriculumid)); // TBD: Do we need an options to include coursesets?
 }
 
 class courseprerequisite extends elis_data_object {

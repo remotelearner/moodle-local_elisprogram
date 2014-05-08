@@ -372,6 +372,8 @@ $string['dashboard_summary_nonprogram_hidden'] = 'You have completed all non-pro
 $string['dashboard_summary_program'] = '{$a->completecourses} of your {$a->totalcourses} courses in this program have been completed and are not being displayed.';
 $string['dashboard_summary_program_all'] = 'All {$a->totalcourses} of your courses in this program have been completed and are not being displayed.';
 $string['dashboard_summary_program_hidden'] = 'You have completed all courses in this program.';
+$string['data_object_validation_reqcourses_not_in_courseset'] = 'Program-CourseSet association cannot require more courses than in courseset: Program = {$a->programname}({$a->programidnumber}), CourseSet = {$a->name}({$a->idnumber}), required courses = {$a->reqcourses}, total courses - {$a->totcourses}';
+$string['data_object_validation_reqcredits_not_in_courseset'] = 'Program-CourseSet association cannot require more credits than in courseset: Program = {$a->programname}({$a->programidnumber}), CourseSet = {$a->name}({$a->idnumber}), required courses = {$a->reqcredits}, total courses - {$a->totcredits}';
 $string['date'] = 'Date';
 $string['datecompleted'] = 'Completion Date';
 $string['date_completed'] = 'Date Completed';

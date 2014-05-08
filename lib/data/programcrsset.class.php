@@ -62,8 +62,44 @@ class programcrsset extends elis_data_object {
 
     /* @var array validation rules */
     public static $validation_rules = array(
-        array('validation_helper', 'is_unique_prgid_crssetid')
+        array('validation_helper', 'is_unique_prgid_crssetid'),
+        'validate_reqcourses_in_courseset',
+        'validate_reqcredits_in_courseset'
     );
+
+    /**
+     * Validation for number of required courses available in courseset
+     */
+    public function validate_reqcourses_in_courseset() {
+        $totcourses = $this->crsset->total_courses();
+        if ($totcourses < $this->reqcourses) {
+            $a = new stdClass;
+            $a->idnumber = $this->crsset->idnumber;
+            $a->name = $this->crsset->name;
+            $a->programname = $this->program->name;
+            $a->programidnumber = $this->program->idnumber;
+            $a->reqcourses = $this->reqcourses;
+            $a->totcourses = $totcourses;
+            throw new data_object_validation_exception('data_object_validation_reqcourses_not_in_courseset', 'local_elisprogram', '', $a);
+        }
+    }
+
+    /**
+     * Validation for number of required credits available in courseset
+     */
+    public function validate_reqcredits_in_courseset() {
+        $totcredits = $this->crsset->total_credits();
+        if ($totcredits < $this->reqcredits) {
+            $a = new stdClass;
+            $a->idnumber = $this->crsset->idnumber;
+            $a->name = $this->crsset->name;
+            $a->programname = $this->program->name;
+            $a->programidnumber = $this->program->idnumber;
+            $a->reqcredits = $this->reqcredits;
+            $a->totcredits = $totcredits;
+            throw new data_object_validation_exception('data_object_validation_reqcredits_not_in_courseset', 'local_elisprogram', '', $a);
+        }
+    }
 
     /**
      * get_verbose_name method to return human-readable name of entity
@@ -113,7 +149,7 @@ class programcrsset extends elis_data_object {
         }
         $crsarray = array();
         foreach ($courses as $crs) {
-            $crsarray[] = $crs->id;
+            $crsarray[] = $crs->courseid;
         }
         $crsarray = array_unique($crsarray);
         if (empty($crsarray)) {
@@ -128,7 +164,7 @@ class programcrsset extends elis_data_object {
         $params = array_merge(array($userid), $params);
         $enrolments = $this->_db->get_recordset_sql($enrolmentsql, $params);
         foreach ($enrolments as $enrolment) {
-            if ($enrolments->completestatusid != STUSTATUS_NOTCOMPLETE) {
+            if ($enrolment->completestatusid != STUSTATUS_NOTCOMPLETE) {
                 $curcourses++;
                 $curcredits += $enrolment->credits;
             }
@@ -160,5 +196,54 @@ class programcrsset extends elis_data_object {
             $percentcomplete = $prcntcomplete;
         }
         return $complete;
+    }
+
+    /**
+     * is_active method to determine if a crsset has active enrolments
+     * @param int $courseid if non-zero & in crsset, only that course is checked for activety. Otherwise (if zero) all courseset courses are checked for activetly.
+     * @return bool true if active, false otherwise
+     */
+    public function is_active($courseid = 0) {
+        if ($this->reqcredits <= 0.0 && $this->reqcourses <= 0) {
+            return false;
+        }
+        require_once(elispm::lib('data/pmclass.class.php'));
+        require_once(elispm::lib('data/student.class.php'));
+        require_once(elispm::lib('data/curriculumstudent.class.php'));
+        if (!$courseid) {
+            $courses = $this->crsset->courses;
+            if (!$courses || !$courses->valid()) {
+                return false;
+            }
+            $crsarray = array();
+            foreach ($courses as $crs) {
+                $crsarray[] = $crs->courseid;
+            }
+            $crsarray = array_unique($crsarray);
+            if (empty($crsarray)) {
+                return false;
+            }
+            list($inorequal, $params) = $this->_db->get_in_or_equal($crsarray);
+        } else {
+            if (!$this->_db->record_exists(crssetcourse::TABLE, array('crssetid' => $this->crsset->id, 'courseid' => $courseid))) {
+                return false;
+            }
+            list($inorequal, $params) = $this->_db->get_in_or_equal(array($courseid));
+        }
+        $enrolmentsql = 'SELECT \'x\'
+                           FROM {'.pmclass::TABLE.'} cls
+                           JOIN {'.student::TABLE.'} cce ON cls.id = cce.classid
+                           JOIN {'.curriculumstudent::TABLE."} cca ON cce.userid = cca.userid
+                          WHERE cls.courseid {$inorequal}
+                                AND cce.completestatusid = ?";
+        $params[] = STUSTATUS_NOTCOMPLETE;
+        /* debug code
+        ob_start();
+        var_dump($params);
+        $tmp = ob_get_contents();
+        ob_end_clean();
+        error_log("programcrsset::is_active(): SQL query = {$enrolmentsql}, params = {$tmp}");
+        */
+        return $this->_db->record_exists_sql($enrolmentsql, $params);
     }
 }
