@@ -685,7 +685,7 @@ function curriculumcourse_get_listing($curid, $sort='position', $dir='ASC', $sta
                                       $extrafilters = array()) {
     global $DB;
 
-    $select = 'SELECT DISTINCT crs.id AS courseid, curcrs.id, curcrs.curriclumid, curcrs.required, curcrs.frequency, curcrs.timeperiod, curcrs.position,
+    $select = 'SELECT DISTINCT crs.id AS courseid, curcrs.id, curcrs.curriculumid, curcrs.required, curcrs.frequency, curcrs.timeperiod, curcrs.position,
                       crs.name AS coursename, crsset.name AS crssetname, crsset.idnumber AS crssetidnumber
                  FROM {'.curriculum::TABLE.'} cur
             LEFT JOIN {'.curriculumcourse::TABLE.'} curcrs ON curcrs.curriculumid = cur.id

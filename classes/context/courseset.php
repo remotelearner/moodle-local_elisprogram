@@ -28,14 +28,14 @@ namespace local_elisprogram\context;
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot.'/local/elisprogram/lib/data/userset.class.php');
+require_once($CFG->dirroot.'/local/elisprogram/lib/data/courseset.class.php');
 
 /**
- * ELIS Userset Context.
+ * ELIS CourseSet Context.
  */
 class courseset extends \local_eliscore\context\base {
     /**
-     * Please use \local_elisprogram\context\courseset::instance($usersetid) if you need the instance of context.
+     * Please use \local_elisprogram\context\courseset::instance($crssetid) if you need the instance of context.
      * Alternatively if you know only the context id use context::instance_by_id($contextid)
      *
      * @throws \coding_exception if an invalid context level is passed
@@ -62,7 +62,7 @@ class courseset extends \local_eliscore\context\base {
      * Returns human readable context identifier.
      *
      * @param boolean $withprefix whether to prefix the name of the context with User Set
-     * @param boolean $short does not apply to userset's
+     * @param boolean $short does not apply to coursesets
      * @return string the human readable context name.
      */
     public function get_context_name($withprefix = true, $short = false) {
@@ -150,9 +150,9 @@ class courseset extends \local_eliscore\context\base {
     }
 
     /**
-     * Returns immediate child contexts of userset and sub-usersets
+     * Returns immediate child contexts of coursesets
      *
-     * @return \local_elisprogram\context\userset|array A context instance or an empty array
+     * @return \local_elisprogram\context\courseset|array A context instance or an empty array
      */
     public function get_child_contexts() {
         global $DB;

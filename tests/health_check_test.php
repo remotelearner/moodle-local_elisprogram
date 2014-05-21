@@ -154,6 +154,14 @@ class user_activity_health_testcase extends elis_database_test {
 
         $duplicateprofilecheck = new duplicate_moodle_profile();
         $this->assertEquals(get_string('health_dupmoodleprofiledesc', 'local_elisprogram', 3), $duplicateprofilecheck->description());
+
+        // Put the index we removed back
+        unset($record->id);
+        unset($record->data);
+        $DB->delete_records('user_info_data', (array)$record);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
     }
 
     /**

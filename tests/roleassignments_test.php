@@ -240,7 +240,8 @@ class roleassignments_testcase extends elis_database_test {
             13 => get_string('course', 'local_elisprogram'),
             14 => get_string('class', 'local_elisprogram'),
             15 => get_string('context_level_user', 'local_elisprogram'),
-            16 => get_string('cluster', 'local_elisprogram')
+            16 => get_string('cluster', 'local_elisprogram'),
+            17 => get_string('courseset', 'local_elisprogram')
         );
 
         $this->assertEquals($allcontextlevels, $roletable->get_all_context_levels());

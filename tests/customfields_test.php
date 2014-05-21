@@ -78,7 +78,7 @@ class curriculumcustomfields_testcase extends elis_database_test {
      */
     protected function setUp() {
         parent::setUp();
-        $classes = array('curriculum', 'track', 'course', 'pmclass', 'user', 'userset');
+        $classes = array('curriculum', 'track', 'course', 'courseset', 'pmclass', 'user', 'userset');
         foreach ($classes as $class) {
             $temp = new $class;
             $temp->reset_custom_field_list();
@@ -303,6 +303,26 @@ class curriculumcustomfields_testcase extends elis_database_test {
     }
 
     /**
+     * Create an ELIS courseset.
+     * @param field &$field A custom field to set when creating the courseset.
+     * @return courseset The created courseset.
+     */
+    public function create_courseset(field &$field) {
+        $data = new stdClass;
+        $data->idnumber = 'CRSSET1';
+        $data->name = 'Test Course Set';
+        $data->description = 'Test Course Set';
+
+        $fieldvar = 'field_'.$field->shortname;
+        $data->$fieldvar = 'test field data';
+
+        $crsset = new courseset();
+        $crsset->set_from_data($data);
+        $crsset->save();
+        return $crsset;
+    }
+
+    /**
      * Create an ELIS class instance.
      * @param course &$course The course description to assign the class to.
      * @param field &$field A custom field to set when creating the class.
@@ -392,6 +412,7 @@ class curriculumcustomfields_testcase extends elis_database_test {
                 array(CONTEXT_ELIS_PROGRAM),
                 array(CONTEXT_ELIS_TRACK),
                 array(CONTEXT_ELIS_COURSE),
+                array(CONTEXT_ELIS_COURSESET),
                 array(CONTEXT_ELIS_CLASS),
                 array(CONTEXT_ELIS_USER),
                 array(CONTEXT_ELIS_USERSET),
@@ -576,6 +597,12 @@ class curriculumcustomfields_testcase extends elis_database_test {
                     $crs = $this->create_course($field);
                     // Set up a dummy custom field with a default value.
                     $testvalue = array('id' => $crs->id, 'field_'.$field->shortname => '');
+                    break;
+                case 'courseset':
+                    // Create a courseset.
+                    $crsset = $this->create_courseset($field);
+                    // Set up a dummy custom field with a default value.
+                    $testvalue = array('id' => $crsset->id, 'field_'.$field->shortname => '');
                     break;
                 case 'class':
                     // Create a class.

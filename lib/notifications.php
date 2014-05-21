@@ -566,7 +566,7 @@ function pm_notify_role_assign_handler($eventdata){
     $rarec = false;
     if ((empty($eventdata->userid) || empty($eventdata->contextid) || empty($eventdata->roleid)) &&
             !($rarec = $DB->get_record('role_assignments', array('id' => $eventdata->id)))) {
-        if (debugging('', DEBUG_DEVELOPER)) {
+        if (!PHPUNIT_TEST && debugging('', DEBUG_DEVELOPER)) {
             ob_start();
             var_dump($eventdata);
             $tmp = ob_get_contents();
@@ -707,7 +707,7 @@ function pm_notify_role_unassign_handler($eventdata){
     $rarec = false;
     if ((empty($eventdata->userid) || empty($eventdata->contextid) || empty($eventdata->roleid)) &&
             !($rarec = $DB->get_record('role_assignments', array('id' => $eventdata->id)))) {
-        if (debugging('', DEBUG_DEVELOPER)) {
+        if (!PHPUNIT_TEST && debugging('', DEBUG_DEVELOPER)) {
             ob_start();
             var_dump($eventdata);
             $tmp = ob_get_contents();

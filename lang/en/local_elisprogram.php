@@ -293,6 +293,7 @@ $string['course_role_setting'] = 'Default Course Description Role';
 $string['course_syllabus'] = 'Description';
 $string['course_version'] = 'Version';
 $string['courses'] = 'Course Descriptions';
+$string['courseset'] = 'Course Set';
 $string['coursetemplate'] = 'Course Template in Moodle';
 $string['credits'] = 'Credits';
 $string['credits_rec'] = 'Credits Rec\'vd.';
