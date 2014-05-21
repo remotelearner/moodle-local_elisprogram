@@ -111,8 +111,8 @@ class courseset extends data_object_with_custom_fields {
     public function delete() {
         // delete associated data
         require_once(elis::lib('data/data_filter.class.php'));
-        require_once(elis::lib('data/programcrsset.class.php'));
-        require_once(elis::lib('data/crssetcourse.class.php'));
+        require_once(elispm::lib('data/programcrsset.class.php'));
+        require_once(elispm::lib('data/crssetcourse.class.php'));
 
         // filter specific for courseset
         $filter = new field_filter('crssetid', $this->id);
@@ -257,7 +257,7 @@ class courseset extends data_object_with_custom_fields {
 function courseset_get_listing($sort = 'name', $dir = 'ASC', $startrec = 0, $perpage = 0, $namesearch = '', $alpha = '', $contexts = null, $userid = 0) {
     global $CFG, $DB, $USER;
 
-    require_once(elis::lib('data/programcrsset.class.php'));
+    require_once(elispm::lib('data/programcrsset.class.php'));
 
     $select = 'SELECT crsset.*';
     $select .= ', (SELECT COUNT(*) FROM {'.crssetcourse::TABLE.'} WHERE crssetid = crsset.id) as courses';
@@ -351,6 +351,7 @@ function courseset_count_records($namesearch = '', $alpha = '', $contexts = null
         }
     }
 
-    $where = implode(' AND ', $where).' ';
+    $where = empty($where) ? false : implode(' AND ', $where).' ';
+
     return $DB->count_records_select(courseset::TABLE, $where, $params);
 }

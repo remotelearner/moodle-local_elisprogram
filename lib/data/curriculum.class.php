@@ -195,7 +195,6 @@ class curriculum extends data_object_with_custom_fields {
         $timenow = 0;
         $timerun = time();
         $secondsinaday = 60 * 60 * 24;
-        $prgcrssets = array();
 
         $rs = $DB->get_recordset_sql($sql);
         if ($rs && $rs->valid()) {
@@ -205,7 +204,7 @@ class curriculum extends data_object_with_custom_fields {
                 // Load a new curriculum assignment.
                 if ($curassid != $rec->curassid) {
                     // Check for completion - all credits have been earned and all required courses completed.
-                    if ($curassid && ($numcredits >= $reqcredits) && empty($checkcourses)) {
+                    if ($curassid && $crssetscomplete && ($numcredits >= $reqcredits) && empty($checkcourses)) {
                         $currstudent->complete($timenow ? $timenow : $timerun, $numcredits, 1);
                         $timenow = 0;
                     }
@@ -255,7 +254,7 @@ class curriculum extends data_object_with_custom_fields {
         }
 
         // Check for last record completion - all credits have been earned and all required courses completed.
-        if ($curassid && ($numcredits >= $reqcredits) && empty($checkcourses)) {
+        if ($curassid && $crssetscomplete && ($numcredits >= $reqcredits) && empty($checkcourses)) {
             $currstudent->complete($timenow ? $timenow : $timerun, $numcredits, 1);
         }
 
@@ -284,6 +283,7 @@ class curriculum extends data_object_with_custom_fields {
         $context = false;
         $timenow = time();
         $secondsinaday = 60 * 60 * 24;
+        $notifiedincompleteprograms = array();
 
         $rs = $DB->get_recordset_sql($sql);
         if ($rs && $rs->valid()) {
@@ -301,6 +301,7 @@ class curriculum extends data_object_with_custom_fields {
 
                 $daysfrom = ($reqcompletetime - $timenow) / $secondsinaday;
                 if ($daysfrom <= elis::$config->local_elisprogram->notify_curriculumnotcompleted_days) {
+                    $notifiedincompleteprograms[$rec->curriculumid][$rec->userid] = true;
                     $eventdata = array(
                         'context' => context_system::instance(),
                         'other' => (array)$rec
@@ -322,6 +323,9 @@ class curriculum extends data_object_with_custom_fields {
         $rs = $DB->get_recordset_sql($sql);
         if ($rs && $rs->valid()) {
             foreach ($rs as $rec) {
+                if (!empty($notifiedincompleteprograms[$rec->curriculumid][$rec->userid])) {
+                    continue; // already triggered program:incomplete above
+                }
                 $prgcrsset = new programcrsset($rec->prgcrssetid);
                 $prgcrsset->load();
                 if ($prgcrsset->is_complete($rec->userid)) {
@@ -335,13 +339,12 @@ class curriculum extends data_object_with_custom_fields {
                 $reqcompletetime = $rec->timecreated + $deltad->gettimestamp();
 
                 // If no time to completion set, it has no completion restriction.
-                if ($reqcompletetime  == 0) {
+                if ($reqcompletetime == 0) {
                     continue;
                 }
 
                 $daysfrom = ($reqcompletetime - $timenow) / $secondsinaday;
                 if ($daysfrom <= elis::$config->local_elisprogram->notify_curriculumnotcompleted_days) {
-                    mtrace("Triggering curriculum_notcompleted event.\n");
                     $eventdata = array(
                         'context' => context_system::instance(),
                         'other' => (array)$rec
@@ -743,7 +746,7 @@ class curriculum extends data_object_with_custom_fields {
         $crssets = array();
         $select = 'crssetid = ? AND courseid = ?';
         foreach ($this->crssets as $crsset) {
-            $params = array($crsset->id, $courseid);
+            $params = array($crsset->crssetid, $courseid);
             if ($DB->record_exists_select(crssetcourse::TABLE, $select, $params)) {
                 $crssets[] = $crsset;
             }

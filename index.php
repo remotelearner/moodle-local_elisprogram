@@ -103,6 +103,12 @@ $pages = array(
     'trkrole' => array('class' => 'track_rolepage',
                        'file' => 'rolepage.class.php'),
 
+    // Manage CourseSets
+    'crsset' => array('class' => 'coursesetpage',
+        'file' => 'coursesetpage.class.php'),
+    'crssetrole' => array('class' => 'courseset_rolepage',
+        'file' => 'rolepage.class.php'),
+
     // Manage Courses
     'crs' => array('class' => 'coursepage',
                    'file' => 'coursepage.class.php'),

@@ -868,3 +868,38 @@ class role_name_decorator {
         return html_writer::link($url, $text);
     }
 }
+
+/**
+ * Course Set role page class
+ */
+class courseset_rolepage extends rolepage {
+    /** @var string the courseset role page name */
+    public $pagename = 'crssetrole';
+
+    /**
+     * Method get_context to check course set context
+     * @return object the page context
+     */
+    protected function get_context() {
+        if (!isset($this->_context)) {
+            $id = $this->required_param('id', PARAM_INT);
+            $contextinstance = \local_elisprogram\context\courseset::instance($id);
+            $this->set_context($contextinstance);
+        }
+        return $this->_context;
+    }
+
+    /**
+     * Method get_parent_page to get course set view page
+     * @return object the courseset view page
+     */
+    protected function get_parent_page() {
+        if (!isset($this->parent_page)) {
+            global $CFG; // required by coursesetpage.class.php
+            require_once(elispm::file('coursesetpage.class.php'));
+            $id = $this->required_param('id');
+            $this->parent_page = new coursesetpage(array('id' => $id, 'action' => 'view'));
+        }
+        return $this->parent_page;
+    }
+}
