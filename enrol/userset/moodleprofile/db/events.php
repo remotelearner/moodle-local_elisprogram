@@ -30,15 +30,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 $handlers = array (
-    'user_updated' => array (
-         'handlerfile'      => '/local/elisprogram/enrol/userset/moodleprofile/lib.php',
-         'handlerfunction'  => 'cluster_profile_update_handler',
-         'schedule'         => 'cron' // ELIS-8792/MDL-45641: this can be put back to 'instant' when MDL issue resolved
-     ),
-
     'user_created' => array (
          'handlerfile'      => '/local/elisprogram/enrol/userset/moodleprofile/lib.php',
          'handlerfunction'  => 'cluster_profile_update_handler',
-         'schedule'         => 'cron' // ELIS-8792/MDL-45641: this can be put back to 'instant' when MDL issue resolved
+         'schedule'         => 'instant'
+    ),
+    'user_updated' => array (
+         'handlerfile'      => '/local/elisprogram/enrol/userset/moodleprofile/lib.php',
+         'handlerfunction'  => 'cluster_profile_update_handler',
+         'schedule'         => 'instant'
      )
 );

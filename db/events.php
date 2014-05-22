@@ -103,12 +103,6 @@ $handlers = array (
         'schedule'          => 'instant'
      ),
 
-    'user_updated' => array (
-        'handlerfile'       => '/local/elisprogram/lib/lib.php',
-        'handlerfunction'   => 'pm_moodle_user_to_pm',
-        'schedule'          => 'instant'
-     ),
-
     'local_elisprogram_cls_completed' => array (
         'handlerfile'       => '/local/elisprogram/lib/lib.php',
         'handlerfunction'   => 'pm_course_complete',
