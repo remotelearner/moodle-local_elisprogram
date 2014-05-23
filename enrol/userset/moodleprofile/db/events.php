@@ -29,17 +29,16 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$observers = array(
-        array (
-            'eventname'   => '\core\event\user_updated',
-            'includefile' => '/local/elisprogram/enrol/userset/moodleprofile/lib.php',
-            'callback'    => 'cluster_profile_update_handler',
-            'internal'    => false
-        ),
-        array (
-            'eventname'   => '\core\event\user_created',
-            'includefile' => '/local/elisprogram/enrol/userset/moodleprofile/lib.php',
-            'callback'    => 'cluster_profile_update_handler',
-            'internal'    => false
+$handlers = array (
+    'user_updated' => array (
+         'handlerfile'      => '/local/elisprogram/enrol/userset/moodleprofile/lib.php',
+         'handlerfunction'  => 'cluster_profile_update_handler',
+         'schedule'         => 'cron' // ELIS-8792/MDL-45641: this can be put back to 'instant' when MDL issue resolved
+     ),
+
+    'user_created' => array (
+         'handlerfile'      => '/local/elisprogram/enrol/userset/moodleprofile/lib.php',
+         'handlerfunction'  => 'cluster_profile_update_handler',
+         'schedule'         => 'cron' // ELIS-8792/MDL-45641: this can be put back to 'instant' when MDL issue resolved
      )
 );
