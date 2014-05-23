@@ -27,14 +27,15 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(__FILE__).'/../../../../config.php');
 require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
-require_once elis::lib('data/data_object_with_custom_fields.class.php');
-require_once elis::lib('data/customfield.class.php');
-require_once elispm::lib('lib.php');
-require_once elispm::lib('data/course.class.php');
-require_once elispm::lib('data/curriculumcourse.class.php');
-require_once elispm::lib('data/curriculumstudent.class.php');
-require_once elispm::lib('data/user.class.php');
-require_once elispm::lib('datedelta.class.php');
+require_once(elis::lib('data/data_object_with_custom_fields.class.php'));
+require_once(elis::lib('data/customfield.class.php'));
+require_once(elispm::lib('lib.php'));
+require_once(elispm::lib('data/course.class.php'));
+require_once(elispm::lib('data/curriculumcourse.class.php'));
+require_once(elispm::lib('data/curriculumstudent.class.php'));
+require_once(elispm::lib('data/programcrsset.class.php'));
+require_once(elispm::lib('data/user.class.php'));
+require_once(elispm::lib('datedelta.class.php'));
 
 class curriculum extends data_object_with_custom_fields {
     const TABLE = 'local_elisprogram_pgm';
@@ -58,6 +59,10 @@ class curriculum extends data_object_with_custom_fields {
             'class' => 'track',
             'foreignidfield' => 'curid'
         ),
+        'crssets' => array(
+            'class' => 'programcrsset',
+            'foreignidfield' => 'prgid'
+        )
     );
 
     protected $_dbfield_idnumber;
@@ -183,13 +188,15 @@ class curriculum extends data_object_with_custom_fields {
         $reqcredits = 10000; // Initially so a completion event is not triggered.
         $requiredcourseids = array();
         $checkcourses = $requiredcourseids;
+        $crssetscomplete = true;
         $context = false;
         $timenow = 0;
         $timerun = time();
         $secondsinaday = 60 * 60 * 24;
+        $prgcrssets = array();
 
         $rs = $DB->get_recordset_sql($sql);
-        if ($rs) {
+        if ($rs && $rs->valid()) {
             foreach ($rs as $rec) {
                 // Loop through enrolment records grouped by curriculum and curriculum assignments,
                 // counting the credits achieved and looking for all required courses to be complete.
@@ -206,7 +213,7 @@ class curriculum extends data_object_with_custom_fields {
                     $currstudent->load();
 
                     $numcredits = 0;
-                    $checkcourses = $requiredcourseids;
+                    $crssetscomplete = true;
                 }
 
                 if (!empty($rec->crsrequired) && $rec->clscomplete > $timenow) {
@@ -222,6 +229,18 @@ class curriculum extends data_object_with_custom_fields {
                         $requiredcourseids = array();
                     }
                     $checkcourses = $requiredcourseids;
+                    // Check for any courseset requirements
+                    $select = 'prgid = ? AND (reqcredits > 0.0 OR reqcourses > 0)';
+                    if (($requiredcrssets = $DB->get_recordset_select(programcrsset::TABLE, $select, array($curid), '', 'id')) && $requiredcrssets->valid()) {
+                        foreach ($requiredcrssets as $requiredcrsset) {
+                            $prgcrsset = new programcrsset($requiredcrsset->id);
+                            $prgcrsset->load();
+                            if (!$prgcrsset->is_complete($rec->userid)) {
+                                $crssetscomplete = false;
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 // Track data for completion...
@@ -230,6 +249,7 @@ class curriculum extends data_object_with_custom_fields {
                     unset($checkcourses[$rec->courseid]);
                 }
             }
+            $rs->close();
         }
 
         // Check for last record completion - all credits have been earned and all required courses completed.
@@ -264,7 +284,7 @@ class curriculum extends data_object_with_custom_fields {
         $secondsinaday = 60 * 60 * 24;
 
         $rs = $DB->get_recordset_sql($sql);
-        if ($rs) {
+        if ($rs && $rs->valid()) {
             foreach ($rs as $rec) {
                 // Loop through curriculum assignments checking for nags.
                 $deltad = new datedelta($rec->timetocomplete);
@@ -287,6 +307,48 @@ class curriculum extends data_object_with_custom_fields {
                     $event->trigger();
                 }
             }
+            $rs->close();
+        }
+
+        // Incomplete Program CourseSets
+        $sql = 'SELECT cca.id as id, cca.userid, cca.curriculumid, cca.timecreated,
+                       cur.timetocomplete as timetocomplete, pc.id as prgcrssetid
+                  FROM {'.curriculumstudent::TABLE.'} cca
+                  JOIN {'.curriculum::TABLE.'} cur ON cca.curriculumid = cur.id
+                  JOIN {'.programcrsset::TABLE.'} pc ON pc.prgid = cur.id
+                       AND (pc.reqcredits > 0.0 OR pc.reqcourses > 0)';
+        $rs = $DB->get_recordset_sql($sql);
+        if ($rs && $rs->valid()) {
+            foreach ($rs as $rec) {
+                $prgcrsset = new programcrsset($rec->prgcrssetid);
+                $prgcrsset->load();
+                if ($prgcrsset->is_complete($rec->userid)) {
+                    continue;
+                }
+
+                // Loop through curriculum assignments checking for nags.
+                $deltad = new datedelta($rec->timetocomplete);
+
+                // Need to fit this into the SQL instead.
+                $reqcompletetime = $rec->timecreated + $deltad->gettimestamp();
+
+                // If no time to completion set, it has no completion restriction.
+                if ($reqcompletetime  == 0) {
+                    continue;
+                }
+
+                $daysfrom = ($reqcompletetime - $timenow) / $secondsinaday;
+                if ($daysfrom <= elis::$config->local_elisprogram->notify_curriculumnotcompleted_days) {
+                    mtrace("Triggering curriculum_notcompleted event.\n");
+                    $eventdata = array(
+                        'context' => context_system::instance(),
+                        'other' => (array)$rec
+                    );
+                    $event = \local_elisprogram\event\curriculum_notcompleted::create($eventdata);
+                    $event->trigger();
+                }
+            }
+            $rs->close();
         }
 
         return true;
@@ -617,11 +679,26 @@ class curriculum extends data_object_with_custom_fields {
     function get_verbose_name() {
         return $this->verbose_name;
     }
+
+    /**
+     * Method crssets_with_course to return coursesets associated to program containing specified course
+     * @param int $courseid the course id to check for
+     * @return array associated course sets containing specified course
+     */
+    public function crssets_with_course($courseid) {
+        $crssets = array();
+        $select = 'crssetid = ? AND courseid = ?';
+        foreach ($this->crssets as $crsset) {
+            $params = array($crsset->id, $courseid);
+            if ($DB->record_exists_select(crssetcourse::TABLE, $select, $params)) {
+                $crssets[] = $crsset;
+            }
+        }
+        return $crssets;
+    }
 }
 
-
 /// Non-class supporting functions. (These may be able to replaced by a generic container/listing class)
-
 
 /**
  * Gets a curriculum listing with specific sort and other filters.
@@ -646,9 +723,11 @@ function curriculum_get_listing($sort = 'name', $dir = 'ASC', $startrec = 0,
     require_once($CFG->dirroot .'/local/elisprogram/lib/data/curriculum.class.php');
     require_once($CFG->dirroot .'/local/elisprogram/lib/data/curriculumcourse.class.php');
     require_once($CFG->dirroot .'/local/elisprogram/lib/data/clustercurriculum.class.php');
+    require_once($CFG->dirroot.'/local/elisprogram/lib/data/programcrsset.class.php');
 
     $select = 'SELECT cur.*, (SELECT COUNT(*) FROM {'. curriculumcourse::TABLE .'}
                WHERE curriculumid = cur.id ) as courses ';
+    $select .= ', (SELECT COUNT(*) FROM {'.programcrsset::TABLE.'} WHERE prgid = cur.id) as crssets ';
     $tables = 'FROM {'. curriculum::TABLE .'} cur ';
     $join   = ' ';
     $on     = ' ';
@@ -762,9 +841,11 @@ function curriculum_get_listing_recordset($sort = 'name', $dir = 'ASC',
     require_once($CFG->dirroot .'/local/elisprogram/lib/data/curriculum.class.php');
     require_once($CFG->dirroot .'/local/elisprogram/lib/data/curriculumcourse.class.php');
     require_once($CFG->dirroot .'/local/elisprogram/lib/data/clustercurriculum.class.php');
+    require_once($CFG->dirroot.'/local/elisprogram/lib/data/programcrsset.class.php');
 
     $select = 'SELECT cur.*, (SELECT COUNT(*) FROM {'. curriculumcourse::TABLE .
               '} WHERE curriculumid = cur.id ) as courses ';
+    $select .= ', (SELECT COUNT(*) FROM {'.programcrsset::TABLE.'} WHERE prgid = cur.id) as crssets ';
     $tables = 'FROM {'. curriculum::TABLE .'} cur ';
     $join   = '';
     $on     = '';

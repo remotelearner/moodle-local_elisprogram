@@ -108,4 +108,53 @@ class courseset_testcase extends elis_database_test {
         }
         $this->assertTrue($failed);
     }
+
+    /**
+     * Test program-courseset associations
+     */
+    public function test_program_courseset_associations() {
+        require_once(elispm::lib('data/programcrsset.class.php'));
+
+        // CourseSet
+        $crsset1 = array(
+            'idnumber' => '123456789',
+            'name' => 'Courseset1 Name',
+            'description' => 'Courseset1 Description',
+            'priority' => '1'
+        );
+        $courseset = new courseset($crsset1);
+        $courseset->save();
+
+        // Program
+        $program1 = array(
+            'idnumber' => '123456789',
+            'name' => 'Program1 Name',
+            'description' => 'Program1 Description',
+            'priority' => '1',
+            'reqcredits' => '2.5'
+        );
+        $program = new curriculum($program1);
+        $program->save();
+
+        $prgcrssetdata = array(
+            'reqcredits' => 2.0,
+            'reqcourses' => 1,
+            'andor' => 1,
+            'prgid' => $program->id,
+            'crssetid' => $courseset->id
+        );
+        $prgcrsset = new programcrsset($prgcrssetdata);
+        $prgcrsset->save();
+        $this->assertNotEmpty($prgcrsset->id);
+
+        // Attempt duplicate - should fail validation
+        $prgcrsset = new programcrsset($prgcrssetdata);
+        $failed = false;
+        try {
+            $prgcrsset->save();
+        } catch (data_object_validation_exception $e) {
+            $failed = true;
+        }
+        $this->assertTrue($failed);
+    }
 }

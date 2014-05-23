@@ -40,18 +40,18 @@ class courseset extends data_object_with_custom_fields {
 
     /* @var array the class's associations */
     // uncomment below once courseset association classes have been defined
-    /*
     public static $associations = array(
         'programs' => array(
             'class' => 'programcrsset',
             'foreignidfield' => 'crssetid'
         ),
+      /*
         'courses' => array(
             'class' => 'crssetcourse',
             'foreignidfield' => 'crssetid'
         )
+      */
     );
-    */
 
     // DB fields:
     protected $_dbfield_idnumber;
@@ -95,12 +95,12 @@ class courseset extends data_object_with_custom_fields {
         // delete associated data
         require_once(elis::lib('data/data_filter.class.php'));
         // uncomment code lines once courseset association classes have been defined
-        // require_once elis::lib('data/programcrsset.class.php');
+        require_once(elis::lib('data/programcrsset.class.php'));
         // require_once elis::lib('data/crssetcourse.class.php');
 
         // filter specific for tracks, due to different field name
         $filter = new field_filter('crssetid', $this->id);
-        // programcrsset::delete_records($filter, $this->_db);
+        programcrsset::delete_records($filter, $this->_db);
         // crssetcourse::delete_records($filter, $this->_db);
 
         parent::delete();
@@ -221,10 +221,12 @@ class courseset extends data_object_with_custom_fields {
 function courseset_get_listing($sort = 'name', $dir = 'ASC', $startrec = 0, $perpage = 0, $namesearch = '', $alpha = '', $contexts = null, $userid = 0) {
     global $CFG, $DB, $USER;
 
+    require_once(elis::lib('data/programcrsset.class.php'));
+
     $select = 'SELECT crsset.*';
     // Uncomment lines below when courseset associations classes created
     // $select .= ', (SELECT COUNT(*) FROM {'.crssetcourse::TABLE.'} WHERE crssetid = crsset.id) as courses';
-    // $select .= ', (SELECT COUNT(*) FROM {'.programcrsset::TABLE.'} WHERE crssetid = crsset.id) as programs';
+    $select .= ', (SELECT COUNT(*) FROM {'.programcrsset::TABLE.'} WHERE crssetid = crsset.id) as programs';
     $tables = '  FROM {'.courseset::TABLE.'} crsset ';
     $join   = ' ';
     $on     = ' ';

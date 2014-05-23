@@ -214,9 +214,8 @@ class pm_context_set {
             $where[] = new in_list_filter($idfieldname, $this->contexts['courseset']);
         }
         if (isset($this->contexts['curriculum'])) {
-            // uncomment below when local/elisprogram/lib/data/programcrsset.class.php is defined
-            // $where[] = new join_filter($idfieldname, programcrsset::TABLE, 'crssetid', new in_list_filter('prgid', $this->contexts['curriculum']),
-            //        false, false);
+            $where[] = new join_filter($idfieldname, programcrsset::TABLE, 'crssetid', new in_list_filter('prgid', $this->contexts['curriculum']),
+                    false, false);
         }
         return $where;
     }
@@ -318,10 +317,9 @@ class pm_context_set {
     public function _courseset_allowed($id) {
         global $DB;
         if (isset($this->contexts['curriculum'])) {
-            // uncomment below when local/elisprogram/lib/data/programcrsset.class.php is defined
-            // if ($DB->record_exists_select(programcrsset::TABLE, "crssetid = $id AND prgid IN (".implode(',', $this->contexts['curriculum']).')')) {
-            //     return true;
-            // }
+            if ($DB->record_exists_select(programcrsset::TABLE, "crssetid = $id AND prgid IN (".implode(',', $this->contexts['curriculum']).')')) {
+                return true;
+            }
         }
         return false;
     }
@@ -455,9 +453,8 @@ function _cmctx_get_curriculum_containing_course($instance_id) {
 function _cmctx_get_curriculum_containing_courseset($instanceid) {
     global $DB;
     $result = false;
-    // uncomment below when local/elisprogram/lib/data/programcrsset.class.php is defined
-    // require_once elispm::lib('data/programcrsset.class.php');
-    // $result = $DB->get_recordset(programcrsset::TABLE, array('crssetid' => $instanceid), '', 'prgid');
+    require_once(elispm::lib('data/programcrsset.class.php'));
+    $result = $DB->get_recordset(programcrsset::TABLE, array('crssetid' => $instanceid), '', 'prgid');
     return ($result && $result->valid() === true) ? $result : array();
 }
 
