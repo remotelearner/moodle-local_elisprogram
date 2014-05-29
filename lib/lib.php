@@ -411,9 +411,9 @@ function pm_moodle_user_to_pm($mu) {
     // re-fetch, in case this is from a stale event
     $mu = $DB->get_record('user', array('id' => $mu->id));
 
-    if (user_not_fully_set_up($mu) || !$mu->confirmed) {
+    if (user_not_fully_set_up($mu) || !$mu->confirmed || $mu->deleted) {
         // Prevent the sync if a bare-bones user record is being created by create_user_record
-        // or Moodle user has not yet been confirmed.
+        // or Moodle user has not yet been confirmed or is deleted.
         return true;
     }
 
