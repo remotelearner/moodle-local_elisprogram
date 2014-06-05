@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,17 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    local_elisprogram
+ * @package    eliswidget_help
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$subplugins = array(
-    'usetenrol' => 'local/elisprogram/enrol/userset',
-    'elisprogram' => 'local/elisprogram/plugins',
-    'eliswidget' => 'local/elisprogram/widgets',
-);
+$string['pluginname'] = 'ELIS Widget Help';
+$string['name'] = 'Help';
+$string['description'] = 'A widget containing instructions on how to use ELIS widgets.';
+$string['helptext'] = 'You\'ve added an ELIS Dashboard Block!<br /><br />
+To choose which widget to display here, click the "Customize This Page" button on the top right of this page. Then click the gear icon and choose "Configure"';

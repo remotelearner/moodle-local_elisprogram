@@ -1213,6 +1213,7 @@ $string['studentnotunenrolled'] = 'Student: {$a->name} not unenrolled.';
 $string['students'] = 'Students';
 $string['studentunenrolled'] = 'Student: {$a->name} unenrolled.';
 $string['subplugintype_elisprogram_plural'] = 'General plugins';
+$string['subplugintype_eliswidget_plural'] = 'Widget plugins';
 $string['subplugintype_usetenrol_plural'] = 'User Set enrolment methods';
 $string['success'] = 'Success';
 $string['success_bulk_delete'] = 'Successfully deleted users.';
@@ -1381,4 +1382,6 @@ $string['waitlist_size'] = 'Waitlist Size';
 $string['waitlistcourses'] = 'Waitlist';
 $string['waitlistenrol'] = 'Auto enrol from waitlist';
 $string['when_student_grade_set'] = 'When Student grade set';
+$string['widget_preview_alt'] = 'Widget Preview';
+$string['widget_preview_notavailable'] = 'No preview available';
 

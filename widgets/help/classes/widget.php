@@ -16,18 +16,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    local_elisprogram
+ * @package    eliswidget_help
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace eliswidget_help;
 
-$plugin->version = 2014030703;
-$plugin->release = '2.6.1.1 (Build: 20140415)';
-$plugin->dependencies = array(
-    'enrol_elis' => 2014030700,
-    'local_eliscore' => 2014030701
-);
+/**
+ * A "help" widget that teaches users how to use ELIS widgets and the ELIS dashboard block.
+ */
+class widget extends \local_elisprogram\lib\widgetbase {
+    /**
+     * Get HTML to display the widget.
+     *
+     * @param bool $fullscreen Whether the widget is being displayed full-screen or not.
+     * @return string The HTML to display the widget.
+     */
+    public function get_html($fullscreen = false) {
+        return get_string('helptext', $this->get_component());
+    }
+
+    /**
+     * Get an array of CSS files that are needed by the widget.
+     *
+     * @param bool $fullscreen Whether the widget is being displayed full-screen or not.
+     * @return array Array of URLs or \moodle_url objects to require for the widget.
+     */
+    public function get_css_dependencies($fullscreen = false) {
+        return [new \moodle_url('/local/elisprogram/widgets/help/css/help.css')];
+    }
+}
