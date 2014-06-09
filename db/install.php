@@ -69,6 +69,7 @@ function xmldb_local_elisprogram_install() {
     // Ensure ELIS scheduled tasks is initialized.
     require_once($CFG->dirroot.'/local/eliscore/lib/tasklib.php');
     elis_tasks_update_definition('local_elisprogram');
+    elis_tasks_uninstall('elis_program');
 
     // Remove some lingering subplugins that were renamed
     unset_all_config_for_plugin('usersetenrol_manual');
