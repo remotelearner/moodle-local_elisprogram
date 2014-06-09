@@ -43,5 +43,11 @@ function xmldb_local_elisprogram_upgrade($oldversion = 0) {
         $result = $migrator->migrate_language_strings();
         upgrade_plugin_savepoint($result, 2014030701, 'local', 'elisprogram');
     }
+
+    if ($result && $oldversion < 2014030703) {
+        elis_tasks_uninstall('elis_program');
+        upgrade_plugin_savepoint($result, 2014030703, 'local', 'elisprogram');
+    }
+
     return $result;
 }
