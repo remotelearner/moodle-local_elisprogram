@@ -1019,6 +1019,7 @@ $string['othercourses'] = 'Other Class Instances';
 $string['over_enrol'] = 'Over Enrol';
 
 $string['passed'] = 'Passed';
+$string['page_healthcheck'] = 'Health Check';
 $string['phone2'] = 'Phone 2';
 $string['pluginname'] = 'ELIS Program';
 $string['pm_classinstance_associated'] = 'Class instance associated';

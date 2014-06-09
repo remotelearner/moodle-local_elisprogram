@@ -28,7 +28,6 @@ global $CFG;
 require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 
 // Libs.
-require_once(elis::file('elisprogram/healthpage.class.php'));
 require_once(elis::plugin_file('eliscore_etl', 'health.php'));
 require_once(elis::plugin_file('eliscore_etl', 'etl.php'));
 
@@ -132,7 +131,6 @@ class user_activity_health_testcase extends elis_database_test {
      */
     public function test_duplicate_profile_data() {
         global $DB;
-        require_once(elispm::file('healthpage.class.php'));
 
         // Drop the table index so that we can insert a duplicate record.
         $table = new xmldb_table('user_info_data');
@@ -152,7 +150,7 @@ class user_activity_health_testcase extends elis_database_test {
         $DB->insert_record('user_info_data', $record);
         $DB->insert_record('user_info_data', $record);
 
-        $duplicateprofilecheck = new duplicate_moodle_profile();
+        $duplicateprofilecheck = new \local_elisprogram\lib\health\duplicatemoodleprofile();
         $this->assertEquals(get_string('health_dupmoodleprofiledesc', 'local_elisprogram', 3), $duplicateprofilecheck->description());
 
         // Put the index we removed back
@@ -185,8 +183,8 @@ class user_activity_health_testcase extends elis_database_test {
         }
 
         // Should not report any duplicates.
-        $duplicatecheck = new duplicate_usertracks();
-        $this->assertEquals(0, $duplicatecheck->count);
+        $duplicatecheck = new \local_elisprogram\lib\health\duplicateusertracks();
+        $this->assertEquals(0, $duplicatecheck->get_amount());
 
         // Insert a duplicate record.
         $record = new stdClass();
@@ -195,15 +193,15 @@ class user_activity_health_testcase extends elis_database_test {
         $DB->insert_record(usertrack::TABLE, $record);
 
         // Should report duplicates.
-        $duplicatecheck = new duplicate_usertracks();
-        $this->assertGreaterThan(0, $duplicatecheck->count);
+        $duplicatecheck = new \local_elisprogram\lib\health\duplicateusertracks();
+        $this->assertGreaterThan(0, $duplicatecheck->get_amount());
 
         // Remove duplicate records.
         pm_fix_duplicate_usertrack_records();
 
         // Should not report any duplicates.
-        $duplicatecheck = new duplicate_usertracks();
-        $this->assertEquals(0, $duplicatecheck->count);
+        $duplicatecheck = new \local_elisprogram\lib\health\duplicateusertracks();
+        $this->assertEquals(0, $duplicatecheck->get_amount());
 
         // Put the index back.
         $dbman->add_index($table, $index);

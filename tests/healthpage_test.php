@@ -31,7 +31,6 @@ require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 require_once(elispm::lib('data/pmclass.class.php'));
 require_once(elispm::lib('data/student.class.php'));
 require_once(elispm::lib('data/user.class.php'));
-require_once(elispm::file('healthpage.class.php'));
 
 /**
  * Test healthpage functions.
@@ -180,7 +179,7 @@ class healthpage_testcase extends elis_database_test {
             $DB->insert_record(student::TABLE, $enrolment);
         }
 
-        $healthcheck = new health_duplicate_enrolments();
-        $this->assertEquals($count, $healthcheck->count);
+        $healthcheck = new \local_elisprogram\lib\health\duplicateenrolments();
+        $this->assertEquals($count, $healthcheck->get_amount());
     }
 }
