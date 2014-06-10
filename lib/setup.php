@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 of later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -78,9 +77,14 @@ elispm::$libdir = elis::component_file('elisprogram', 'lib');
 global $DB;
 elispm::$db = $DB;
 
-{
+/**
+ * Must create a function to limit scope of $plugin variable getting confused in install
+ * see: ELIS-8850
+ */
+function elisprogram_version_init() {
     $plugin = new stdClass;
-    include elispm::file('version.php');
+    include(elispm::file('version.php'));
     elispm::$version = $plugin->version;
     elispm::$release = $plugin->release;
 }
+elisprogram_version_init();
