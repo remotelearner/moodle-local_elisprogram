@@ -34,6 +34,7 @@ require_once elispm::lib('contexts.php');
 require_once elispm::file('curriculumcoursepage.class.php');
 require_once elispm::file('form/courseform.class.php');
 require_once elispm::file('pmclasspage.class.php');
+require_once elispm::file('crssetcoursepage.class.php');
 require_once elispm::file('rolepage.class.php');
 require_once elispm::file('resultspage.class.php');
 require_once elispm::file('certificatepage.class.php');
@@ -123,6 +124,8 @@ class coursepage extends managementpage {
         ),
         array('tab_id' => 'elem', 'page' => get_class($this), 'params' => array('action' => 'lelem'), 'name' => get_string('completion_elements', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'grades'),
         array('tab_id' => 'coursecurriculumpage', 'page' => 'coursecurriculumpage', 'name' => get_string('course_curricula', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'curriculum'),
+        array('tab_id' => 'coursecrssetpage', 'page' => 'coursecrssetpage', 'name' => get_string('coursesets', 'local_elisprogram'), 'showtab' => true,
+            'showbutton' => true, 'image' => 'courseset'),
         array('tab_id' => 'course_rolepage', 'page' => 'course_rolepage', 'name' => get_string('roles', 'role'), 'showtab' => true, 'showbutton' => false, 'image' => 'tag'),
         array('tab_id' => 'course_enginepage', 'page' => 'course_enginepage', 'name' => get_string('results_engine', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'calculator'),
         array('tab_id' => 'course_enginestatuspage', 'page' => 'course_enginestatuspage', 'name' => get_string('status_report', 'local_elisprogram'), 'showtab' => false, 'showbutton' => false),

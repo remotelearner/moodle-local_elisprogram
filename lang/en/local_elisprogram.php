@@ -25,6 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['active'] = 'Active';
 $string['add'] = 'Add';
 $string['add_class'] = 'Add Class Instance';
 $string['add_coreq'] = 'Add co-requisites';
@@ -98,6 +99,8 @@ $string['blktpl_enable'] = 'Enable';
 $string['blktpl_field'] = 'Field';
 $string['blktpl_value'] = 'Value';
 $string['blktpl_applytousers_button'] = 'Apply Enabled Values To All Selected Users (On All Pages)';
+$string['breadcrumb_crssetcoursepage'] = 'Assign Course Descriptions';
+$string['breadcrumb_coursecrssetpage'] = 'Assign Course Sets';
 $string['breadcrumb_trackassignmentpage'] = 'Assign Class Instances';
 $string['breadcrumb_usertrackpage'] = 'Assign Tracks';
 $string['breadcrumb_trackuserpage'] = 'Assign Users';
@@ -236,8 +239,10 @@ $string['confirm_delete_class'] = 'Are you sure you want to delete the class ins
 $string['confirm_delete_completion'] = 'Are you sure you want to delete the learning objective "name: {$a}"?';
 $string['confirm_delete_course'] = 'Are you sure you want to delete the course description named {$a->name} (ID number: {$a->idnumber})?';
 $string['confirm_delete_courseset'] = 'Are you sure you want to delete the course set named {$a->name} (ID number: {$a->idnumber})?';
-$string['confirm_delete_active_courseset'] = '<b>This Course Set has active enrolments! Deleting this Course Set will change completion criteria for those enrolled users!</b>
+$string['confirm_delete_active_courseset'] = '<b>This Course Set has active enrolments! Deleting this Course Set will change completion criteria for those enrolled users!</b><br/>
 Are you sure you still want to delete the Course Set named {$a->name} (ID number: {$a->idnumber})?';
+$string['confirm_delete_active_courseset_course'] = '<b>This Course Description has active enrolments! Removing this Course Description from the Course Set will change completion criteria for those enrolled users!</b><br/>
+Are you sure you still want to remove the Course Description from the Course Set?';
 $string['confirm_delete_curriculum'] = 'Are you sure you want to delete the program named {$a->name} (ID number: {$a->idnumber})?';
 $string['confirm_delete_field'] = 'Are you sure you want to delete the {$a->datatype} field named "{$a->name}"?';
 $string['confirm_delete_instructor'] = 'Are you sure you want to delete the instructor "name: {$a->name}"?';
@@ -309,6 +314,7 @@ $string['coursesetform:courseset_name_help'] = '<p>Name of Course Set.</p>';
 $string['coursesetform:priority'] = 'Display priority';
 $string['coursesetform:priority_help'] = '<p>Determines the order in which Course Sets are displayed from an enrolled user\'s perspective.
 The lower the priority number, the higher the Course Set will display on the user\'s listing.</p>';
+$string['coursesets'] = 'Course Sets';
 $string['coursetemplate'] = 'Course Template in Moodle';
 $string['credits'] = 'Credits';
 $string['credits_rec'] = 'Credits Rec\'vd.';
@@ -428,6 +434,8 @@ $string['ds_action_enrol'] = 'Enrol';
 $string['ds_action_edit'] = 'Edit';
 $string['ds_action_assign_confirm'] = 'You are about to assign this {$a->actionelement} to the {$a->baseelement}, proceed?';
 $string['ds_action_assign_confirm_multi'] = 'You are about to assign these {$a->actionelement} to the {$a->baseelement}, proceed?';
+$string['ds_action_crssetcrs_unassign'] = 'You are about to unassign this Course Description from the Course Set, proceed?';
+$string['ds_action_crssetcrs_unassign_active'] = 'The Course Description you\'ve selected to unassign from this Course Set has active enrolments! Removing the Course Description from the Course Set will change completion criteria for all associated Programs. Proceed?';
 $string['ds_action_instructor_assign'] = 'You are about to assign this user as an instructor, proceed?';
 $string['ds_action_instructor_assign_multi'] = 'You are about to assign these users as instructors, proceed?';
 $string['ds_action_instructor_unassign'] = 'You are about to unassign this user as an instructor, proceed?';
@@ -462,6 +470,10 @@ $string['ds_bulkassignment'] = 'Bulk Assignment';
 $string['ds_bulkedits'] = 'Bulk Edits';
 $string['ds_bulk_addall'] = 'Add All';
 $string['ds_bulk_confirm'] = 'Performing large bulk actions can take some time - Are you sure?';
+$string['ds_bulk_confirm_crs_active'] = 'Some selected Course Description(s) have active enrolments. Deleting them from the Course Set will change Program completion criteria for those enrolled users.<br/>
+Are you sure to remove selected Course Description(s) from the Course Set?';
+$string['ds_bulk_confirm_crsset_active'] = 'Some selected Course Set(s) have active enrolments. Removing active Course Description from Course Set(s) will change Program completion criteria for those enrolled users.<br/>
+Are you sure to unassociate the selected Course Set(s) from the Course Description?';
 $string['ds_bulk_defaultstatus'] = 'To perform bulk actions, drag rows here.';
 $string['ds_bulk_unloadconfirm'] = 'You have pending bulk actions, if you leave your selections will be lost.';
 $string['ds_changes'] = 'Please confirm the following changes before they are applied:';

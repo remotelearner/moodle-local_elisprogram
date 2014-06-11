@@ -31,9 +31,7 @@ require_once(elispm::lib('managementpage.class.php'));
 require_once(elispm::lib('contexts.php'));
 require_once(elispm::lib('datedelta.class.php'));
 require_once(elispm::file('form/coursesetform.class.php'));
-require_once(elispm::file('curriculumcoursepage.class.php'));
-require_once(elispm::file('curriculumstudentpage.class.php'));
-require_once(elispm::file('clustercurriculumpage.class.php'));
+require_once(elispm::file('crssetcoursepage.class.php'));
 require_once(elispm::file('rolepage.class.php'));
 
 /**
@@ -126,11 +124,11 @@ class coursesetpage extends managementpage {
         array('tab_id' => 'view', 'page' => get_class($this), 'params' => array('action' => 'view'), 'name' => get_string('detail', 'local_elisprogram'), 'showtab' => true),
         array('tab_id' => 'edit', 'page' => get_class($this), 'params' => array('action' => 'edit'), 'name' => get_string('edit', 'local_elisprogram'),
             'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
-        // Uncomment following lines for ELIS-8777
+        // Uncomment following lines for ELIS-8852
         // array('tab_id' => 'programcrsset', 'page' => 'programcrssetpage', 'name' => get_string('curricula', 'local_elisprogram'),
         //     'showtab' => true, 'showbutton' => true, 'image' => 'curriculum'),
-        // array('tab_id' => 'crssetcourse', 'page' => 'crssetcoursepage', 'name' => get_string('courses', 'local_elisprogram'),
-        //     'showtab' => true, 'showbutton' => true, 'image' => 'course'),
+        array('tab_id' => 'crssetcoursepage', 'page' => 'crssetcoursepage', 'name' => get_string('courses', 'local_elisprogram'),
+            'showtab' => true, 'showbutton' => true, 'image' => 'course'),
         array('tab_id' => 'courseset_rolepage', 'page' => 'courseset_rolepage', 'name' => get_string('roles', 'role'), 'showtab' => true, 'showbutton' => false, 'image' => 'tag'),
         array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete', 'local_elisprogram'),
             'showbutton' => true, 'image' => 'delete'),
@@ -139,14 +137,15 @@ class coursesetpage extends managementpage {
 
     /**
      * is_active method
+     * @param int $courseid optional specify course to check, 0 means all
      * @return bool true if courseset has active enrolments, false otherwise
      */
-    public function is_active() {
+    public function is_active($courseid = 0) {
         $id = $this->required_param('id', PARAM_INT);
         $isactive = false;
         $crsset = new courseset($id);
         foreach ($crsset->programs as $prgcrsset) {
-            if ($prgcrsset->is_active()) {
+            if ($prgcrsset->is_active($courseid)) {
                 $isactive = true;
                 break;
             }

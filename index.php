@@ -108,6 +108,10 @@ $pages = array(
         'file' => 'coursesetpage.class.php'),
     'crssetrole' => array('class' => 'courseset_rolepage',
         'file' => 'rolepage.class.php'),
+    'coursecrsset' => array('class' => 'coursecrssetpage',
+        'file' => 'crssetcoursepage.class.php'),
+    'crssetcourse' => array('class' => 'crssetcoursepage',
+        'file' => 'crssetcoursepage.class.php'),
 
     // Manage Courses
     'crs' => array('class' => 'coursepage',
