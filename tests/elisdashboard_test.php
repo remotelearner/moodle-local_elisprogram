@@ -27,8 +27,6 @@ require_once(dirname(__FILE__).'/../../eliscore/test_config.php');
 global $CFG;
 require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 
-require_once(elis::file('elisprogram/dashboardpage.class.php'));
-
 /**
  * Test ELIS Dashboard component info methods
  * @group local_elisprogram
@@ -60,7 +58,7 @@ class elisdashboard_testcase extends elis_database_test {
      * @dataProvider get_jquery_info_dataprovider
      */
     public function test_get_jquery_info($files, $infostrings, $expected) {
-        $dashbrd = new dashboardpage();
+        $dashbrd = new \local_elisprogram\pages\admininfo();
         list($componentname, $release, $version) = $dashbrd->get_jquery_file_info($files, $infostrings);
         $this->assertEquals($expected[0], $componentname);
         $this->assertEquals($expected[1], $release);

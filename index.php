@@ -152,6 +152,8 @@ $pages = array(
     // Administration
     'replnk' => array('class' => 'class_reportlinkspage',
                       'file' => 'reportlinkspage.class.php'),
+    'admininfo' => array('class' => '\local_elisprogram\pages\admininfo',
+                        'file' => 'classes/pages/admininfo.php'),
     'bulkuser' => array('class' => 'bulkuserpage',
                         'file' => 'bulkuserpage.class.php'),
 	'resultsconfig' => array('class' => 'resultsconfigpage',

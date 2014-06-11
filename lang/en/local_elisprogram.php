@@ -228,6 +228,7 @@ $string['completion_grade'] = 'Completion grade';
 $string['completion_name'] = 'Name';
 $string['completion_status'] = 'Completion Status';
 $string['completion_time'] = 'Completion Date';
+$string['component_info'] = 'Component Information';
 $string['confirm_bulk_inactive'] = 'Are you sure you want to mark the following users as inactive: {$a}?';
 $string['confirm_bulk_delete'] = 'Are you sure you want to delete the following users: {$a}?';
 $string['confirm_bulk_enrol_edit'] = 'Please confirm the following changes before they are applied:';
@@ -506,9 +507,8 @@ $string['edit_course_corequisites'] = 'Edit Course Description Corequisites';
 $string['edit_course_prerequisites'] = 'Edit Course Description Prerequisites';
 $string['edit_student_attendance'] = 'Edit Student Attendance';
 $string['elis_config'] = 'ELIS Configuration';
-$string['elis_doc_class_link'] = '<strong>Documentation for ELIS</strong> &mdash; we have over 200
-pages of documentation for ELIS in our <a href="http://rlcommunity.remote-learner.net">ELIS Support Course</a>.
-If you have problems accessing this course, please contact your sales representative.';
+$string['elis_doc_heading'] = 'ELIS Documentation';
+$string['elis_doc_description'] = 'Each ELIS page has a link at the bottom to the Moodle Docs for that page. Scroll to the bottom of an ELIS page and click "Moodle Docs for this page"';
 $string['elis_profile'] = 'ELIS profile';
 $string['elis_settings'] = 'ELIS Settings';
 $string['eliscomponent'] = 'Component';
@@ -1225,6 +1225,7 @@ $string['sync_instructor_role_help'] = 'If you select a role here, then any user
 $string['sync_instructor_role_setting'] = 'Instructor Role';
 $string['sync_student_role_help'] = 'If you select a role here, then any user with this role in an ELIS class instance will be enrolled as a student in the class instance.';
 $string['sync_student_role_setting'] = 'Student Role';
+$string['system_status'] = 'ELIS System Status';
 
 $string['tab_archived_learning_plans'] = 'Archived Learning Plans';
 $string['tab_current_learning_plans'] = 'Current Learning Plans';
