@@ -463,6 +463,7 @@ abstract class managementpage extends pm_page {
             'cluster' => 'elisicon-userset',
             'track' => 'elisicon-track',
             'course' => 'elisicon-course',
+            'courseset' => 'elisicon-courseset',
             'class' => 'elisicon-class',
             'user' => 'elisicon-user',
             'waiting' => 'elisicon-waitlist',

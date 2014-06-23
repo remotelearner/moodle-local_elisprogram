@@ -120,6 +120,9 @@ i[class*="elisicon-"] {
 .elisicon-more:before {
     content: "\e01d";
 }
+.elisicon-courseset:before {
+    content: "\e01e";
+}
 
 /* Colors */
 .elisicon-remove.elisiconcolored {
@@ -137,6 +140,9 @@ i[class*="elisicon-"] {
 }
 .elisicon-course:hover {
     color: #2980B9;
+}
+.elisicon-courseset:hover {
+    color: #E67E22;
 }
 .elisicon-class:hover {
     color: #16A085;
