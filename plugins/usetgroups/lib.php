@@ -46,6 +46,11 @@ require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
  */
 function userset_groups_userset_assigned_handler($clusterassevent) {
     $clusterassignment = (object)$clusterassevent->other;
+
+    if (empty($clusterassignment->userid)) {
+        return false;
+    }
+
     $attributes = array('mdlusr.cuserid' =>  $clusterassignment->userid,
         'clst.id' => $clusterassignment->clusterid);
 

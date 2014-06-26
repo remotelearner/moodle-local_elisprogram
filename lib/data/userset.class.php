@@ -306,6 +306,10 @@ class userset extends data_object_with_custom_fields {
         require_once(elispm::lib('data/clustertrack.class.php'));
         require_once(elispm::lib('data/usertrack.class.php'));
 
+        if (empty($eventdata->userid)) {
+            return false;
+        }
+
         $assignment = new clusterassignment($eventdata);
         $userset = $assignment->cluster;
 
