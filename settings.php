@@ -145,11 +145,6 @@ if ($ADMIN->fulltree) {
                            get_string('time_12h_setting', 'local_elisprogram'),
                            '' /* get_string('time_12h_help', 'local_elisprogram') */, 0));
 
-    // Redirect users accessing My Moodle to the dashboard
-    $settings->add(new admin_setting_configcheckbox('local_elisprogram/mymoodle_redirect',
-                           get_string('redirect_dashbrd_setting', 'local_elisprogram'),
-                           '' /* get_string('redirect_dashbrd_help', 'local_elisprogram') */, 0));
-
     // ***User Settings
     $settings->add(new admin_setting_heading('user_settings', get_string('user_settings', 'local_elisprogram'), '' /* get_string('user_settings_info', 'local_elisprogram') */));
 
