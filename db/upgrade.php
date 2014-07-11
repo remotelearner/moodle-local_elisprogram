@@ -49,5 +49,10 @@ function xmldb_local_elisprogram_upgrade($oldversion = 0) {
         upgrade_plugin_savepoint($result, 2014030703, 'local', 'elisprogram');
     }
 
+    if ($result && $oldversion < 2014030704) {
+        $DB->delete_records('events_handlers', array('component' => 'elis_program'));
+        upgrade_plugin_savepoint($result, 2014030704, 'local', 'elisprogram');
+    }
+
     return $result;
 }
