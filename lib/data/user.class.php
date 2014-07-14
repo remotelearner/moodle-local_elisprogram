@@ -625,6 +625,7 @@ class user extends data_object_with_custom_fields {
              LEFT JOIN {'.curriculumcourse::TABLE.'} curcrs ON curcrs.curriculumid = cur.id
              LEFT JOIN {'.programcrsset::TABLE.'} prgcrsset ON prgcrsset.prgid = cur.id
              LEFT JOIN {'.crssetcourse::TABLE.'} crssetcrs ON prgcrsset.crssetid = crssetcrs.crssetid
+             LEFT JOIN {'.courseset::TABLE.'} crsset ON prgcrsset.crssetid = crsset.id
                   JOIN {'.course::TABLE.'} crs ON (curcrs.courseid = crs.id OR crssetcrs.courseid = crs.id)
                        -- limit to non-enrolled courses
                   LEFT JOIN (SELECT cls.courseid, clsenrol.completestatusid FROM {'.pmclass::TABLE.'} cls

@@ -33,6 +33,7 @@ require_once elispm::file('form/curriculumform.class.php');
 require_once elispm::file('curriculumcoursepage.class.php');
 require_once elispm::file('curriculumstudentpage.class.php');
 require_once elispm::file('clustercurriculumpage.class.php');
+require_once elispm::file('programcrssetpage.class.php');
 require_once elispm::file('rolepage.class.php');
 
 /// The main management page.
@@ -134,6 +135,7 @@ class curriculumpage extends managementpage {
         array('tab_id' => 'curriculumstudentpage', 'page' => 'curriculumstudentpage', 'name' => get_string('users', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'user'),
         array('tab_id' => 'curriculumclusterpage', 'page' => 'curriculumclusterpage', 'name' => get_string('clusters', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'cluster'),
         array('tab_id' => 'curriculumcoursepage', 'page' => 'curriculumcoursepage', 'name' => get_string('courses', 'local_elisprogram') , 'showtab' => true, 'showbutton' => true, 'image' => 'course'),
+        array('tab_id' => 'programcrssetpage', 'page' => 'programcrssetpage', 'name' => get_string('coursesets', 'local_elisprogram') , 'showtab' => true, 'showbutton' => true, 'image' => 'courseset'),
         //allow users to view the tracks associated with this curriculum
         array('tab_id' => 'trackpage', 'page' => 'trackpage', 'params' => $track_params, 'name' => get_string('tracks', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'track'),
         array('tab_id' => 'curriculum_rolepage', 'page' => 'curriculum_rolepage', 'name' => get_string('roles', 'role'), 'showtab' => true, 'showbutton' => false, 'image' => 'tag'),

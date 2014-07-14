@@ -112,6 +112,10 @@ $pages = array(
         'file' => 'crssetcoursepage.class.php'),
     'crssetcourse' => array('class' => 'crssetcoursepage',
         'file' => 'crssetcoursepage.class.php'),
+    'prgcrsset' => array('class' => 'programcrssetpage',
+        'file' => 'programcrssetpage.class.php'),
+    'crssetprg' => array('class' => 'crssetprogrampage',
+        'file' => 'programcrssetpage.class.php'),
 
     // Manage Courses
     'crs' => array('class' => 'coursepage',

@@ -24,24 +24,24 @@
  *
  */
 
-require_once(elispm::lib('data/crssetcourse.class.php'));
+require_once(elispm::lib('data/programcrsset.class.php'));
 
 /**
- * A base class for managing course - courseset associations. (one course, multiple coursesets)
+ * A base class for managing program - courseset associations. (one program, multiple coursesets)
  */
-class deepsight_datatable_coursecrsset_base extends deepsight_datatable_courseset {
+class deepsight_datatable_programcrsset_base extends deepsight_datatable_courseset {
 
     /**
-     * @var int The ID of the course being managed.
+     * @var int The ID of the program being managed.
      */
     protected $id;
 
     /**
-     * Sets the current course ID
-     * @param int $courseid The ID of the course to use.
+     * Sets the current program ID
+     * @param int $prgid The ID of the program to use.
      */
-    public function set_id($courseid) {
-        $this->id = (int)$courseid;
+    public function set_id($prgid) {
+        $this->id = (int)$prgid;
     }
 
     /**
@@ -52,7 +52,8 @@ class deepsight_datatable_coursecrsset_base extends deepsight_datatable_coursese
         $deps = parent::get_js_dependencies();
         $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_confirm.js';
         $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_link.js';
-        $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_coursecrsset.js';
+        $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_programcrsset.js';
+        $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_programcrsset_assignedit.js';
         return $deps;
     }
 
@@ -64,13 +65,17 @@ class deepsight_datatable_coursecrsset_base extends deepsight_datatable_coursese
         $opts = parent::get_table_js_opts();
         $opts['dragdrop'] = true;
         $opts['multiselect'] = true;
-        $opts['desc_single'] = get_string('ds_action_crssetcrs_unassign', 'local_elisprogram');
-        $opts['desc_single_active'] = get_string('ds_action_crssetcrs_unassign_active', 'local_elisprogram');
+        $opts['activelist'] = 1;
+        $opts['desc_single'] = get_string('ds_action_crssetprg_unassign', 'local_elisprogram');
+        $opts['desc_single_active'] = get_string('ds_action_crssetprg_unassign_active', 'local_elisprogram');
         $opts['desc_multiple'] = get_string('ds_bulk_confirm', 'local_elisprogram');
-        $opts['desc_multiple_active'] = get_string('ds_bulk_confirm_crsset_active', 'local_elisprogram');
+        $opts['desc_multiple_active'] = get_string('confirm_delete_active_courseset_program', 'local_elisprogram');
+        $opts['desc_multiple_edit_active'] = get_string('ds_bulk_confirm_edit_crsset_active', 'local_elisprogram');
         $opts['langbulkconfirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
-        $opts['langbulkconfirmactive'] = get_string('ds_bulk_confirm_crsset_active', 'local_elisprogram');
+        $opts['langbulkconfirmactive'] = get_string('confirm_delete_active_courseset_program', 'local_elisprogram');
+        $opts['langbulkconfirmeditactive'] = get_string('ds_bulk_confirm_edit_crsset_active', 'local_elisprogram');
         $opts['langconfirmactive'] = get_string('confirm_delete_active_courseset_program', 'local_elisprogram');
+        $opts['langconfirmeditactive'] = get_string('confirm_edit_active_courseset_program', 'local_elisprogram');
         $opts['langworking'] = get_string('ds_working', 'local_elisprogram');
         $opts['langyes'] = get_string('yes', 'moodle');
         $opts['langno'] = get_string('no', 'moodle');
@@ -86,7 +91,7 @@ class deepsight_datatable_coursecrsset_base extends deepsight_datatable_coursese
 /**
  * A datatable for listing currently assigned coursesets.
  */
-class deepsight_datatable_coursecrsset_assigned extends deepsight_datatable_coursecrsset_base {
+class deepsight_datatable_programcrsset_assigned extends deepsight_datatable_programcrsset_base {
     /** @var int $disabledresults number of disabled rows */
     protected $disabledresults = 0;
 
@@ -117,9 +122,24 @@ class deepsight_datatable_coursecrsset_assigned extends deepsight_datatable_cour
         require_once(elispm::file('coursesetpage.class.php'));
         $row = parent::results_row_transform($row);
         $crssetpage = new coursesetpage(array('id' => $row['element_id']));
-        $row['meta']['isactive'] = $crssetpage->is_active($this->id, $row['element_id']);
-        $row['meta']['candel'] = !$row['meta']['isactive'] || $crssetpage->_has_capability('local/elisprogram:courseset_delete_active', $row['element_id']);
-        if (!$row['meta']['candel']) {
+        $filters = array();
+        $filters[] = new field_filter('crssetid', $row['element_id']);
+        $filters[] = new field_filter('prgid', $this->id);
+        $prgcrssets = programcrsset::find(new AND_filter($filters));
+        $isactive = -1;
+        foreach ($prgcrssets as $prgcrsset) {
+            if ($isactive == -1) {
+                $isactive = 0;
+            }
+            if ($prgcrsset->is_active()) {
+                $isactive++;
+                break;
+            }
+        }
+        $row['meta']['isactive'] = ($isactive > 0);
+        $row['meta']['candel'] = !$row['meta']['isactive'] || $crssetpage->_has_capability('local/elisprogram:courseset_delete_active');
+        $row['meta']['canedit'] = !$row['meta']['isactive'] || $crssetpage->_has_capability('local/elisprogram:courseset_edit_active');
+        if (!$row['meta']['candel'] && !$row['meta']['canedit']) {
             $this->disabledresults++;
         }
         return $row;
@@ -132,8 +152,15 @@ class deepsight_datatable_coursecrsset_assigned extends deepsight_datatable_cour
     public function get_actions() {
         $actions = parent::get_actions();
 
+        // Edit action.
+        $edit = new deepsight_action_programcrsset_edit($this->DB, 'programcrsset_edit');
+        $edit->endpoint = (strpos($this->endpoint, '?') !== false)
+                ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
+        $edit->condition = 'function(rowdata) { return(rowdata.meta.canedit); }';
+        $actions[] = $edit;
+
         // Unassign action.
-        $unassign = new deepsight_action_coursecrsset_unassign($this->DB, 'coursecrsset_unassign');
+        $unassign = new deepsight_action_programcrsset_unassign($this->DB, 'programcrsset_unassign');
         $unassign->endpoint = (strpos($this->endpoint, '?') !== false)
                 ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
         $unassign->condition = 'function(rowdata) { return(rowdata.meta.candel); }';
@@ -150,8 +177,11 @@ class deepsight_datatable_coursecrsset_assigned extends deepsight_datatable_cour
      */
     protected function get_select_fields(array $filters) {
         $fields = parent::get_select_fields($filters);
-        $fields[] = 'crssetcrs.id AS crssetcrs_id';
-        $fields[] = 'crssetcrs.crssetid AS crssetcrs_crssetid';
+        $fields[] = 'prgcrsset.id AS prgcrsset_id';
+        $fields[] = 'prgcrsset.crssetid AS prgcrsset_crssetid';
+        $fields[] = 'prgcrsset.reqcredits AS assocdata_reqcredits';
+        $fields[] = 'prgcrsset.reqcourses AS assocdata_reqcourses';
+        $fields[] = 'prgcrsset.andor AS assocdata_andor';
         return $fields;
     }
 
@@ -160,10 +190,10 @@ class deepsight_datatable_coursecrsset_assigned extends deepsight_datatable_cour
      * @param array $filters An array of active filters to use to determne join sql.
      * @return string A SQL string containing any JOINs needed for the full query.
      */
-    protected function get_join_sql(array $filters=array()) {
+    protected function get_join_sql(array $filters = array()) {
         $joinsql = parent::get_join_sql($filters);
-        $joinsql[] = 'JOIN {'.crssetcourse::TABLE.'} crssetcrs ON crssetcrs.courseid = '.$this->id.'
-                           AND crssetcrs.crssetid = element.id';
+        $joinsql[] = 'JOIN {'.programcrsset::TABLE.'} prgcrsset ON prgcrsset.prgid = '.$this->id.'
+                           AND prgcrsset.crssetid = element.id';
         return $joinsql;
     }
 
@@ -178,7 +208,7 @@ class deepsight_datatable_coursecrsset_assigned extends deepsight_datatable_cour
                                   if (rowdata.meta.isactive) {
                                       window.lepcrssetactivelist.push(rowdata.element_id);
                                   }
-                                  if (!rowdata.meta.candel) {
+                                  if (!rowdata.meta.candel && !rowdata.meta.canedit) {
                                       row.addClass(\'disabled\').find(\'td.actions\').html(\''.$langactive.'\');
                                   }
                                   return row;
@@ -205,7 +235,7 @@ class deepsight_datatable_coursecrsset_assigned extends deepsight_datatable_cour
      */
     protected function bulklist_add_by_filters(array $filters) {
         global $SESSION;
-
+        require_once(elispm::file('coursesetpage.class.php'));
         $this->disabledresults = 0;
         list($filtersql, $filterparams) = $this->get_filter_sql($filters);
         $joinsql = implode(' ', $this->get_join_sql($filters));
@@ -215,7 +245,21 @@ class deepsight_datatable_coursecrsset_assigned extends deepsight_datatable_cour
         foreach ($results as $result) {
             $id = (int)$result->id;
             $crssetpage = new coursesetpage(array('id' => $id));
-            if ($crssetpage->_has_capability('local/elisprogram:courseset_delete_active', $id) || !$crssetpage->is_active($this->id, $id)) {
+            $filters = array();
+            $filters[] = new field_filter('crssetid', $this->id);
+            $filters[] = new field_filter('prgid', $result->id);
+            $prgcrssets = programcrsset::find(new AND_filter($filters));
+            $isactive = -1;
+            foreach ($prgcrssets as $prgcrsset) {
+                if ($isactive == -1) {
+                    $isactive = 0;
+                }
+                if ($prgcrsset->is_active()) {
+                    $isactive++;
+                }
+            }
+            if ($isactive == 0 || $crssetpage->_has_capability('local/elisprogram:courseset_delete_active') ||
+                    $crssetpage->_has_capability('local/elisprogram:courseset_edit_active')) {
                 $SESSION->{$sessionparam}[$id] = $id;
             } else {
                 $this->disabledresults++;
@@ -229,7 +273,7 @@ class deepsight_datatable_coursecrsset_assigned extends deepsight_datatable_cour
 /**
  * A datatable listing coursesets that are available to assign to the course, and are not currently assigned.
  */
-class deepsight_datatable_coursecrsset_available extends deepsight_datatable_coursecrsset_base {
+class deepsight_datatable_programcrsset_available extends deepsight_datatable_programcrsset_base {
 
     /**
      * Gets the assign action.
@@ -239,7 +283,7 @@ class deepsight_datatable_coursecrsset_available extends deepsight_datatable_cou
         $actions = parent::get_actions();
 
         // Assign action.
-        $assign = new deepsight_action_coursecrsset_assign($this->DB, 'coursecrsset_assign');
+        $assign = new deepsight_action_programcrsset_assign($this->DB, 'programcrsset_assign');
         $assign->endpoint = (strpos($this->endpoint, '?') !== false)
                 ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
         $actions[] = $assign;
@@ -252,10 +296,10 @@ class deepsight_datatable_coursecrsset_available extends deepsight_datatable_cou
      * @param array $filters An array of active filters to use to determne join sql.
      * @return string A SQL string containing any JOINs needed for the full query.
      */
-    protected function get_join_sql(array $filters=array()) {
+    protected function get_join_sql(array $filters = array()) {
         $joinsql = parent::get_join_sql($filters);
-        $joinsql[] = 'LEFT JOIN {'.crssetcourse::TABLE.'} crssetcrs ON crssetcrs.courseid = '.$this->id.'
-                                AND crssetcrs.crssetid = element.id';
+        $joinsql[] = 'LEFT JOIN {'.programcrsset::TABLE.'} prgcrsset ON prgcrsset.prgid = '.$this->id.'
+                                AND prgcrsset.crssetid = element.id';
         return $joinsql;
     }
 
@@ -292,7 +336,7 @@ class deepsight_datatable_coursecrsset_available extends deepsight_datatable_cou
         $additionalfilters = array();
 
         // Remove assigned users.
-        $additionalfilters[] = 'crssetcrs.id IS NULL';
+        $additionalfilters[] = 'prgcrsset.id IS NULL';
 
         // Permissions.
         list($permadditionalfilters, $permadditionalparams) = $this->get_filter_sql_permissions();

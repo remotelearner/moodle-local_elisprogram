@@ -318,7 +318,7 @@ class deepsight_action_coursecrsset_unassign extends deepsight_action_standard {
         $crssetctx = \local_elisprogram\context\courseset::instance($crssetid);
         $candelactive = has_capability('local/elisprogram:courseset_delete_active', $crssetctx);
         if (!$candelactive) {
-            $crsset = new crsset($crssetid);
+            $crsset = new courseset($crssetid);
             foreach ($crsset->programs as $programcrsset) {
                 if ($programcrsset->is_active($courseid)) {
                     return false;

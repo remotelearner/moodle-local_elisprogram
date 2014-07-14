@@ -56,6 +56,8 @@ $string['all_items_assigned'] = 'All available items assigned.';
 $string['all_users_already_enrolled'] = 'All users in track already enrolled.';
 $string['alleliscomponents'] = 'Component Details';
 $string['and_all_children'] = '(and all children)';
+$string['and_dd'] = ' AND ';
+$string['andor_dd'] = ' AND/OR ';
 $string['assign'] = 'Assign';
 $string['assign_selected'] = 'Assign Selected';
 $string['assign_user_track'] = 'Assign users to track ';
@@ -100,7 +102,9 @@ $string['blktpl_field'] = 'Field';
 $string['blktpl_value'] = 'Value';
 $string['blktpl_applytousers_button'] = 'Apply Enabled Values To All Selected Users (On All Pages)';
 $string['breadcrumb_crssetcoursepage'] = 'Assign Course Descriptions';
+$string['breadcrumb_crssetprogrampage'] = 'Assign Programs';
 $string['breadcrumb_coursecrssetpage'] = 'Assign Course Sets';
+$string['breadcrumb_programcrssetpage'] = 'Assign Course Sets';
 $string['breadcrumb_trackassignmentpage'] = 'Assign Class Instances';
 $string['breadcrumb_usertrackpage'] = 'Assign Tracks';
 $string['breadcrumb_trackuserpage'] = 'Assign Users';
@@ -244,6 +248,9 @@ $string['confirm_delete_active_courseset'] = '<b>This Course Set has active enro
 Are you sure you still want to delete the Course Set named {$a->name} (ID number: {$a->idnumber})?';
 $string['confirm_delete_active_courseset_course'] = '<b>This Course Description has active enrolments! Removing this Course Description from the Course Set will change completion criteria for those enrolled users!</b><br/>
 Are you sure you still want to remove the Course Description from the Course Set?';
+$string['confirm_delete_active_courseset_program'] = '<b>This Program has active enrolments! Removing this Program from the Course Set will change completion criteria for those enrolled users!</b><br/>
+Are you sure you still want to remove the Program from the Course Set?';
+$string['confirm_delete_courseset_program'] = 'Are you sure to remove the Program from the Course Set?';
 $string['confirm_delete_curriculum'] = 'Are you sure you want to delete the program named {$a->name} (ID number: {$a->idnumber})?';
 $string['confirm_delete_field'] = 'Are you sure you want to delete the {$a->datatype} field named "{$a->name}"?';
 $string['confirm_delete_instructor'] = 'Are you sure you want to delete the instructor "name: {$a->name}"?';
@@ -255,6 +262,10 @@ $string['confirm_delete_usersetclassification'] = 'Are you sure you want to dele
 $string['confirm_delete_with_usersubsets'] = 'Are you sure you want to delete the user set named {$a->name}?  This user set has {$a->subclusters} subset(s).';
 $string['confirm_delete_with_usersubsets_and_descendants'] = 'Are you sure you want to delete the user set named {$a->name}?  This user set has {$a->subclusters} subset(s) and {$a->descendants} other descendant user sets.';
 $string['confirm_waitlist'] = 'Are you sure to {$a->action} {$a->num} entries in the waitlist?';
+$string['confirm_edit_active_courseset'] = '<b>This Course Set has active enrolments! Changing this Course Set association could change completion criteria for those enrolled users!</b><br/>
+Are you sure you still want to save changes to the Course Set?';
+$string['confirm_edit_active_courseset_program'] = '<b>This Course Set has active enrolments! Changing this Program/Course Set association could change completion criteria for those enrolled users!</b><br/>
+Are you sure you still want to save changes to the Program/Course Set association?';
 $string['context_level_user'] = 'Program Management User';
 $string['corequisites'] = 'Corequisite';
 $string['cost'] = 'Cost';
@@ -395,8 +406,8 @@ $string['dashboard_summary_nonprogram_hidden'] = 'You have completed all non-pro
 $string['dashboard_summary_program'] = '{$a->completecourses} of your {$a->totalcourses} courses in this program have been completed and are not being displayed.';
 $string['dashboard_summary_program_all'] = 'All {$a->totalcourses} of your courses in this program have been completed and are not being displayed.';
 $string['dashboard_summary_program_hidden'] = 'You have completed all courses in this program.';
-$string['data_object_validation_reqcourses_not_in_courseset'] = 'Program-CourseSet association cannot require more courses than in courseset: Program = {$a->programname}({$a->programidnumber}), CourseSet = {$a->name}({$a->idnumber}), required courses = {$a->reqcourses}, total courses - {$a->totcourses}';
-$string['data_object_validation_reqcredits_not_in_courseset'] = 'Program-CourseSet association cannot require more credits than in courseset: Program = {$a->programname}({$a->programidnumber}), CourseSet = {$a->name}({$a->idnumber}), required courses = {$a->reqcredits}, total courses - {$a->totcredits}';
+$string['data_object_validation_reqcourses_not_in_courseset'] = 'Program-CourseSet association cannot require more courses than in courseset: Program = {$a->programname}({$a->programidnumber}), CourseSet = {$a->name}({$a->idnumber}), required courses = {$a->reqcourses}, total courses = {$a->totcourses}';
+$string['data_object_validation_reqcredits_not_in_courseset'] = 'Program-CourseSet association cannot require more credits than in courseset: Program = {$a->programname}({$a->programidnumber}), CourseSet = {$a->name}({$a->idnumber}), required credits = {$a->reqcredits}, total credits = {$a->totcredits}';
 $string['date'] = 'Date';
 $string['datecompleted'] = 'Completion Date';
 $string['date_completed'] = 'Date Completed';
@@ -437,6 +448,8 @@ $string['ds_action_assign_confirm'] = 'You are about to assign this {$a->actione
 $string['ds_action_assign_confirm_multi'] = 'You are about to assign these {$a->actionelement} to the {$a->baseelement}, proceed?';
 $string['ds_action_crssetcrs_unassign'] = 'You are about to unassign this Course Description from the Course Set, proceed?';
 $string['ds_action_crssetcrs_unassign_active'] = 'The Course Description you\'ve selected to unassign from this Course Set has active enrolments! Removing the Course Description from the Course Set will change completion criteria for all associated Programs. Proceed?';
+$string['ds_action_crssetprg_unassign'] = 'You are about to unassign this Program from the Course Set, proceed?';
+$string['ds_action_crssetprg_unassign_active'] = 'The Program you\'ve selected to unassign from this Course Set has active enrolments! Removing the Program from the Course Set will change completion criteria for those enrolled users. Proceed?';
 $string['ds_action_instructor_assign'] = 'You are about to assign this user as an instructor, proceed?';
 $string['ds_action_instructor_assign_multi'] = 'You are about to assign these users as instructors, proceed?';
 $string['ds_action_instructor_unassign'] = 'You are about to unassign this user as an instructor, proceed?';
@@ -475,6 +488,10 @@ $string['ds_bulk_confirm_crs_active'] = 'Some selected Course Description(s) hav
 Are you sure to remove selected Course Description(s) from the Course Set?';
 $string['ds_bulk_confirm_crsset_active'] = 'Some selected Course Set(s) have active enrolments. Removing active Course Description from Course Set(s) will change Program completion criteria for those enrolled users.<br/>
 Are you sure to unassociate the selected Course Set(s) from the Course Description?';
+$string['ds_bulk_confirm_edit_crsset_active'] = 'Some selected Program/Course-Set assocation(s) have active enrolments. Modifying them could change Program completion criteria for those enrolled users.<br/>
+Are you sure to save changes to selected Program/Course Set assocation(s)?';
+$string['ds_bulk_confirm_prg_active'] = 'Some selected Program(s) have active enrolments. Deleting them from the Course Set will change Program completion criteria for those enrolled users.<br/>
+Are you sure to remove selected Program(s) from the Course Set?';
 $string['ds_bulk_defaultstatus'] = 'To perform bulk actions, drag rows here.';
 $string['ds_bulk_unloadconfirm'] = 'You have pending bulk actions, if you leave your selections will be lost.';
 $string['ds_changes'] = 'Please confirm the following changes before they are applied:';
@@ -487,6 +504,7 @@ $string['ds_assign_as_subset'] = 'Assign as subset(s)';
 $string['ds_nochanges'] = 'No Changes';
 $string['ds_noresults'] = '<strong>We couldn\'t find any results for the selected filters.</strong><span>Note: Elements added to the bulk editor will not be included here.</span>';
 $string['ds_notenrolled'] = 'Not Enrolled';
+$string['ds_prgcrsset_assocdata'] = 'Program/Course-Set Association Data';
 $string['ds_searchresults'] = 'Search Results';
 $string['ds_selectedelement'] = 'selected item';
 $string['ds_selectedelements'] = 'selected items';
@@ -1015,6 +1033,7 @@ $string['onfailed'] = 'You failed this course';
 $string['onlyvalidmoodleusers'] = '<p>Note: Users with no Moodle account are not shown in this listing.</p>';
 $string['onpassed'] = 'You passed this course';
 $string['onwaitlist'] = 'You are on the waitlist';
+$string['or_dd'] = ' OR ';
 $string['othercourses'] = 'Other Class Instances';
 $string['over_enrol'] = 'Over Enrol';
 
@@ -1095,6 +1114,7 @@ $string['report'] = 'Report';
 $string['reports'] = 'Reports';
 $string['required'] = 'Required';
 $string['required_credits'] = 'Required Credits';
+$string['required_courses'] = 'Required Courses';
 $string['required_field'] = 'Error: {$a} is a required field';
 $string['result'] = 'Result';
 $string['results'] = 'Results';

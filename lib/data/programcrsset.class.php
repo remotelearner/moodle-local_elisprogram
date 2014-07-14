@@ -234,16 +234,11 @@ class programcrsset extends elis_data_object {
                            FROM {'.pmclass::TABLE.'} cls
                            JOIN {'.student::TABLE.'} cce ON cls.id = cce.classid
                            JOIN {'.curriculumstudent::TABLE."} cca ON cce.userid = cca.userid
+                                AND cca.curriculumid = ?
                           WHERE cls.courseid {$inorequal}
                                 AND cce.completestatusid = ?";
+        array_unshift($params, $this->prgid);
         $params[] = STUSTATUS_NOTCOMPLETE;
-        /* debug code
-        ob_start();
-        var_dump($params);
-        $tmp = ob_get_contents();
-        ob_end_clean();
-        error_log("programcrsset::is_active(): SQL query = {$enrolmentsql}, params = {$tmp}");
-        */
         return $this->_db->record_exists_sql($enrolmentsql, $params);
     }
 }
