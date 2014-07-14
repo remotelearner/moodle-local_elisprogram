@@ -123,6 +123,15 @@ i[class*="elisicon-"] {
 .elisicon-courseset:before {
     content: "\e01e";
 }
+.elisicon-rllogo:before {
+    content: "\e01f";
+}
+.elisicon-collapsed:before {
+    content: "\e020";
+}
+.elisicon-expanded:before {
+    content: "\e021";
+}
 
 /* Colors */
 .elisicon-remove.elisiconcolored {
