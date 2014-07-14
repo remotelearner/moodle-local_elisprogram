@@ -318,6 +318,94 @@ class curriculumstudent extends elis_data_object {
         return true;
     }
 
+    /**
+     * Get the percentage complete for this association.
+     *
+     * @return int The percent the program is complete by this user.
+     */
+    public function get_percent_complete() {
+        global $DB;
+        if ($this->completed == STUSTATUS_PASSED) {
+            return 100;
+        }
+        if ($this->completed == STUSTATUS_FAILED) {
+            return -1;
+        }
+
+        $program = $DB->get_record(curriculum::TABLE, ['id' => $this->curriculumid]);
+
+        // Get percent of required credits.
+        $percentreqcredits = null;
+        if ($program->reqcredits > 0) {
+            $sql = 'SELECT sum(stu.credits) as numcredits
+                      FROM {local_elisprogram_cls_enrol} stu
+                      JOIN {local_elisprogram_cls} cls ON cls.id = stu.classid
+                      JOIN {local_elisprogram_pgm_crs} pgmcrs ON pgmcrs.courseid = cls.courseid
+                     WHERE stu.userid = ?
+                           AND pgmcrs.curriculumid = ?
+                           AND stu.credits > 0';
+            $params = [
+                $this->userid,
+                $this->curriculumid,
+            ];
+            $progresstats = $DB->get_record_sql($sql, $params);
+            $percentreqcredits = ($progresstats->numcredits/$program->reqcredits)*100;
+        }
+
+        // Get percent of required courses.
+        $sql = 'SELECT count(1) as count
+                  FROM {local_elisprogram_pgm_crs} pgmcrs
+                 WHERE pgmcrs.curriculumid = ? AND pgmcrs.required = 1';
+        $params = [$this->curriculumid];
+        $numrequiredcourses = $DB->count_records_sql($sql, $params);
+        $percentreqcourses = null;
+        if ($numrequiredcourses > 0) {
+            $sql = 'SELECT count(1) as count
+                      FROM {local_elisprogram_pgm_crs} pgmcrs
+                      JOIN {local_elisprogram_cls} cls ON cls.courseid = pgmcrs.courseid
+                      JOIN {local_elisprogram_cls_enrol} stu ON stu.classid = cls.id AND stu.userid = ?
+                     WHERE pgmcrs.curriculumid = ? AND pgmcrs.required = 1 AND stu.completestatusid = ?';
+            $params = [$this->userid, $this->curriculumid, STUSTATUS_PASSED];
+            $numrequiredcoursescomplete = $DB->count_records_sql($sql, $params);
+            $percentreqcourses = ($numrequiredcoursescomplete/$numrequiredcourses)*100;
+        }
+
+        // Get percent complete for coursesets.
+        $programcoursesets = $DB->get_records(programcrsset::TABLE, ['prgid' => $this->curriculumid]);
+        $percentcoursesets = [];
+        if (!empty($programcoursesets)) {
+            foreach ($programcoursesets as $programcourseset) {
+                $programcourseset = new programcrsset($programcourseset);
+                $percentcomplete = 'a';
+                $programcourseset->is_complete($this->userid, $percentcomplete);
+                if (is_numeric($percentcomplete)) {
+                    $percentcoursesets[] = $percentcomplete;
+                }
+            }
+        }
+
+        $numelements = 0;
+        $total = 0;
+        if ($percentreqcredits !== null) {
+            $total += $percentreqcredits;
+            $numelements++;
+        }
+        if ($percentreqcourses !== null) {
+            $total += $percentreqcourses;
+            $numelements++;
+        }
+        foreach ($percentcoursesets as $percentcourseset) {
+            $total += $percentcourseset;
+            $numelements++;
+        }
+
+        if ($numelements <= 0) {
+            return 0;
+        }
+
+        return (int)round($total/$numelements);
+    }
+
     public static function get_completed_for_user($userid) {
         global $DB;
 

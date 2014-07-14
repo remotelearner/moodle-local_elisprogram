@@ -258,6 +258,37 @@ class elis_program_datagenerator extends elis_datagenerator{
     }
 
     /**
+     * Create an ELIS courseset.
+     *
+     * @param array $info An array of values to set.
+     * @return object The resulting database record.
+     */
+    public function create_courseset(array $info=array()) {
+        require_once(elispm::lib('data/courseset.class.php'));
+
+        $uniq = uniqid();
+        $now = time();
+
+        $defaults = [
+            'name' => 'Courseset '.$uniq,
+            'idnumber' => 'CRSSET_'.$uniq,
+            'description' => 'Test Courseset Description',
+            'priority' => '',
+            'timecreated' => $now,
+            'timemodified' => $now,
+        ];
+
+        if (!empty($info)) {
+            $info = array_intersect_key($info, $defaults);
+        }
+        $info = (object)array_merge($defaults, $info);
+
+        $info->id = $this->db->insert_record(courseset::TABLE, $info);
+
+        return $info;
+    }
+
+    /**
      * Create an ELIS custom field category.
      * @param array $name The name of the category.
      */
@@ -280,11 +311,24 @@ class elis_program_datagenerator extends elis_datagenerator{
      * @param int $pmclassid The ID of an ELIS class instance.
      * @return object The resulting database record.
      */
-    public function assign_user_to_class($userid, $pmclassid) {
+    public function assign_user_to_class($userid, $pmclassid, $extra = array()) {
         require_once(elispm::lib('data/student.class.php'));
-        $info = new stdClass;
-        $info->userid = $userid;
-        $info->classid = $pmclassid;
+        $now = time();
+        $defaults = [
+            'userid' => 1,
+            'classid' => 1,
+            'enrolmenttime' => $now,
+            'completetime' => $now,
+            'endtime' => 0,
+            'completestatusid' => 0,
+            'grade' => 0,
+            'credits' => 0,
+            'locked' => 0,
+            'timemodified' => $now,
+        ];
+        $info = array_merge(['userid' => $userid, 'classid' => $pmclassid], $extra);
+        $info = array_intersect_key($info, $defaults);
+        $info = (object)array_merge($defaults, $info);
         $info->id = $this->db->insert_record(student::TABLE, $info);
         return $info;
     }
@@ -387,10 +431,61 @@ class elis_program_datagenerator extends elis_datagenerator{
             'timecreated' => $now,
             'timemodified' => $now,
         );
-        $info = array_merge(array('userid' => $courseid, 'curriculumid' => $curriculumid), $extra);
+        $info = array_merge(array('courseid' => $courseid, 'curriculumid' => $curriculumid), $extra);
         $info = array_intersect_key($info, $defaults);
         $info = (object)array_merge($defaults, $info);
         $info->id = $this->db->insert_record(curriculumcourse::TABLE, $info);
+        return $info;
+    }
+
+    /**
+     * Assign an ELIS course description to an ELIS courseset.
+     *
+     * @param int $courseid The ID of an ELIS course description.
+     * @param int $coursesetid The ID of an ELIS courseset.
+     * @param array $extra An array of extra parameters to set.
+     * @return object The resulting database record.
+     */
+    public function assign_course_to_courseset($courseid, $coursesetid, $extra = array()) {
+        require_once(elispm::lib('data/crssetcourse.class.php'));
+        $now = time();
+        $defaults = [
+            'crssetid' => 1,
+            'courseid' => 1,
+            'timecreated' => $now,
+            'timemodified' => $now,
+        ];
+        $info = array_merge(['courseid' => $courseid, 'crssetid' => $coursesetid], $extra);
+        $info = array_intersect_key($info, $defaults);
+        $info = (object)array_merge($defaults, $info);
+        $info->id = $this->db->insert_record(crssetcourse::TABLE, $info);
+        return $info;
+    }
+
+    /**
+     * Assign an ELIS course description to an ELIS courseset.
+     *
+     * @param int $courseid The ID of an ELIS course description.
+     * @param int $coursesetid The ID of an ELIS courseset.
+     * @param array $extra An array of extra parameters to set.
+     * @return object The resulting database record.
+     */
+    public function assign_courseset_to_program($coursesetid, $programid, $extra = array()) {
+        require_once(elispm::lib('data/programcrsset.class.php'));
+        $now = time();
+        $defaults = [
+            'crssetid' => 1,
+            'prgid' => 1,
+            'reqcredits' => 0,
+            'reqcourses' => 0,
+            'andor' => '',
+            'timecreated' => $now,
+            'timemodified' => $now,
+        ];
+        $info = array_merge(['crssetid' => $coursesetid, 'prgid' => $programid], $extra);
+        $info = array_intersect_key($info, $defaults);
+        $info = (object)array_merge($defaults, $info);
+        $info->id = $this->db->insert_record(programcrsset::TABLE, $info);
         return $info;
     }
 

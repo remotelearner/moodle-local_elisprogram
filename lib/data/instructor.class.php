@@ -387,8 +387,6 @@ class instructor extends elis_data_object {
     /**
      * Get a list of the existing instructors for the supplied (or current)
      * class.
-     * NOTE: called statically in /local/elisprogram/coursecatalogpage.class.php
-     *       with argument $cid set!
      *
      * @param int $cid A class ID (optional).
      * @uses $DB

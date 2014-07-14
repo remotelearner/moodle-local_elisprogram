@@ -28,35 +28,62 @@ namespace local_elisprogram\plugininfo;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * This class defines elisprogram subplugininfo
+ * This class defines elisprogram subplugininfo.
  */
 class eliswidget extends \core\plugininfo\base {
     /** @var string the plugintype name, eg. mod, auth or workshopform */
     public $type = 'local';
+
     /** @var string full path to the location of all the plugins of this type */
     public $typerootdir = '/local/elisprogram/widgets/';
+
     /** @var string the plugin name, eg. assignment, ldap */
     public $name = 'eliswidget';
+
     /** @var string the localized plugin name */
     public $displayname = 'ELIS Program Widgets';
-    /** @var string the plugin source, one of core_plugin_manager::PLUGIN_SOURCE_xxx constants */
-    public $source;
-    /** @var string fullpath to the location of this plugin */
-    public $rootdir;
-    /** @var int|string the version of the plugin's source code */
-    public $versiondisk;
-    /** @var int|string the version of the installed plugin */
-    public $versiondb;
-    /** @var int|float|string required version of Moodle core  */
-    public $versionrequires;
+
     /** @var mixed human-readable release information */
     public $release = '2.7.0.0';
-    /** @var array other plugins that this one depends on, lazy-loaded by {@link get_other_required_plugins()} */
-    public $dependencies;
-    /** @var int number of instances of the plugin - not supported yet */
-    public $instances;
-    /** @var int order of the plugin among other plugins of the same type - not supported yet */
-    public $sortorder;
-    /** @var array|null array of {@link \core\update\info} for this plugin */
-    public $availableupdates;
+
+    public function get_settings_section_name() {
+        return 'local_elisprogram_settings_'.$this->component;
+    }
+
+    /**
+     * Loads plugin settings to the settings tree
+     *
+     * This function usually includes settings.php file in plugins folder.
+     * Alternatively it can create a link to some settings page (instance of admin_externalpage)
+     *
+     * @param \part_of_admin_tree $adminroot
+     * @param string $parentnodename
+     * @param bool $hassiteconfig whether the current user has moodle/site:config capability
+     */
+    public function load_settings(\part_of_admin_tree $adminroot, $parentnodename, $hassiteconfig) {
+        global $CFG, $USER, $DB, $OUTPUT, $PAGE; // In case settings.php wants to refer to them.
+        $ADMIN = $adminroot; // May be used in settings.php.
+        $plugininfo = $this; // Also can be used inside settings.php.
+
+        if (!$this->is_installed_and_upgraded()) {
+            return;
+        }
+
+        if (!$hassiteconfig or !file_exists($this->full_path('settings.php'))) {
+            return;
+        }
+
+        $section = $this->get_settings_section_name();
+        $adminsection = optional_param('section', '', PARAM_SAFEDIR);
+        if ($adminsection === $section) {
+            $USER->currentitypath = 'admn/widgetsettings/'.$section;
+        }
+
+        $settings = new \admin_settingpage($section, $this->displayname, 'moodle/site:config', $this->is_enabled() === false);
+        include($this->full_path('settings.php')); // This may also set $settings to null.
+
+        if ($settings) {
+            $ADMIN->add($parentnodename, $settings);
+        }
+    }
 }

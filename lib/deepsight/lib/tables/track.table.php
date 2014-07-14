@@ -151,16 +151,9 @@ class deepsight_datatable_track extends deepsight_datatable_standard {
     protected function get_join_sql(array $filters=array()) {
         $joinsql = parent::get_join_sql($filters);
         $joinsql[] = 'JOIN {'.curriculum::TABLE.'} pgm ON pgm.id = element.curid';
-        $activecustomfields = array_intersect_key($this->custom_fields, $filters);
-        if (!empty($activecustomfields)) {
-            $joinsql[] = 'JOIN {context} ctx ON ctx.instanceid = element.id AND ctx.contextlevel='.CONTEXT_ELIS_TRACK;
-            foreach ($activecustomfields as $fieldname => $field) {
-                $customfieldjoin = 'LEFT JOIN {local_eliscore_fld_data_'.$field->datatype.'} '.$fieldname.' ON ';
-                $customfieldjoin .= $fieldname.'.contextid = ctx.id AND '.$fieldname.'.fieldid='.$field->id;
-                $joinsql[] = $customfieldjoin;
-            }
-        }
-        return $joinsql;
+        $activecustomfields = array_intersect_key($this->customfields, $filters);
+        $cfjoinsql = $this->get_custom_field_joins(CONTEXT_ELIS_TRACK, $activecustomfields);
+        return array_merge($joinsql, $cfjoinsql);
     }
 
     /**

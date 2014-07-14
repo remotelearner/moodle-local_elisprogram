@@ -32,8 +32,6 @@ $PAGE->set_context(context_system::instance());
 
 $pages = array(
     // Learning Plan
-    'crscat' => array('class' => 'coursecatalogpage',
-                      'file' => 'coursecatalogpage.class.php'),
     'certlist' => array('class' => 'certificatelistpage',
                         'file' => 'certificatelistpage.class.php'),
 

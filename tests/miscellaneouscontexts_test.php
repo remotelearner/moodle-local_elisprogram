@@ -381,10 +381,6 @@ class miscellaneouscontexts_testcase extends elis_database_test {
         $this->setup_curriculum();
         $this->setup_curriculumstudent();
         $user = new user(103);
-        // ELIS-5861 -- This method will write HTML to STDOUT, so wrap it in an output buffer.
-        ob_start();
-        $user->get_dashboard();
-        ob_end_clean();
 
         $this->setUser(1);
 

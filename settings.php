@@ -32,7 +32,11 @@ global $CFG, $DB, $PAGE, $USER;
 global $SESSION;
 
 if ($ADMIN->fulltree) {
-    $USER->currentitypath = 'admn/local_elisprogram_settings'; // TBD: to expand menu
+
+    // To expand elisadmin menu.
+    if (optional_param('section', '', PARAM_SAFEDIR) === 'local_elisprogram_settings') {
+        $USER->currentitypath = 'admn/local_elisprogram_settings';
+    }
 
     if (!is_siteadmin() &&
         optional_param('section', '', PARAM_SAFEDIR) == 'local_elisprogram_settings') {
@@ -245,6 +249,11 @@ if ($ADMIN->fulltree) {
     include(elispm::file('db/subplugins.php'));
 
     foreach ($subplugins as $subplugintype => $subplugintyperootdir) {
+        if ($subplugintype === 'eliswidget') {
+            // Settings for widgets are in their own page.
+            continue;
+        }
+
         //get the list of instances of the current subplugin type
         $directories = get_plugin_list($subplugintype);
 
@@ -267,5 +276,9 @@ if ($ADMIN->fulltree) {
             get_string('legacy_show_inactive_users_help', 'local_elisprogram'), 0));
 
     $ADMIN->add('local_elisprogram', $settings);
-}
 
+    // ELIS Widget settings.
+    foreach (\core_plugin_manager::instance()->get_plugins_of_type('eliswidget') as $plugin) {
+        $plugin->load_settings($ADMIN, 'local_elisprogram', $hassiteconfig);
+    }
+}

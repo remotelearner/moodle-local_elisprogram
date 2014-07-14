@@ -121,4 +121,176 @@ class curriculumstudent_testcase extends elis_database_test {
             $this->assertEquals($completetime, $record->timecompleted);
         }
     }
+
+    public function dataprovider_get_percent_complete() {
+        return [
+                [
+                        'Required credits only.',
+                        [
+                            'reqcredits' => 10,
+                            'courses' => [
+                                [
+                                    'required' => 0,
+                                    'completestatusid' => STUSTATUS_PASSED,
+                                    'credits' => 2,
+                                ],
+                            ],
+                        ],
+                        20,
+                ],
+                [
+                        'Single required course (passed).',
+                        [
+                            'reqcredits' => 0,
+                            'courses' => [
+                                [
+                                    'required' => 1,
+                                    'completestatusid' => STUSTATUS_PASSED,
+                                    'credits' => 2,
+                                ],
+                            ],
+                        ],
+                        100,
+                ],
+                [
+                        'Single required course (failed).',
+                        [
+                            'reqcredits' => 0,
+                            'courses' => [
+                                [
+                                    'required' => 1,
+                                    'completestatusid' => STUSTATUS_FAILED,
+                                    'credits' => 2,
+                                ],
+                            ],
+                        ],
+                        0,
+                ],
+                [
+                        'Single required course (not complete).',
+                        [
+                            'reqcredits' => 0,
+                            'courses' => [
+                                [
+                                    'required' => 1,
+                                    'completestatusid' => STUSTATUS_NOTCOMPLETE,
+                                    'credits' => 2,
+                                ],
+                            ],
+                        ],
+                        0,
+                ],
+                [
+                        'Multiple passed required courses.',
+                        [
+                            'reqcredits' => 0,
+                            'courses' => [
+                                [
+                                    'required' => 1,
+                                    'completestatusid' => STUSTATUS_PASSED,
+                                    'credits' => 2,
+                                ],
+                                [
+                                    'required' => 1,
+                                    'completestatusid' => STUSTATUS_PASSED,
+                                    'credits' => 2,
+                                ],
+                                [
+                                    'required' => 1,
+                                    'completestatusid' => STUSTATUS_NOTCOMPLETE,
+                                    'credits' => 2,
+                                ],
+                            ],
+                        ],
+                        67,
+                ],
+                [
+                        'Multiple required courses with different states.',
+                        [
+                            'reqcredits' => 0,
+                            'courses' => [
+                                [
+                                    'required' => 1,
+                                    'completestatusid' => STUSTATUS_PASSED,
+                                    'credits' => 2,
+                                ],
+                                [
+                                    'required' => 1,
+                                    'completestatusid' => STUSTATUS_FAILED,
+                                    'credits' => 2,
+                                ],
+                                [
+                                    'required' => 1,
+                                    'completestatusid' => STUSTATUS_NOTCOMPLETE,
+                                    'credits' => 2,
+                                ],
+                            ],
+                        ],
+                        33,
+                ],
+                [
+                        'Single Courseset',
+                        [
+                            'reqcredits' => 0,
+                            'coursesets' => [
+                                [
+                                    'reqcredits' => 10,
+                                    'reqcourses' => 2,
+                                    'courses' => [
+                                        [
+                                            'completestatusid' => STUSTATUS_PASSED,
+                                            'credits' => 5,
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ],
+                        50,
+                ],
+        ];
+    }
+
+    /**
+     * @dataProvider dataprovider_get_percent_complete
+     */
+    public function test_get_percent_complete($testdesc, $setupdata, $expectedpercentcomplete) {
+        global $DB;
+        require_once(\elispm::file('tests/other/datagenerator.php'));
+        $datagen = new \elis_program_datagenerator($DB);
+
+        // Create user.
+        $mockuser = $datagen->create_user();
+
+        $program = $datagen->create_program(['reqcredits' => $setupdata['reqcredits']]);
+        $pgmstu = $datagen->assign_user_to_program($mockuser->id, $program->id);
+
+        if (!empty($setupdata['courses'])) {
+            foreach ($setupdata['courses'] as $coursesetupdata) {
+                $course = $datagen->create_course();
+                $pgmcrs = $datagen->assign_course_to_program($course->id, $program->id, ['required' => $coursesetupdata['required']]);
+                $pmclass = $datagen->create_pmclass(array('courseid' => $course->id));
+                $studentparams = ['completestatusid' => $coursesetupdata['completestatusid'], 'credits' => $coursesetupdata['credits']];
+                $student = $datagen->assign_user_to_class($mockuser->id, $pmclass->id, $studentparams);
+            }
+        }
+
+        if (!empty($setupdata['coursesets'])) {
+            foreach ($setupdata['coursesets'] as $coursesetsetupdata) {
+                $courseset = $datagen->create_courseset();
+                $pgmcrssetparams = ['reqcredits' => $coursesetsetupdata['reqcredits'], 'reqcourses' => $coursesetsetupdata['reqcourses']];
+                $pgmcrsset = $datagen->assign_courseset_to_program($courseset->id, $program->id, $pgmcrssetparams);
+                foreach ($coursesetsetupdata['courses'] as $coursesetupdata) {
+                    $course = $datagen->create_course();
+                    $crssetcrs = $datagen->assign_course_to_courseset($course->id, $courseset->id);
+                    $pmclass = $datagen->create_pmclass(array('courseid' => $course->id));
+                    $studentparams = ['completestatusid' => $coursesetupdata['completestatusid'], 'credits' => $coursesetupdata['credits']];
+                    $student = $datagen->assign_user_to_class($mockuser->id, $pmclass->id, $studentparams);
+                }
+            }
+        }
+
+        $currstu = new curriculumstudent($pgmstu);
+        $actual = $currstu->get_percent_complete();
+        $this->assertEquals($expectedpercentcomplete, $actual);
+    }
 }

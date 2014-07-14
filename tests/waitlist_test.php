@@ -31,24 +31,11 @@ require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 require_once(elispm::lib('data/pmclass.class.php'));
 require_once(elispm::lib('data/student.class.php'));
 require_once(elispm::lib('data/waitlist.class.php'));
-require_once(elispm::file('coursecatalogpage.class.php'));
 require_once(elispm::lib('data/course.class.php'));
 require_once(elispm::lib('data/user.class.php'));
 require_once(elispm::lib('data/usermoodle.class.php'));
 require_once(elispm::lib('data/coursetemplate.class.php'));
 require_once(elispm::file('studentpage.class.php'));
-
-/**
- * Mock course catalog page that doesn't do any displaying of info
- */
-class coursecatalogpage_nodisplay extends coursecatalogpage {
-    /**
-     * Display the page.
-     */
-    public function display($action = null) {
-        // Ignore any displays - only testing back-end.
-    }
-}
 
 /**
  * Test waitlist functions.
@@ -118,51 +105,6 @@ class waitlist_testcase extends elis_database_test {
         $waitlist->save();
         $waitlistentries = $DB->get_records(waitlist::TABLE, array('classid' => 100, 'userid' => 1));
         $this->assertEquals(count($waitlistentries), 1);
-    }
-
-    /**
-     * Validate that the course catalog page saves a waitlist record with
-     * correct data
-     */
-    public function test_coursecatalogpagesaveswaitlistrecord() {
-        global $CFG, $_POST, $USER, $DB;
-
-        // Prevent emails from being sent.
-        set_config('noemailever', true);
-
-        // Create our course, class and user.
-        $this->load_csv_data_course_class();
-
-        $user = new user(array(
-            'idnumber' => 'user',
-            'username' => 'user',
-            'firstname' => 'user',
-            'lastname' => 'user',
-            'email' => 'user@user.com',
-            'country' => 'CA'
-        ));
-        $user->save();
-
-        // Fake out the page by assuming the role of the test user.
-        $USER = $DB->get_record('user', array('username' => 'user'));
-
-        // Fake out formslib to convince it that the form was submitted.
-        $_POST['id'] = 100;
-        $_POST['submitbutton'] = 'submitbutton';
-        $_POST['_qf__enrolconfirmform'] = '1';
-        $_POST['sesskey'] = sesskey();
-
-        // Instantiate a version of the course catalogue page that does not display anything to the UI.
-        $page = new coursecatalogpage_nodisplay();
-
-        // Use the page to enrol the test user in the waitlist, recording our time range.
-        $mintime = time();
-        $sink = $this->redirectMessages();
-        $page->do_savewaitlist();
-        $maxtime = time();
-
-        // Validate state of the waitlist db record.
-        $this->assert_waitlist_record_valid(100, $user->id, $mintime, $maxtime);
     }
 
     /**
