@@ -242,3 +242,68 @@ class programcrsset extends elis_data_object {
         return $this->_db->record_exists_sql($enrolmentsql, $params);
     }
 }
+
+/**
+ * Gets a program courseset listing with specific sort and other filters.
+ *
+ * @param int $curid The curriculum ID.
+ * @param string $sort Field to sort on.
+ * @param string $dir Direction of sort.
+ * @param int $startrec Record number to start at.
+ * @param int $perpage Number of records per page.
+ * @param string $namesearch Search string for curriculum name.
+ * @param string $descsearch Search string for curriculum description.
+ * @param string $alpha Start initial of curriculum name filter.
+ * @param array $extrafilters Additional filters to apply to the count
+ * @return recordset Returned records.
+ */
+function programcourseset_get_listing($curid, $sort='position', $dir='ASC', $startrec=0, $perpage=0, $namesearch='', $alpha='',
+                                      $extrafilters = array()) {
+    global $DB;
+
+    $select = 'SELECT crsset.*
+                 FROM {'.curriculum::TABLE.'} cur
+                 JOIN {'.programcrsset::TABLE.'} prgcrsset ON prgcrsset.prgid = cur.id
+                 JOIN {'.courseset::TABLE.'} crsset ON crsset.id = prgcrsset.crssetid';
+
+    $where = 'cur.id = ?';
+    $params = array($curid);
+
+    if (!empty($namesearch)) {
+        $namesearch = trim($namesearch);
+        $name_like = $DB->sql_like('crsset.name', '?', FALSE);
+
+        $where .= (!empty($where) ? ' AND ' : '') . "($name_like) ";
+        $params[] = "%$namesearch%";
+    }
+
+    if ($alpha) {
+        $name_like = $DB->sql_like('crsset.name', '?', FALSE);
+        $where .= (!empty($where) ? ' AND ' : '') . "($name_like) ";
+        $params[] = "$alpha%";
+    }
+
+    if (!empty($extrafilters['contexts'])) {
+        // apply a filter related to filtering on particular courseset contexts
+        $filter_object = $extrafilters['contexts']->get_filter('id', 'courseset');
+        $filter_sql = $filter_object->get_sql(false, 'crsset');
+        if (!empty($filter_sql)) {
+            // user does not have access at the system context
+            $where .= 'AND '.$filter_sql['where'];
+            $params = array_merge($params, $filter_sql['where_parameters']);
+        }
+    }
+
+    if (!empty($where)) {
+        $where = ' WHERE '.$where.' ';
+    }
+
+    if ($sort) {
+        $sort = ' ORDER BY '.$sort.' '.$dir.' ';
+    }
+
+    $sql = $select.$where.$sort;
+
+    return $DB->get_recordset_sql($sql, $params, $startrec, $perpage);
+}
+

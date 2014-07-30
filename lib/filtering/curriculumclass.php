@@ -168,6 +168,14 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
             'timetocomplete'    => generalized_filter_curriculumclass::filtertypedate,
             'priority'          => generalized_filter_curriculumclass::filtertypetext,
         ),
+        'courseset' => array(
+            'id'                => generalized_filter_curriculumclass::filtertypetext,
+            'name'              => generalized_filter_curriculumclass::filtertypeselect,
+            'description'       => generalized_filter_curriculumclass::filtertypetext,
+            'priority'          => generalized_filter_curriculumclass::filtertypetext,
+            'timecreated'       => generalized_filter_curriculumclass::filtertypedate,
+            'timemodified'      => generalized_filter_curriculumclass::filtertypedate,
+        ),
         'course' => array(
             'id'                => generalized_filter_curriculumclass::filtertypetext,
             'name'              => generalized_filter_curriculumclass::filtertypeselect,
@@ -210,6 +218,13 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
             'timetocomplete'    => 'fld_timetocomplete',
             'priority'          => 'fld_priority',
         ),
+        'courseset' => array(
+            'name'              => 'fld_coursesetname',
+            'description'       => 'fld_description',
+            'priority'          => 'fld_priority',
+            'timecreated'       => 'fld_timemodified',
+            'timemodified'      => 'fld_timetocomplete',
+        ),
         'course' => array(
             'name'              => 'fld_coursename',
             'code'              => 'fld_code',
@@ -239,6 +254,9 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
             'local_elisprogram_pgm' => 'cur',
             'local_elisprogram_pgm_assign' => 'cura',
         ),
+        'courseset' => array(
+            'local_elisprogram_crssetcrs' => 'csc',
+        ),
         'course' => array(
             'local_elisprogram_crs' => 'cou',
         ),
@@ -249,6 +267,7 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
 
     protected $sections = array(
         'curriculum' => array('name' => 'curriculum'),
+        'courseset'  => array('name' => 'courseset'),
         'course'     => array('name' => 'course'),
         'class'      => array('name' => 'class')
     );
@@ -256,6 +275,7 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
     // This is the field to be returned by the custom profile fields.
     protected $_innerfield = array(
         'curriculum' => 'cca.userid',
+        'courseset'  => 'cls.id', // TBD ???
         'course'     => 'cls.id',
         'class'      => 'cls.id',
     );
@@ -263,6 +283,7 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
     // This is the field to compare the custom profile field against.
     protected $_outerfield = array(
         'curriculum' => 'u.id',
+        'courseset'  => 'cls.id', // TBD ???
         'course'     => 'cls.id',
         'class'      => 'cls.id',
     );
@@ -413,8 +434,8 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                         unset($records);
 
                         $id    = $this->_uniqueid . $group .'-name';
-                        $child = $this->_uniqueid .'course-name';
-                        $path  = $CFG->wwwroot .'/local/elisprogram/lib/filtering/helpers/courses.php';
+                        $child = $this->_uniqueid.'courseset-name';
+                        $path  = $CFG->wwwroot.'/local/elisprogram/lib/filtering/helpers/coursesets.php';
                         $PAGE->requires->yui_module('moodle-local_eliscore-dependentselect', 'M.local_eliscore.init_dependentselect', array($id, $child, $path));
                         $options['numeric'] = 1;
                         $options['talias'] = $this->tables[$group]['local_elisprogram_pgm'];
@@ -441,6 +462,37 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                 $options['contextlevel'] = CONTEXT_ELIS_PROGRAM;
                 break;
 
+            case 'courseset':
+                switch ($name) {
+                    case 'name':
+                        $options['choices'] = array();
+                        $records = $DB->get_recordset('local_elisprogram_crsset', null, 'name', 'id, name');
+                        foreach ($records as $record) {
+                            $options['choices'][$record->id] = $record->name;
+                        }
+                        unset($records);
+
+                        $id    = $this->_uniqueid.'curriculum-name';
+                        $parent2 = $this->_uniqueid.'courseset-name';
+                        $child = $this->_uniqueid.'course-name';
+                        $path  = $CFG->wwwroot.'/local/elisprogram/lib/filtering/helpers/courses.php';
+                        $PAGE->requires->yui_module('moodle-local_eliscore-dependent2select', 'M.local_eliscore.init_dependent2select', array($id, $child, $path, $parent2));
+                        $options['numeric'] = 1;
+                        $options['talias'] = ''; // TBD: $this->tables[$group]['local_elisprogram_crssetcrs'];
+                        $options['dbfield'] = ''; // TBD: 'crssetid';
+                        $options['multiple'] = 'multiple';
+                        break;
+
+                    default:
+                        break;
+                }
+                $options['wrapper'] = ' INNER JOIN {local_elisprogram_crssetcrs} csc ON c.instanceid = csc.crssetid';
+                // use EXISTS clause because we might need to connect based on several conditions
+                $options['subqueryprefix'] = 'EXISTS';
+                // tell the filter we're operating on the courseset context level
+                $options['contextlevel'] = CONTEXT_ELIS_COURSESET;
+                break;
+
             case 'course':
                 switch ($name) {
                     case 'name':
@@ -451,7 +503,7 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                         }
                         unset($records);
 
-                        $id    = $this->_uniqueid . $group .'-name';
+                        $id = $this->_uniqueid.$group.'-name';
                         $child = $this->_uniqueid .'class-idnumber';
                         $path  = $CFG->wwwroot .'/local/elisprogram/lib/filtering/helpers/classes.php';
                         $PAGE->requires->yui_module('moodle-local_eliscore-dependentselect', 'M.local_eliscore.init_dependentselect', array($id, $child, $path));

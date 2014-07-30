@@ -27,12 +27,11 @@
  * Generate a JSON data set containing all the classes belonging to the specified course
  */
 
-require_once(dirname(__FILE__) .'/../../../../../config.php');
-require_once($CFG->dirroot .'/local/elisprogram/lib/setup.php');
-require_once($CFG->dirroot .'/local/elisprogram/lib/contexts.php');
-require_once($CFG->dirroot .'/local/elisprogram/lib/data/course.class.php');
+require_once(dirname(__FILE__).'/../../../../../config.php');
+require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
+require_once($CFG->dirroot.'/local/elisprogram/lib/contexts.php');
+require_once($CFG->dirroot.'/local/elisprogram/lib/data/course.class.php');
 require_once($CFG->dirroot.'/local/elisprogram/lib/data/courseset.class.php');
-require_once($CFG->dirroot.'/local/elisprogram/lib/data/crssetcourse.class.php');
 
 if (!isloggedin() || isguestuser()) {
     mtrace("ERROR: must be logged in!");
@@ -53,45 +52,25 @@ if (array_key_exists('id', $_REQUEST)) {
     $ids[] = 0;
 }
 
-$parent2 = optional_param('parent2', '', PARAM_TEXT);
-
 // Must have blank value as the default here (instead of zero) or it breaks the gas guage report
-$choices_array = array(array('', get_string('anyvalue', 'filters')));
+$choicesarray = array(array('', get_string('anyvalue', 'filters')));
 $exitloop = false;
 if (!empty($ids)) {
     $contexts = get_contexts_by_capability_for_user('course', 'local/elisreports:view', $USER->id);
     foreach ($ids as $id) {
-        $records = false;
-
         if ($id > 0) {
-            if (!empty($parent2)) {
-                list($inoreq, $params) = $DB->get_in_or_equal($ids);
-                $sql = 'SELECT DISTINCT crs.id AS courseid, crs.name AS coursename
-                          FROM {'.courseset::TABLE.'} ccs
-                          JOIN {'.crssetcourse::TABLE.'} csc ON csc.crssetid = ccs.id
-                          JOIN {'.course::TABLE.'} crs ON crs.id = csc.courseid
-                         WHERE ccs.id '.$inoreq;
-                $records = $DB->get_recordset_sql($sql, $params);
-                $idfield = 'courseid';
-                $namefield = 'coursename';
-                $exitloop = true;
-            } else {
-                $records = curriculumcourse_get_listing($id, 'crs.name', 'ASC', 0, 0, '', '', array('contexts' => $contexts, 'coursesets' => true));
-                $idfield   = 'courseid';
-                $namefield = 'coursename';
-            }
-        } else if ($id == 0) {
-            $records = course_get_listing('crs.name', 'ASC', 0, 0, '', '', $contexts);
+            $records = programcourseset_get_listing($id, 'crsset.name', 'ASC', 0, 0, '', '', array('contexts' => $contexts));
             $idfield   = 'id';
             $namefield = 'name';
+        } else if ($id == 0) {
+            $records = courseset_get_listing('crsset.name', 'ASC', 0, 0, '', '', $contexts);
+            $idfield   = 'id';
+            $namefield = 'name';
+            $exitloop = true;
         }
         if ((is_array($records) && !empty($records)) || ($records instanceof Iterator && $records->valid() === true)) {
-            $recarray = array();
-            foreach ($records as $key => $val) {
-                $recarray[$key] = $val;
-            }
-            foreach ($recarray as $record) {
-                $choices_array[] = array($record->$idfield, $record->$namefield);
+            foreach ($records as $record) {
+                $choicesarray[] = array($record->$idfield, $record->$namefield);
             }
         }
         unset($records);
@@ -101,5 +80,5 @@ if (!empty($ids)) {
     }
 }
 
-echo json_encode($choices_array);
+echo json_encode($choicesarray);
 

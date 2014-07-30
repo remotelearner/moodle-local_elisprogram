@@ -663,6 +663,7 @@ $string['fld_completion_grade'] = 'Completion grade';
 $string['fld_cost'] = 'Cost';
 $string['fld_course'] = 'Course';
 $string['fld_coursename'] = 'Course';
+$string['fld_coursesetname'] = 'Course Set';
 $string['fld_credits'] = 'Credits';
 $string['fld_curriculum'] = 'Program';
 $string['fld_curriculumname'] = 'Program';
