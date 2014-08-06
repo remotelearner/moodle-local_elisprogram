@@ -197,8 +197,8 @@ if (isset($pages[$section])) {
     $classname = $pages[$section]['class'];
     $PAGE = new $classname();
 } else {
-    include elispm::file('dashboardpage.class.php');
-    $PAGE = new dashboardpage();
+    redirect($CFG->wwwroot.'/my/');
+    die();
 }
 $PAGE->requires->css('/local/elisprogram/icons.css');
 // ELIS-3042
