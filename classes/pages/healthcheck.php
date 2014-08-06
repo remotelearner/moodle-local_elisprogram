@@ -64,6 +64,7 @@ class healthcheck extends \pm_page {
             '\local_elisprogram\lib\health\duplicatecourselos',
             '\local_elisprogram\lib\health\duplicateenrolments',
             '\local_elisprogram\lib\health\duplicateusertracks',
+            '\local_elisprogram\lib\health\oldcontextrecords',
             '\local_elisprogram\lib\health\stalecmclassmoodle',
             '\local_elisprogram\lib\health\trackclasses',
             '\local_elisprogram\lib\health\usersync',
