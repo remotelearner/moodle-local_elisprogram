@@ -27,7 +27,7 @@
 /**
  * Action to assign courseset to a course.
  */
-abstract class deepsight_action_coursecrsset_assignedit extends deepsight_action_confirm {
+class deepsight_action_coursecrsset_assign extends deepsight_action_confirm {
     /**
      * @var string The label for the action.
      */
@@ -42,6 +42,28 @@ abstract class deepsight_action_coursecrsset_assignedit extends deepsight_action
      * @var string Mode indicating to the javascript how to operate.
      */
     public $mode = 'assign';
+
+    /**
+     * Constructor.
+     * @param moodle_database $DB The active database connection.
+     * @param string $name The unique name of the action to use.
+     */
+    public function __construct(moodle_database &$DB, $name) {
+        parent::__construct($DB, $name);
+        $this->label = ucwords(get_string('assign', 'local_elisprogram'));
+
+        $langelements = new stdClass;
+        $langelements->baseelement = strtolower(get_string('course', 'local_elisprogram'));
+        $langelements->actionelement = strtolower(get_string('courseset', 'local_elisprogram'));
+        $this->descsingle = (!empty($descsingle))
+                ? $descsingle : get_string('ds_action_assign_confirm', 'local_elisprogram', $langelements);
+
+        $langelements = new stdClass;
+        $langelements->baseelement = strtolower(get_string('course', 'local_elisprogram'));
+        $langelements->actionelement = strtolower(get_string('coursesets', 'local_elisprogram'));
+        $this->descmultiple = (!empty($descmultiple))
+                ? $descmultiple : get_string('ds_action_assign_confirm_multi', 'local_elisprogram', $langelements);
+    }
 
     /**
      * Provide options to the javascript.
@@ -67,25 +89,6 @@ abstract class deepsight_action_coursecrsset_assignedit extends deepsight_action
     }
 
     /**
-     * Process association data from the form.
-     * @param string $assocdata JSON-formatted association data.
-     * @param string $bulkaction Whether this is a bulk action or not.
-     * @return array The formatted and cleaned association data.
-     */
-    protected function process_incoming_assoc_data($assocdata, $bulkaction) {
-        return array(); // no association data
-    }
-
-    /**
-     * Formats association data for display in the table post-edit.
-     * @param array $assocdata The incoming association data
-     * @return array The formatted association data.
-     */
-    protected function format_assocdata_for_display($assocdata) {
-        return $assocdata;
-    }
-
-    /**
      * Determine whether the current user can manage the course - crsset association.
      * @param int $crssetid The ID of the courseset.
      * @param int $courseid The ID of the course.
@@ -99,36 +102,6 @@ abstract class deepsight_action_coursecrsset_assignedit extends deepsight_action
         $courseassocctx = pm_context_set::for_user_with_capability('course', $perm, $USER->id);
         $courseassociateallowed = ($courseassocctx->context_allowed($courseid, 'course') === true) ? true : false;
         return ($crssetassociateallowed === true && $courseassociateallowed === true) ? true : false;
-    }
-}
-
-/**
- * Action to assign courseset to a course.
- */
-class deepsight_action_coursecrsset_assign extends deepsight_action_coursecrsset_assignedit {
-    /**
-     * @var string The label for the action.
-     */
-    public $label = 'Assign';
-
-    /**
-     * @var string The icon for the action.
-     */
-    public $icon = 'elisicon-assoc';
-
-    /**
-     * @var string Mode indicating to the javascript how to operate.
-     */
-    public $mode = 'assign';
-
-    /**
-     * Constructor.
-     * @param moodle_database $DB The active database connection.
-     * @param string $name The unique name of the action to use.
-     */
-    public function __construct(moodle_database &$DB, $name) {
-        parent::__construct($DB, $name);
-        $this->label = ucwords(get_string('assign', 'local_elisprogram'));
     }
 
     /**
@@ -147,70 +120,12 @@ class deepsight_action_coursecrsset_assign extends deepsight_action_coursecrsset
                 $crssetcourse->save();
             }
         }
-        $formatteddata = $this->format_assocdata_for_display(array());
+
         return array(
             'result' => 'success',
             'msg' => 'Success',
-            'displaydata' => $formatteddata,
+            'displaydata' => array(),
             'saveddata' => array()
-        );
-    }
-}
-
-/**
- * Edit the course - courseset assignment.
- */
-class deepsight_action_coursecrsset_edit extends deepsight_action_coursecrsset_assignedit {
-    /**
-     * @var string The label for the action.
-     */
-    public $label = 'Edit';
-
-    /**
-     * @var string The icon for the action.
-     */
-    public $icon = 'elisicon-edit';
-
-    /**
-     * @var string Mode indicating to the javascript how to operate.
-     */
-    public $mode = 'edit';
-
-    /**
-     * Constructor.
-     * @param moodle_database $DB The active database connection.
-     * @param string $name The unique name of the action to use.
-     */
-    public function __construct(moodle_database &$DB, $name) {
-        parent::__construct($DB, $name);
-        $this->label = ucwords(get_string('edit', 'local_elisprogram'));
-    }
-
-    /**
-     * Edit course - courseset associations.
-     * @param array $elements An array of course information to edit.
-     * @param bool $bulkaction Whether this is a bulk-action or not.
-     * @return array An array to format as JSON and return to the Javascript.
-     */
-    protected function _respond_to_js(array $elements, $bulkaction) {
-        global $DB;
-        $courseid = required_param('id', PARAM_INT);
-        // No association data
-        foreach ($elements as $crssetid => $label) {
-            if ($this->can_manage_assoc($crssetid, $courseid) === true) {
-                $assoc = $DB->get_record(crssetcourse::TABLE, array('crssetid' => $crssetid, 'courseid' => $courseid));
-                if (!empty($assoc)) {
-                    $crssetcourse = new crssetcourse($assoc);
-                    $crssetcourse->save();
-                }
-            }
-        }
-        $formatteddata = $this->format_assocdata_for_display($assocdata);
-        return array(
-            'result' => 'success',
-            'msg' => 'Success',
-            'displaydata' => $formatteddata,
-            'saveddata' => $assocdata
         );
     }
 }
@@ -218,7 +133,7 @@ class deepsight_action_coursecrsset_edit extends deepsight_action_coursecrsset_a
 /**
  * An action to unassign courseset from a course.
  */
-class deepsight_action_coursecrsset_unassign extends deepsight_action_standard {
+class deepsight_action_coursecrsset_unassign extends deepsight_action_confirm {
     /**
      * The javascript class to use.
      */
@@ -271,8 +186,6 @@ class deepsight_action_coursecrsset_unassign extends deepsight_action_standard {
     public function get_js_opts() {
         global $CFG;
         $opts = parent::get_js_opts();
-        $opts['condition'] = $this->condition;
-        $opts['opts']['actionurl'] = $this->endpoint;
         $opts['opts']['mode'] = $this->mode;
         $opts['opts']['langbulkconfirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
         $opts['opts']['langbulkconfirmactive'] = get_string('ds_bulk_confirm_crsset_active', 'local_elisprogram');
