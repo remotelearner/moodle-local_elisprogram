@@ -103,22 +103,22 @@ class elis26 extends \local_eliscore\install\migration\migrator {
         );
         foreach ($ctxoldnewmap as $oldctxlevel => $newctxlevel) {
             // Update context table.
-            $sql = 'UPDATE {context} SET contextlevel = ? WHERE contextlevel = ?';
+            $sql = 'UPDATE IGNORE {context} SET contextlevel = ? WHERE contextlevel = ?';
             $params = array($newctxlevel, $oldctxlevel);
             $DB->execute($sql, $params);
 
             // Update role context levels.
-            $sql = 'UPDATE {role_context_levels} SET contextlevel = ? WHERE contextlevel = ?';
+            $sql = 'UPDATE IGNORE {role_context_levels} SET contextlevel = ? WHERE contextlevel = ?';
             $params = array($newctxlevel, $oldctxlevel);
             $DB->execute($sql, $params);
 
             // Update custom field context levels.
-            $sql = 'UPDATE {local_eliscore_field_clevels} SET contextlevel = ? WHERE contextlevel = ?';
+            $sql = 'UPDATE IGNORE {local_eliscore_field_clevels} SET contextlevel = ? WHERE contextlevel = ?';
             $params = array($newctxlevel, $oldctxlevel);
             $DB->execute($sql, $params);
 
             // Update custom field category context levels.
-            $sql = 'UPDATE {local_eliscore_fld_cat_ctx} SET contextlevel = ? WHERE contextlevel = ?';
+            $sql = 'UPDATE IGNORE {local_eliscore_fld_cat_ctx} SET contextlevel = ? WHERE contextlevel = ?';
             $params = array($newctxlevel, $oldctxlevel);
             $DB->execute($sql, $params);
         }

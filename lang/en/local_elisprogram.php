@@ -684,6 +684,9 @@ $string['health_dupmoodleprofilesoln'] = 'Run the script {$a}/fix_duplicate_mood
 $string['health_dupusertrack'] = 'Duplicate user track records';
 $string['health_dupusertrackdesc'] = 'There are {$a->count} duplicate records in the ELIS {$a->name} table.';
 $string['health_dupusertracksoln'] = '<p>Run the script to remove all duplicate records in {$a->name}.<br /><a href="{$a->wwwroot}/local/elisprogram/scripts/fix_duplicate_usertracks.php">Fix this now</a></p>';
+$string['health_oldcontextrecs'] = 'Pre-2.6 context records';
+$string['health_oldcontextrecsdesc'] = 'Pre-2.6 context records detected in table(s) {$a}';
+$string['health_oldcontextrecssoln'] = 'This may or may not be a problem, but must be investigated manually. Open a support ticket and include the table(s) listed.';
 $string['health_stale'] = 'Stale PM Class Instance - Moodle course description record';
 $string['health_staledesc'] = 'There were {$a->count} records in the {$a->table} table referencing nonexistent ELIS class instances.';
 $string['health_stalesoln'] = 'These records need to be removed from the database.<br/>Suggested SQL:';
