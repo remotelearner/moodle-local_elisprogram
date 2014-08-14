@@ -61,6 +61,21 @@ class pmclass extends base {
                 new \deepsight_filter_date($DB, 'enddate', $langenddate, ['element.enddate' => $langenddate]),
         ];
 
+        // Add custom fields.
+        $customfieldfilters = $this->get_custom_field_info(\local_eliscore\context\helper::get_level_from_name('class'));
+        $filters = array_merge($filters, $customfieldfilters);
+
+        // Restrict to configured enabled fields.
+        $enabledfields = get_config('eliswidget_enrolment', 'classenabledfields');
+        if (!empty($enabledfields)) {
+            $enabledfields = explode(',', $enabledfields);
+            foreach ($filters as $i => $filter) {
+                if (!in_array($filter->get_name(), $enabledfields)) {
+                    unset($filters[$i]);
+                }
+            }
+        }
+
         return $filters;
     }
 
@@ -119,12 +134,17 @@ class pmclass extends base {
         require_once(\elispm::lib('data/user.class.php'));
         list($sql, $params) = parent::get_join_sql($filters);
 
+        // Custom field joins.
+        $enabledcfields = array_intersect_key($this->customfields, $this->availablefilters);
+        $ctxlevel = \local_eliscore\context\helper::get_level_from_name('class');
+        $newsql = $this->get_custom_field_joins($ctxlevel, $enabledcfields);
+
+        // Enrolment and waitlist information.
         $euserid = \user::get_current_userid();
-        $newsql = [
-                'LEFT JOIN {local_elisprogram_cls_enrol} enrol ON enrol.classid = element.id AND enrol.userid = ?',
-                'LEFT JOIN {local_elisprogram_waitlist} waitlist ON waitlist.classid = element.id AND waitlist.userid = ?'
-        ];
+        $newsql[] = 'LEFT JOIN {local_elisprogram_cls_enrol} enrol ON enrol.classid = element.id AND enrol.userid = ?';
+        $newsql[] = 'LEFT JOIN {local_elisprogram_waitlist} waitlist ON waitlist.classid = element.id AND waitlist.userid = ?';
         $newparams = [$euserid, $euserid];
+
         return [array_merge($sql, $newsql), array_merge($params, $newparams)];
     }
 
