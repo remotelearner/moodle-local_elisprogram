@@ -259,7 +259,7 @@
     color: #aaa;
     content: '' !important;
     font-family: inherit !important;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><circle cx="3.5" cy="3.5" r="3" style="stroke:rgba(0,0,0, 0.5);stroke-width:0.5" fill-opacity="0"/><line x1="5.7" y1="5.7" x2="10" y2="10" style="stroke:rgba(0,0,0, 0.5);stroke-width:1" /></svg>');
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCI+PGNpcmNsZSBjeD0iMy41IiBjeT0iMy41IiByPSIzIiBzdHlsZT0ic3Ryb2tlOnJnYmEoMCwwLDAsIDAuNSk7c3Ryb2tlLXdpZHRoOjAuNSIgZmlsbC1vcGFjaXR5PSIwIi8+PGxpbmUgeDE9IjUuNyIgeTE9IjUuNyIgeDI9IjEwIiB5Mj0iMTAiIHN0eWxlPSJzdHJva2U6cmdiYSgwLDAsMCwgMC41KTtzdHJva2Utd2lkdGg6MSIgLz48L3N2Zz4=");
     background-repeat: no-repeat;
     background-position: center;
     background-size: 60%;
