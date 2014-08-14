@@ -180,6 +180,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
                 'status_passed' => get_string('status_passed', 'eliswidget_enrolment'),
                 'status_failed' => get_string('status_failed', 'eliswidget_enrolment'),
                 'status_waitlist' => get_string('status_waitlist', 'eliswidget_enrolment'),
+                'status_prereqnotmet' => get_string('status_prereqnotmet', 'eliswidget_enrolment'),
                 'more' => get_string('more', 'eliswidget_enrolment'),
                 'less' => get_string('less', 'eliswidget_enrolment'),
                 'coursesets' => get_string('coursesets', 'eliswidget_enrolment'),

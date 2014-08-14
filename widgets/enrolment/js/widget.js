@@ -482,6 +482,8 @@
                     }
                 } else if (main.data.numwaitlist > 0) {
                     var status = opts.lang.status_waitlist;
+                } else if (main.data.numnoncompleteprereq > 0) {
+                    var status = opts.lang.status_prereqnotmet;
                 } else {
                     var status = opts.lang.status_notenroled;
                 }
@@ -515,6 +517,13 @@
                 return header;
             }
 
+            // Determine if the user can choose classes.
+            if (main.data.numenrol == 0 && main.data.numwaitlist == 0 && main.data.numnoncompleteprereq > 0) {
+                var canchooseclasses = false;
+            } else {
+                var canchooseclasses = true;
+            }
+
             jqthis.attr({id: 'course_'+this.courseid, class: 'course'});
             jqthis.data('id', this.courseid);
             jqthis.append(this.renderheader());
@@ -523,27 +532,29 @@
                 var childrenlist = jqthis.children('.childrenlist');
                 jqthis.toggleClass('expanded');
                 if (childrenlist.is(':empty') === true) {
-                    // Add filterbar and classlist elements.
-                    var pmclassheading = $('<div class="childrenlistheader"></div>');
-                    pmclassheading.append('<h6>'+opts.lang.classes+'</h6>');
-                    pmclassheading.append('<span id="'+main.generateid('filterbar')+'" class="filterbar"></span>');
-                    childrenlist.append(pmclassheading);
-                    var classlist = $('<div id="'+main.generateid('classlist')+'"></div>');
-                    childrenlist.append(classlist);
-                    var pagination = $('<div id="'+main.generateid('pagination')+'" class="ds_pagelinks"></div>');
-                    childrenlist.append(pagination);
+                    if (canchooseclasses === true) {
+                        // Add filterbar and classlist elements.
+                        var pmclassheading = $('<div class="childrenlistheader"></div>');
+                        pmclassheading.append('<h6>'+opts.lang.classes+'</h6>');
+                        pmclassheading.append('<span id="'+main.generateid('filterbar')+'" class="filterbar"></span>');
+                        childrenlist.append(pmclassheading);
+                        var classlist = $('<div id="'+main.generateid('classlist')+'"></div>');
+                        childrenlist.append(classlist);
+                        var pagination = $('<div id="'+main.generateid('pagination')+'" class="ds_pagelinks"></div>');
+                        childrenlist.append(pagination);
 
-                    // Initialize datatable.
-                    main.datatable = classlist.eliswidget_enrolment_datatable({
-                        ids: {courseid: main.courseid, programid: main.programid, widgetid: main.widgetid},
-                        endpoint: opts.endpoint,
-                        requestmode: 'classesforcourse',
-                        requestdata: {courseid: main.courseid},
-                        childrenderer: 'eliswidget_enrolment_pmclass',
-                        childopts: opts,
-                        lang: opts.lang
-                    });
-                    main.datatable.doupdatetable();
+                        // Initialize datatable.
+                        main.datatable = classlist.eliswidget_enrolment_datatable({
+                            ids: {courseid: main.courseid, programid: main.programid, widgetid: main.widgetid},
+                            endpoint: opts.endpoint,
+                            requestmode: 'classesforcourse',
+                            requestdata: {courseid: main.courseid},
+                            childrenderer: 'eliswidget_enrolment_pmclass',
+                            childopts: opts,
+                            lang: opts.lang
+                        });
+                        main.datatable.doupdatetable();
+                    }
                 }
             });
         });
