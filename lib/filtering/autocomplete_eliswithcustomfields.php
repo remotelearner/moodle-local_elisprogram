@@ -340,7 +340,11 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
             if (!empty($permsfilter)) {
                 $search[] = '('.implode(') OR (', $permsfilter).')';
             }
-            $where = 'WHERE ('.implode(') AND (', $search).')';
+
+            $where = '';
+            if (!empty($search)) {
+                $where = 'WHERE ('.implode(') AND (', $search).')';
+            }
 
             // Assemble + run the query.
             $sql = $select.' '.$from.' '.$where;
