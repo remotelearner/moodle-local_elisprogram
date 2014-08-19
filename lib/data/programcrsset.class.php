@@ -132,7 +132,7 @@ class programcrsset extends elis_data_object {
      * @return bool true if complete, false otherwise
      */
     public function is_complete($userid, &$percentcomplete = null) {
-        if ($percentcomplete != null) {
+        if ($percentcomplete !== null) {
             $percentcomplete = 100.0;
         }
         if ($this->reqcredits <= 0.0 || $this->reqcourses <= 0) {
@@ -164,7 +164,7 @@ class programcrsset extends elis_data_object {
         $params = array_merge(array($userid), $params);
         $enrolments = $this->_db->get_recordset_sql($enrolmentsql, $params);
         foreach ($enrolments as $enrolment) {
-            if ($enrolment->completestatusid != STUSTATUS_NOTCOMPLETE) {
+            if ($enrolment->completestatusid == STUSTATUS_PASSED) {
                 $curcourses++;
                 $curcredits += $enrolment->credits;
             }
