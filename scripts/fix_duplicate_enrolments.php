@@ -39,7 +39,7 @@ function cleanup() {
     $dbman = $DB->get_manager();
 
     $tablename  = student::TABLE;
-    $tempname   = $tablename .'_temp';
+    $tempname = 'local_elisprogram_clsnrl_tmp';
 
     $table = new xmldb_table($tempname);
     if ($dbman->table_exists($table)) {
