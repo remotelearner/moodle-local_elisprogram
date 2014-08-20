@@ -170,13 +170,15 @@ class curriculum extends data_object_with_custom_fields {
                     cur.id as curid, cur.reqcredits as reqcredits,
                     cca.id as curassid, cca.userid, cca.curriculumid, cca.completed, cca.timecompleted,
                     cca.credits, cca.locked, cca.timecreated, cca.timemodified, cca.timeexpired,
-                    ccc.courseid as courseid, ccc.required AS crsrequired ';
+                    cco.id as courseid, ccc.required AS crsrequired ';
         // >* This will return ALL class enrolment records for a user's curriculum assignment.
         $from    = 'FROM {'.curriculumstudent::TABLE.'} cca ';
         $join    = 'INNER JOIN {'.user::TABLE.'} cu ON cu.id = cca.userid
                     INNER JOIN {'.curriculum::TABLE.'} cur ON cca.curriculumid = cur.id
-                    INNER JOIN {'.curriculumcourse::TABLE.'} ccc ON ccc.curriculumid = cur.id
-                    INNER JOIN {'.course::TABLE.'} cco ON cco.id = ccc.courseid
+                     LEFT JOIN {'.curriculumcourse::TABLE.'} ccc ON ccc.curriculumid = cur.id
+                     LEFT JOIN {'.programcrsset::TABLE.'} pcs ON pcs.prgid = cur.id
+                     LEFT JOIN {'.crssetcourse::TABLE.'} csc ON csc.crssetid = pcs.crssetid
+                    INNER JOIN {'.course::TABLE.'} cco ON (cco.id = ccc.courseid OR cco.id = csc.courseid)
                     INNER JOIN {'.pmclass::TABLE.'} ccl ON ccl.courseid = cco.id
                     INNER JOIN {'.student::TABLE.'} cce ON (cce.classid = ccl.id) AND (cce.userid = cca.userid) ';
         // >*
@@ -302,49 +304,6 @@ class curriculum extends data_object_with_custom_fields {
                 $daysfrom = ($reqcompletetime - $timenow) / $secondsinaday;
                 if ($daysfrom <= elis::$config->local_elisprogram->notify_curriculumnotcompleted_days) {
                     $notifiedincompleteprograms[$rec->curriculumid][$rec->userid] = true;
-                    $eventdata = array(
-                        'context' => context_system::instance(),
-                        'other' => (array)$rec
-                    );
-                    $event = \local_elisprogram\event\curriculum_notcompleted::create($eventdata);
-                    $event->trigger();
-                }
-            }
-            $rs->close();
-        }
-
-        // Incomplete Program CourseSets
-        $sql = 'SELECT cca.id as id, cca.userid, cca.curriculumid, cca.timecreated,
-                       cur.timetocomplete as timetocomplete, pc.id as prgcrssetid
-                  FROM {'.curriculumstudent::TABLE.'} cca
-                  JOIN {'.curriculum::TABLE.'} cur ON cca.curriculumid = cur.id
-                  JOIN {'.programcrsset::TABLE.'} pc ON pc.prgid = cur.id
-                       AND (pc.reqcredits > 0.0 OR pc.reqcourses > 0)';
-        $rs = $DB->get_recordset_sql($sql);
-        if ($rs && $rs->valid()) {
-            foreach ($rs as $rec) {
-                if (!empty($notifiedincompleteprograms[$rec->curriculumid][$rec->userid])) {
-                    continue; // already triggered program:incomplete above
-                }
-                $prgcrsset = new programcrsset($rec->prgcrssetid);
-                $prgcrsset->load();
-                if ($prgcrsset->is_complete($rec->userid)) {
-                    continue;
-                }
-
-                // Loop through curriculum assignments checking for nags.
-                $deltad = new datedelta($rec->timetocomplete);
-
-                // Need to fit this into the SQL instead.
-                $reqcompletetime = $rec->timecreated + $deltad->gettimestamp();
-
-                // If no time to completion set, it has no completion restriction.
-                if ($reqcompletetime == 0) {
-                    continue;
-                }
-
-                $daysfrom = ($reqcompletetime - $timenow) / $secondsinaday;
-                if ($daysfrom <= elis::$config->local_elisprogram->notify_curriculumnotcompleted_days) {
                     $eventdata = array(
                         'context' => context_system::instance(),
                         'other' => (array)$rec
