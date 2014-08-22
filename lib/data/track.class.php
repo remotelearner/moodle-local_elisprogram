@@ -239,6 +239,7 @@ class track extends data_object_with_custom_fields {
         foreach ($this->curriculum->crssets as $prgcrsset) {
             foreach ($prgcrsset->crsset->courses as $crssetcrs) {
                 $course = $crssetcrs->course;
+                $course->load();
                 if (!empty($createdcourseids[$course->id])) {
                     continue; // class for course already created
                 }
