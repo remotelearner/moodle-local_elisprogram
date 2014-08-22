@@ -176,10 +176,25 @@ class pmclass extends base {
         // Note: get_search results returns a recordset, so we also array-ify pageresults - recordsets are one-time-use.
         $classids = [];
         $pageresultsar = [];
+        $dateformat = get_string('strftimedate');
         foreach ($pageresults as $id => $result) {
             $classids[] = $result->id;
             $pageresultsar[$id] = $result;
             $pageresultsar[$id]->instructors = [];
+            if (isset($pageresultsar[$id]->element_startdate)) {
+                if ($pageresultsar[$id]->element_startdate > 0) {
+                    $pageresultsar[$id]->element_startdate = userdate($pageresultsar[$id]->element_startdate, $dateformat);
+                } else {
+                    $pageresultsar[$id]->element_startdate = get_string('notavailable');
+                }
+            }
+            if (isset($pageresultsar[$id]->element_enddate)) {
+                if ($pageresultsar[$id]->element_enddate > 0) {
+                    $pageresultsar[$id]->element_enddate = userdate($pageresultsar[$id]->element_enddate, $dateformat);
+                } else {
+                    $pageresultsar[$id]->element_enddate = get_string('notavailable');
+                }
+            }
         }
         unset($pageresults);
 
