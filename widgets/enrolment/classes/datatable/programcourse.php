@@ -46,16 +46,11 @@ class programcourse extends course {
         list($sql, $params) = parent::get_join_sql($filters);
         $newsql = [
                 'JOIN {local_elisprogram_pgm_crs} pgmcrs ON pgmcrs.courseid = element.id',
-                'LEFT JOIN (
-                        {local_elisprogram_crs_prereq} prereq
-                        JOIN {local_elisprogram_cls} prereqcls ON prereqcls.courseid = prereq.courseid
-                        JOIN {local_elisprogram_cls_enrol} stu ON stu.classid = prereqcls.id AND stu.userid = ? AND stu.completestatusid IN (?, ?)
-                ) ON prereq.curriculumcourseid = pgmcrs.id',
                 'LEFT JOIN {local_elisprogram_cls} cls ON cls.courseid = element.id',
                 'LEFT JOIN {local_elisprogram_cls_enrol} enrol ON enrol.classid = cls.id AND enrol.userid = ?',
                 'LEFT JOIN {local_elisprogram_waitlist} waitlist ON waitlist.classid = cls.id AND waitlist.userid = ?',
         ];
-        $newparams = [$euserid, STUSTATUS_FAILED, STUSTATUS_NOTCOMPLETE, $euserid, $euserid];
+        $newparams = [$euserid, $euserid];
         return [array_merge($sql, $newsql), array_merge($params, $newparams)];
     }
 
@@ -77,8 +72,22 @@ class programcourse extends course {
      * @return array Array of fields to select.
      */
     protected function get_select_fields(array $filters = array()) {
+        require_once(\elispm::lib('data/user.class.php'));
+        $euserid = (int)\user::get_current_userid();
         $selectfields = parent::get_select_fields($filters);
-        $selectfields[] = 'count(prereq.id) AS numnoncompleteprereq';
+
+        // Select the number of prerequisites not met.
+        $selectfields[] = '(SELECT count(prereq.id) FROM {local_elisprogram_crs_prereq} prereq
+                              JOIN {local_elisprogram_cls} prereqcls ON prereqcls.courseid = prereq.courseid
+                         LEFT JOIN {local_elisprogram_cls_enrol} prereqstu
+                                   ON prereqstu.classid = prereqcls.id AND prereqstu.userid = '.$euserid.'
+                             WHERE prereq.curriculumcourseid = pgmcrs.id
+                                   AND (
+                                       prereqstu.completestatusid IN ('.STUSTATUS_FAILED.','.STUSTATUS_NOTCOMPLETE.')
+                                       OR prereqstu.id IS NULL
+                                   )
+                           ) AS numnoncompleteprereq';
+
         $selectfields[] = 'count(enrol.id) AS numenrol';
         $selectfields[] = 'max(enrol.completestatusid) AS higheststatus';
         $selectfields[] = 'count(waitlist.id) AS numwaitlist';
