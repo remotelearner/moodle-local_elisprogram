@@ -263,6 +263,10 @@ class ajax {
 
         switch($data['action']) {
             case 'enrol':
+                $enrolallowed = get_config('enrol_elis', 'enrol_from_course_catalog');
+                if (empty($enrolallowed) || $enrolallowed != '1') {
+                    throw new \Exception('Self-enrolments from dashboard not allowed.');
+                }
                 require_once(\elispm::lib('data/student.class.php'));
                 // Search for existing enrolment.
                 $enrolment = $DB->get_records(\student::TABLE, ['classid' => $data['classid'], 'userid' => $euserid]);
@@ -281,6 +285,10 @@ class ajax {
                 return ['newstatus' => 'enroled'];
 
             case 'unenrol':
+                $unenrolallowed = get_config('enrol_elis', 'unenrol_from_course_catalog');
+                if (empty($unenrolallowed) || $unenrolallowed != '1') {
+                    throw new \Exception('Self-unenrolments from dashboard not allowed.');
+                }
                 require_once(\elispm::lib('data/student.class.php'));
                 // Search for existing enrolment.
                 $enrolment = $DB->get_record(\student::TABLE, ['classid' => $data['classid'], 'userid' => $euserid]);

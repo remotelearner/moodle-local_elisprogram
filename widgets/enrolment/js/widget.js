@@ -289,6 +289,12 @@
                     available: 'enrol'
                 };
                 var action = status2action[status];
+                if (action == 'enrol' && opts.enrolallowed != '1') {
+                    action = '';
+                }
+                if (action == 'unenrol' && opts.unenrolallowed != '1') {
+                    action = '';
+                }
                 var statusele = $('<span id="'+main.generateid('status')+'" class="pmclassstatus"></span>');
                 statusele.append('<span>'+opts.lang['status_'+status]+'</span>');
                 if (action != '') {

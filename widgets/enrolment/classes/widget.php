@@ -171,8 +171,15 @@ class widget extends \local_elisprogram\lib\widgetbase {
         $html .= \html_writer::tag('div', '', ['class' => 'childrenlist']);
         $html .= \html_writer::end_tag('div');
 
+        $enrolallowed = get_config('enrol_elis', 'enrol_from_course_catalog');
+        $enrolallowed = (!empty($enrolallowed) && $enrolallowed == '1') ? '1' : '0';
+        $unenrolallowed = get_config('enrol_elis', 'unenrol_from_course_catalog');
+        $unenrolallowed = (!empty($unenrolallowed) && $unenrolallowed == '1') ? '1' : '0';
+
         $initopts = [
             'endpoint' => $CFG->wwwroot.'/local/elisprogram/widgets/enrolment/ajax.php',
+            'enrolallowed' => $enrolallowed,
+            'unenrolallowed' => $unenrolallowed,
             'lang' => [
                 'status_available' => get_string('status_available', 'eliswidget_enrolment'),
                 'status_notenroled' => get_string('status_notenroled', 'eliswidget_enrolment'),
