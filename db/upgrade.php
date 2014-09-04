@@ -37,7 +37,7 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
         elis_tasks_update_definition('local_elisprogram');
     }
 
-    if ($result && $oldversion < 2014030702) {
+    if ($result && $oldversion < 2014082500) {
         $file = $CFG->dirroot.'/local/elisprogram/db/install.xml';
         $tables = array('local_elisprogram_crsset', 'local_elisprogram_crssetcrs', 'local_elisprogram_prgcrsset');
         foreach ($tables as $table) {
@@ -52,7 +52,7 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
         \local_eliscore\context\helper::reset_levels();
         \local_eliscore\context\helper::init_levels();
 
-        upgrade_plugin_savepoint($result, '2014030702', 'local', 'elisprogram');
+        upgrade_plugin_savepoint($result, '2014082500', 'local', 'elisprogram');
     }
 
     return $result;
