@@ -24,6 +24,8 @@
  *
  */
 
+require_once(__DIR__.'/lib.php');
+
 /**
  * Trait providing custom field filtering functions to deepsight tables.
  */
