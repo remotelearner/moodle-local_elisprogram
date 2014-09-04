@@ -86,10 +86,11 @@ class widget extends \local_elisprogram\lib\widgetbase {
         // Add in joins and restrictions if we're hiding archived programs.
         if ($displayarchived !== true) {
             $joins[] = 'JOIN {context} ctx ON ctx.instanceid = pgm.id AND ctx.contextlevel = :pgmctxlvl';
-            $joins[] = 'JOIN {local_eliscore_fld_data_int} flddata ON flddata.contextid = ctx.id';
-            $joins[] = 'JOIN {local_eliscore_field} field ON field.id = flddata.fieldid';
+            $joins[] = 'LEFT JOIN {local_eliscore_fld_data_int} flddata ON flddata.contextid = ctx.id';
+            $joins[] = 'LEFT JOIN {local_eliscore_field} field ON field.id = flddata.fieldid';
+            $restrictions[] = '((field.shortname = :archiveshortname AND flddata.data = 0) OR flddata.id IS NULL)';
             $params['pgmctxlvl'] = \local_eliscore\context\helper::get_level_from_name('curriculum');
-            $restrictions[] = 'flddata.data = 0';
+            $params['archiveshortname'] = '_elis_program_archive';
         }
 
         if (!empty($programid) && is_int($programid)) {
@@ -110,6 +111,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
                  WHERE '.$restrictions.'
               GROUP BY pgm.id
               ORDER BY pgm.priority ASC, pgm.name ASC';
+
         return $DB->get_recordset_sql($sql, $params);
     }
 
