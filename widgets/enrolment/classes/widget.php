@@ -150,7 +150,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
                 'data-numcrssets' => $program->numcrssets
             ];
             $html .= \html_writer::start_tag('div', $pgmwrapperattrs);
-            if (!empty($program->pgmreqcredits) && (int)$program->pgmreqcredits > 0) {
+            if (!empty($program->pgmreqcredits) && $program->pgmreqcredits > 0) {
                 if (!empty($config->progressbarenabled)) {
                     $pgmstu = new \curriculumstudent(['curriculumid' => $program->pgmid, 'userid' => $euserid]);
                     $pgmstu->load();
