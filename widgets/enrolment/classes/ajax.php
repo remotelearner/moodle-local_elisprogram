@@ -300,7 +300,12 @@ class ajax {
                     throw new \Exception('User already enroled.');
                 }
                 try {
-                    $student = new \student(['classid' => $data['classid'], 'userid' => $euserid]);
+                    $enroldata = [
+                        'classid' => $data['classid'],
+                        'userid' => $euserid,
+                        'enrolmenttime' => time(),
+                    ];
+                    $student = new \student($enroldata);
                     $student->save();
                 } catch (\pmclass_enrolment_limit_validation_exception $e) {
                     require_once(\elispm::lib('data/waitlist.class.php'));
