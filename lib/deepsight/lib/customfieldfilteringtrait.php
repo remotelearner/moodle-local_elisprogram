@@ -41,9 +41,10 @@ trait customfieldfilteringtrait {
      * NOTE: This will only look for filterable custom fields, which at the moment are "char" or "text" fields.
      *
      * @param int $contextlevel The context level of the fields we want. i.e. CONTEXT_ELIS_USER, CONTEXT_ELIS_CLASS, etc.
+     * @param array $menuofchoicesadditionalparams An array of additonal search parameters to set in any menu of choices filters.
      * @return array An array of deepsight_filter objects for each found filterable field.
      */
-    protected function get_custom_field_info($contextlevel) {
+    protected function get_custom_field_info($contextlevel, array $menuofchoicesadditionalparams = array()) {
         $fieldfilters = array();
         $fielddata = array();
 
@@ -74,6 +75,9 @@ trait customfieldfilteringtrait {
                     $choices[$i] = trim($choice);
                 }
                 $filtermenu->set_choices(array_combine($choices, $choices));
+                if (!empty($menuofchoicesadditionalparams)) {
+                    $filtermenu->set_additionalsearchparams($menuofchoicesadditionalparams);
+                }
                 $fieldfilters[] = $filtermenu;
             } else {
                 $fieldfilters[] = new \deepsight_filter_textsearch($this->DB, $filtername, $field->name, $filterfielddata);

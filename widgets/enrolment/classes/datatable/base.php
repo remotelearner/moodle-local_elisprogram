@@ -58,8 +58,8 @@ abstract class base {
      */
     public function __construct(\moodle_database &$DB, $ajaxendpoint) {
         $this->DB =& $DB;
-        $this->populate();
         $this->endpoint = $ajaxendpoint;
+        $this->populate();
     }
 
     /**
@@ -99,6 +99,16 @@ abstract class base {
      */
     public function get_filters() {
         return [];
+    }
+
+    /**
+     * Searches for and returns a table's filter.
+     *
+     * @param string $name The name of the requested filter.
+     * @return deepsight_filter The requested filter, or null if not found.
+     */
+    public function get_filter($name) {
+        return (isset($this->availablefilters[$name])) ? $this->availablefilters[$name] : null;
     }
 
     /**

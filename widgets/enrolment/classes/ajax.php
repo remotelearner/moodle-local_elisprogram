@@ -136,6 +136,32 @@ class ajax {
     }
 
     /**
+     * Respond to a request aimed at a specific filter.
+     *
+     * @param array $data Incoming data.
+     */
+    protected function get_filter(array $data) {
+        global $DB;
+        $table = optional_param('table', '', PARAM_TEXT);
+        $filtername = optional_param('filtername', '', PARAM_TEXT);
+        if (empty($table) || empty($filtername)) {
+            throw new \Exception('No table or filter received.');
+        }
+        $table = '\\'.$table;
+        if (strpos($table, '\eliswidget_enrolment\datatable\\') !== 0 || !class_exists($table)) {
+            throw new \Exception('Invalid table name received.');
+        }
+        $datatable = new $table($DB, $this->endpoint);
+        $filter = $datatable->get_filter($filtername);
+        if (!empty($filter)) {
+            echo $filter->respond_to_js();
+            die();
+        } else {
+            throw new \Exception('No filter found');
+        }
+    }
+
+    /**
      * Get a list of coursesets present in a program.
      *
      * @param array $data Array containing "programid", "filters", and "page".

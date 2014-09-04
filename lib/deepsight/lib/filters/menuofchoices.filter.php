@@ -32,6 +32,9 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
     protected $endpoint = '';
     protected $choices = array();
 
+    /** @var array An array of additional parameters that will be included in the search request. */
+    protected $additionalsearchparams = [];
+
     /**
      * Constructor.
      *
@@ -67,6 +70,15 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
      */
     public function get_choices() {
         return $this->choices;
+    }
+
+    /**
+     * Set additional search parameters that will be included in the request when the filter searches for options.
+     *
+     * @param array $additionalsearchparams An array of additional search parameters.
+     */
+    public function set_additionalsearchparams(array $additionalsearchparams = array()) {
+        $this->additionalsearchparams = $additionalsearchparams;
     }
 
     /**
@@ -123,6 +135,7 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
             'label' => $this->label,
             'dataurl' => $this->endpoint,
             'initialchoices' => array(),
+            'additionalsearchparams' => $this->additionalsearchparams,
             'lang_search' => get_string('search', 'local_elisprogram'),
             'lang_selected' => get_string('selected', 'local_elisprogram'),
             'lang_all' => get_string('all', 'moodle'),

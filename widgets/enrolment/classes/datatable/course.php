@@ -50,7 +50,6 @@ class course extends base {
         }
 
         require_once(\elispm::lib('deepsight/lib/filter.php'));
-        require_once(\elispm::lib('deepsight/lib/filters/textsearch.filter.php'));
 
         // Basic fields.
         $langname = get_string('course_name', 'local_elisprogram');
@@ -71,7 +70,8 @@ class course extends base {
         ];
 
         // Add custom fields.
-        $customfieldfilters = $this->get_custom_field_info(\local_eliscore\context\helper::get_level_from_name('course'));
+        $coursectxlevel = \local_eliscore\context\helper::get_level_from_name('course');
+        $customfieldfilters = $this->get_custom_field_info($coursectxlevel, ['table' => get_called_class()]);
         $filters = array_merge($filters, $customfieldfilters);
 
         // Restrict to configured enabled fields.

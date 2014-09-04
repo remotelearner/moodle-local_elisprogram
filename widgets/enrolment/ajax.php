@@ -28,7 +28,7 @@ require_once(__DIR__.'/../../../../config.php');
 require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 
 $requestmethod = $_SERVER['REQUEST_METHOD'];
-$mode = required_param('mode', PARAM_TEXT);
+$mode = required_param('m', PARAM_TEXT);
 $data = optional_param_array('data', [], PARAM_TEXT);
 $ajax = new \eliswidget_enrolment\ajax($CFG->wwwroot.'/local/elisprogram/widgets/enrolment/ajax.php');
 echo $ajax->respond($requestmethod, $mode, $data);

@@ -63,7 +63,8 @@ class courseset extends base {
         ];
 
         // Add custom fields.
-        $customfieldfilters = $this->get_custom_field_info(\local_eliscore\context\helper::get_level_from_name('courseset'));
+        $crssetctxlevel = \local_eliscore\context\helper::get_level_from_name('courseset');
+        $customfieldfilters = $this->get_custom_field_info($crssetctxlevel, ['table' => get_called_class()]);
         $filters = array_merge($filters, $customfieldfilters);
 
         // Restrict to configured enabled fields.

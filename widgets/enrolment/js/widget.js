@@ -103,7 +103,7 @@
             main.abortupdatetable();
             main.addClass('loading');
             var data = {
-                mode: opts.requestmode,
+                m: opts.requestmode,
                 data: opts.requestdata,
             };
             data.data.filters = JSON.stringify(main.filters);
@@ -316,7 +316,7 @@
                 e.preventDefault();
                 e.stopPropagation();
                 var data = {
-                    mode: 'changeclassstatus',
+                    m: 'changeclassstatus',
                     data: {action: action, classid: main.classid},
                 };
                 $('#'+main.generateid('status')).find('a').replaceWith('<span class="smloader">'+opts.lang.working+'</span>');

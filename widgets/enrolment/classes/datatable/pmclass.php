@@ -62,7 +62,8 @@ class pmclass extends base {
         ];
 
         // Add custom fields.
-        $customfieldfilters = $this->get_custom_field_info(\local_eliscore\context\helper::get_level_from_name('class'));
+        $pmclassctxlevel = \local_eliscore\context\helper::get_level_from_name('class');
+        $customfieldfilters = $this->get_custom_field_info($pmclassctxlevel, ['table' => get_called_class()]);
         $filters = array_merge($filters, $customfieldfilters);
 
         // Restrict to configured enabled fields.
