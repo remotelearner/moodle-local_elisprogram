@@ -609,12 +609,12 @@ class usersetpage extends managementpage {
             // cluster has sub-clusters, so ask the user if they want to
             // promote or delete the sub-clusters
             $a = new stdClass;
-            $a->name = $obj;
+            $a->name = $obj->name;
             $a->subclusters = $count;
             $context = \local_elisprogram\context\userset::instance($obj->id);
             $like = $DB->sql_like('path', '?');
             $a->descendants = $DB->count_records_select('context',$DB->sql_like('path', '?'), array("{$context->path}/%")) - $a->subclusters;
-            print_string($a->descendants ? 'confirm_delete_with_usersubsets_and_descendants' : 'confirm_delete_with_usersubsets', 'local_elisprogram', array('name'=>$obj->name, 'subclusters'=>$count));
+            print_string($a->descendants ? 'confirm_delete_with_usersubsets_and_descendants' : 'confirm_delete_with_usersubsets', 'local_elisprogram', $a);
             $target = $this->get_new_page(array('action' => 'delete', 'confirm'=>'1'));
             $form = new usersetdeleteform($target->url, array('obj' => $obj, 'a' => $a));
             $form->display();
