@@ -302,6 +302,7 @@ class synchronize {
                        cmp.completion_grade cmpcompletiongrade,
                        cmc.moodlecourseid AS moodlecourseid,
                        gi.id AS giid,
+                       gi.itemtype AS giitemtype,
                        gi.grademax AS gigrademax
                   FROM {'.\coursecompletion::TABLE.'} cmp
                   JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = cmp.courseid
@@ -318,6 +319,7 @@ class synchronize {
             if (!empty($rec->giid)) {
                 $gis[$rec->moodlecourseid][$rec->giid] = (object)array(
                     'id' => $rec->giid,
+                    'itemtype' => $rec->giitemtype,
                     'grademax' => $rec->gigrademax
                 );
                 $linkedcompelems[$rec->pmcourseid][$rec->giid] = (object)array(
@@ -426,7 +428,11 @@ class synchronize {
             if (isset($cmgrades[$coursecompletion->id])) {
                 // Update existing completion element grade.
                 $studentgrade = $cmgrades[$coursecompletion->id];
-                if (!$studentgrade->locked && ($gradeitemgrade->get_dategraded() > $studentgrade->timegraded)) {
+
+                $mgradeiscat = ($gis[$giid]->itemtype === 'category') ? true : false;
+                $mgradeisnewer = ($gradeitemgrade->get_dategraded() > $studentgrade->timegraded) ? true : false;
+
+                if (!$studentgrade->locked && ($mgradeisnewer === true || $mgradeiscat === true)) {
 
                     // Clone of record, to see if we actually change anything.
                     $oldgrade = clone($studentgrade);

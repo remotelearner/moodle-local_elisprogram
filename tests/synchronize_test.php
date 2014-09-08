@@ -1175,37 +1175,45 @@ class synchronize_testcase extends \elis_database_test {
             $mcourseid1 => array(
                     $createdgis[0]['id'] => (object)array(
                         'id' => $createdgis[0]['id'],
-                        'grademax' => 100.00000
+                        'grademax' => 100.00000,
+                        'itemtype' => '',
                     ),
                     $createdgis[1]['id'] => (object)array(
                         'id' => $createdgis[1]['id'],
-                        'grademax' => 100.00000
+                        'grademax' => 100.00000,
+                        'itemtype' => '',
                     ),
                     $createdgis[2]['id'] => (object)array(
                         'id' => $createdgis[2]['id'],
-                        'grademax' => 100.00000
+                        'grademax' => 100.00000,
+                        'itemtype' => '',
                     ),
                     $createdgis[3]['id'] => (object)array(
                         'id' => $createdgis[3]['id'],
-                        'grademax' => 100.00000
+                        'grademax' => 100.00000,
+                        'itemtype' => '',
                     ),
             ),
             $mcourseid2 => array(
                     $createdgis[8]['id'] => (object)array(
                         'id' => $createdgis[8]['id'],
-                        'grademax' => 100.00000
+                        'grademax' => 100.00000,
+                        'itemtype' => '',
                     ),
                     $createdgis[9]['id'] => (object)array(
                         'id' => $createdgis[9]['id'],
-                        'grademax' => 100.00000
+                        'grademax' => 100.00000,
+                        'itemtype' => '',
                     ),
                     $createdgis[10]['id'] => (object)array(
                         'id' => $createdgis[10]['id'],
-                        'grademax' => 100.00000
+                        'grademax' => 100.00000,
+                        'itemtype' => '',
                     ),
                     $createdgis[11]['id'] => (object)array(
                         'id' => $createdgis[11]['id'],
-                        'grademax' => 100.00000
+                        'grademax' => 100.00000,
+                        'itemtype' => '',
                     ),
             )
         );
@@ -1991,6 +1999,7 @@ class synchronize_testcase extends \elis_database_test {
         $gis = array(
             $gradeitem->id => (object)array(
                 'id' => $gradeitem->id,
+                'itemtype' => 'mod',
                 'grademax' => $gradeitem->grademax,
             )
         );
@@ -1998,6 +2007,7 @@ class synchronize_testcase extends \elis_database_test {
         $compelements = array(
             $gradeitem->id => (object)array(
                 'id' => $coursecompletion->id,
+                'itemtype' => 'mod',
                 'completion_grade' => $coursecompletion->completion_grade
             )
         );
