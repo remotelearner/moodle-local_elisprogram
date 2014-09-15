@@ -45,18 +45,22 @@ class synchronize_testcase extends \elis_database_test {
         $timenow = time();
         $edatagenerator = new \elis_program_datagenerator($DB);
 
+        $mcoursecat = $this->getDataGenerator()->create_category();
+
         $mcourses = array(
             'linked1' => $this->getDataGenerator()->create_course(),
             'linked2' => $this->getDataGenerator()->create_course(),
             'linkedmultiple1' => $this->getDataGenerator()->create_course(),
             'notlinked1' => $this->getDataGenerator()->create_course(),
             'notlinked2' => $this->getDataGenerator()->create_course(),
+            'hascategory' => $this->getDataGenerator()->create_course(array('category' => $mcoursecat->id)),
         );
 
         $ecourses = array(
             0 => $edatagenerator->create_course(array('completion_grade' => 50, 'credits' => 12)),
             'linkedmultiple1_2' => $edatagenerator->create_course(array('completion_grade' => 51, 'credits' => 13)),
             'linkedmultiple3' => $edatagenerator->create_course(array('completion_grade' => 52, 'credits' => 14)),
+            'linkedtocoursewithcat' => $edatagenerator->create_course(array('completion_grade' => 53, 'credits' => 15)),
         );
 
         $eclasses = array(
@@ -65,6 +69,7 @@ class synchronize_testcase extends \elis_database_test {
             'linkedmultiple1' => $edatagenerator->create_pmclass(array('courseid' => $ecourses['linkedmultiple1_2']->id)),
             'linkedmultiple2' => $edatagenerator->create_pmclass(array('courseid' => $ecourses['linkedmultiple1_2']->id)),
             'linkedmultiple3' => $edatagenerator->create_pmclass(array('courseid' => $ecourses['linkedmultiple3']->id)),
+            'linkedtocoursewithcat' => $edatagenerator->create_pmclass(array('courseid' => $ecourses['linkedtocoursewithcat']->id)),
         );
 
         $classmoodlecourses = array(
@@ -73,15 +78,16 @@ class synchronize_testcase extends \elis_database_test {
                 $edatagenerator->assign_pmclass_to_moodlecourse($eclasses['linkedmultiple1']->id, $mcourses['linkedmultiple1']->id),
                 $edatagenerator->assign_pmclass_to_moodlecourse($eclasses['linkedmultiple2']->id, $mcourses['linkedmultiple1']->id),
                 $edatagenerator->assign_pmclass_to_moodlecourse($eclasses['linkedmultiple3']->id, $mcourses['linkedmultiple1']->id),
+                $edatagenerator->assign_pmclass_to_moodlecourse($eclasses['linkedtocoursewithcat']->id, $mcourses['hascategory']->id),
         );
 
         // Create users in different setups.
         $cases = array();
-        for ($i = 0; $i <= 7; $i++) {
+        for ($i = 0; $i <= 9; $i++) {
 
             // Holds data for each case so we can use it later for assertions.
             $case = array();
-            $case['muser'] = $this->getDataGenerator()->create_user(array('username' => 'testuser'.$i, 'idnumber' => 'testuser'.$i));;
+            $case['muser'] = $this->getDataGenerator()->create_user(array('username' => 'testuser'.$i, 'idnumber' => 'testuser'.$i));
 
             switch ($i) {
                 case 0:
@@ -276,6 +282,58 @@ class synchronize_testcase extends \elis_database_test {
                         'contextid' => $mcrsctx->id,
                         'userid' => $case['muser']->id
                     ));
+                    break;
+
+                case 8:
+                    // Course Connected to ELIS class.
+                    // Moodle User and ELIS user connected.
+                    // No direct role in the course.
+                    // No existing ELIS student information.
+                    // Role assigned at course category.
+                    $case['cuser'] = $edatagenerator->create_user((array)$case['muser']);
+                    $case['usermoodle'] = $edatagenerator->assign_euser_to_muser($case['cuser']->id, $case['muser']->id, $case['cuser']->idnumber);
+                    $case['mcourse'][] = $mcourses['hascategory'];
+                    $case['pmcourse'] = $ecourses['linkedtocoursewithcat'];
+                    $case['pmclass'][] = $eclasses['linkedtocoursewithcat'];
+                    $mcrscatctx = \context_coursecat::instance($mcoursecat->id);
+                    $gbookroles = explode(',', $CFG->gradebookroles);
+                    $case['roleassignment'] = $DB->insert_record('role_assignments', array(
+                        'roleid' => $gbookroles[0],
+                        'contextid' => $mcrscatctx->id,
+                        'userid' => $case['muser']->id
+                    ));
+                    break;
+
+                case 9:
+                    // Course Connected to ELIS class.
+                    // Moodle User and ELIS user connected.
+                    // No direct role in the course.
+                    // Existing ELIS student information.
+                    // Role assigned at course category.
+                    $case['cuser'] = $edatagenerator->create_user((array)$case['muser']);
+                    $case['usermoodle'] = $edatagenerator->assign_euser_to_muser($case['cuser']->id, $case['muser']->id, $case['cuser']->idnumber);
+                    $case['mcourse'][] = $mcourses['hascategory'];
+                    $case['pmcourse'] = $ecourses['linkedtocoursewithcat'];
+                    $case['pmclass'][] = $eclasses['linkedtocoursewithcat'];
+                    $mcrscatctx = \context_coursecat::instance($mcoursecat->id);
+                    $gbookroles = explode(',', $CFG->gradebookroles);
+                    $case['roleassignment'] = $DB->insert_record('role_assignments', array(
+                        'roleid' => $gbookroles[0],
+                        'contextid' => $mcrscatctx->id,
+                        'userid' => $case['muser']->id
+                    ));
+                    $case['student'] = (object)array(
+                        'classid' => $case['pmclass'][0]->id,
+                        'userid' => $case['cuser']->id,
+                        'enrolmenttime' => $timenow,
+                        'completetime' => 0,
+                        'endtime' => 0,
+                        'completestatusid' => STUSTATUS_NOTCOMPLETE,
+                        'grade' => 0,
+                        'credits' => 5,
+                        'locked' => 0,
+                    );
+                    $case['student']->id = $DB->insert_record('local_elisprogram_cls_enrol', $case['student']);
                     break;
             }
             $cases[$i] = $case;
@@ -481,11 +539,54 @@ class synchronize_testcase extends \elis_database_test {
                 'credits' => null,
                 'locked' => null,
             ),
+            // Case 8. User assigned gradebook role at course category level. No ELIS student information.
+            $cases[8]['muser']->id.'_'.$cases[8]['mcourse'][0]->id.'_'.$cases[8]['pmclass'][0]->id => (object)array(
+                'muid' => (string)$cases[8]['muser']->id,
+                'username' => (string)$cases[8]['muser']->username,
+                'cmid' => (string)$cases[8]['cuser']->id,
+                'moodlecourseid' => (string)$cases[8]['mcourse'][0]->id,
+                'pmclassid' => (string)$cases[8]['pmclass'][0]->id,
+                'pmcourseid' => (string)$cases[8]['pmcourse']->id,
+                'pmcoursecompletiongrade' => (string)$cases[8]['pmcourse']->completion_grade,
+                'pmcoursecredits' => (string)$cases[8]['pmcourse']->credits,
+                'id' => null,
+                'classid' => null,
+                'userid' => null,
+                'enrolmenttime' => null,
+                'completetime' => null,
+                'endtime' => null,
+                'completestatusid' => null,
+                'grade' => null,
+                'credits' => null,
+                'locked' => null,
+            ),
+            // Case 9. User assigned gradebook role at course category level. Existing ELIS student information.
+            $cases[9]['muser']->id.'_'.$cases[9]['mcourse'][0]->id.'_'.$cases[9]['pmclass'][0]->id => (object)array(
+                'muid' => (string)$cases[9]['muser']->id,
+                'username' => (string)$cases[9]['muser']->username,
+                'cmid' => (string)$cases[9]['cuser']->id,
+                'moodlecourseid' => (string)$cases[9]['mcourse'][0]->id,
+                'pmclassid' => (string)$cases[9]['pmclass'][0]->id,
+                'pmcourseid' => (string)$cases[9]['pmcourse']->id,
+                'pmcoursecompletiongrade' => (string)$cases[9]['pmcourse']->completion_grade,
+                'pmcoursecredits' => (string)$cases[9]['pmcourse']->credits,
+                'id' => (string)$cases[9]['student']->id,
+                'classid' => (string)$cases[9]['student']->classid,
+                'userid' => (string)$cases[9]['student']->userid,
+                'enrolmenttime' => (string)$cases[9]['student']->enrolmenttime,
+                'completetime' => (string)$cases[9]['student']->completetime,
+                'endtime' => (string)$cases[9]['student']->endtime,
+                'completestatusid' => (string)$cases[9]['student']->completestatusid,
+                'grade' => (string)$cases[9]['student']->grade,
+                'credits' => (string)$cases[9]['student']->credits,
+                'locked' => (string)$cases[9]['student']->locked,
+            ),
         );
+        ksort($expectedresult);
 
         $this->assertNotEmpty($syncableusers);
-        $this->assertEquals(count($syncableusers), count($expectedresult));
-        $this->assertEquals(array_keys($syncableusers), array_keys($expectedresult));
+        $this->assertEquals(count($expectedresult), count($syncableusers));
+        $this->assertEquals(array_keys($expectedresult), array_keys($syncableusers));
         foreach ($expectedresult as $k => $v) {
             $this->assertArrayHasKey($k, $syncableusers);
             $this->assertEquals($v, $syncableusers[$k], $k.' not equal');
@@ -496,7 +597,7 @@ class synchronize_testcase extends \elis_database_test {
             $sync = new \local_elisprogram\moodle\synchronize();
             $rs = $sync->get_syncable_users($case['muser']->id);
 
-            if ($i <= 4) {
+            if (in_array($i, array(0, 1, 2, 3, 4, 8, 9), true)) {
                 // These users must return something.
                 $this->assertTrue($rs->valid());
                 foreach ($rs as $i => $rec) {
@@ -504,7 +605,7 @@ class synchronize_testcase extends \elis_database_test {
                     $this->assertArrayHasKey($k, $expectedresult);
                     $this->assertEquals($expectedresult[$k], $rec);
                 }
-            } else {
+            } elseif (in_array($i, array(5, 6, 7), true)) {
                 // These users must not return anything.
                 $this->assertEmpty($rs);
             }

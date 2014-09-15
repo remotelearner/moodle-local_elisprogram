@@ -79,15 +79,16 @@ class synchronize {
                   FROM {user} u
                   JOIN {role_assignments} ra ON u.id = ra.userid
                   JOIN {context} ctx ON ctx.id = ra.contextid
+                  JOIN {context} ctx2 ON (ctx2.path LIKE concat('%/',ctx.id,'/%') OR ctx2.path LIKE concat('%/',ctx.id))
+                       AND ctx2.contextlevel = ".CONTEXT_COURSE."
                   JOIN {".\usermoodle::TABLE."} umdl ON umdl.muserid = u.id
                   JOIN {".\user::TABLE."} cu ON cu.id = umdl.cuserid
-                  JOIN {course} crs ON crs.id = ctx.instanceid
+                  JOIN {course} crs ON crs.id = ctx2.instanceid
                   JOIN {".\classmoodlecourse::TABLE."} cmc ON cmc.moodlecourseid = crs.id
                   JOIN {".\pmclass::TABLE."} cls ON cls.id = cmc.classid
                   JOIN {".\course::TABLE."} ecrs ON ecrs.id = cls.courseid
              LEFT JOIN {".\student::TABLE."} stu ON stu.userid = cu.id AND stu.classid = cls.id
                  WHERE ra.roleid $gbrsql
-                       AND ctx.contextlevel = ".CONTEXT_COURSE."
                        AND u.deleted = 0
                        {$userfilter}
               GROUP BY muid, pmclassid
