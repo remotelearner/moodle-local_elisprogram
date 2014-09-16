@@ -53,7 +53,7 @@ trait customfieldfilteringtrait {
                   FROM {local_eliscore_field} field
                   JOIN {local_eliscore_field_clevels} ctx ON ctx.fieldid = field.id
                   JOIN {local_eliscore_field_owner} owner ON owner.fieldid = field.id AND plugin = "manual"
-                 WHERE (field.datatype = "char" OR field.datatype = "text")
+                 WHERE field.datatype != "bool"
                        AND ctx.contextlevel = ?';
         $customfields = $this->DB->get_recordset_sql($sql, array($contextlevel));
         foreach ($customfields as $field) {
@@ -62,6 +62,7 @@ trait customfieldfilteringtrait {
                 $field->params = array();
             }
 
+            $field->shortname = strtolower($field->shortname); // TBD: Moodle DB API converting them to lower case so we must too to get value!
             $filtername = 'cf_'.$field->shortname;
             $fielddata[$filtername] = $field;
 
@@ -79,6 +80,8 @@ trait customfieldfilteringtrait {
                     $filtermenu->set_additionalsearchparams($menuofchoicesadditionalparams);
                 }
                 $fieldfilters[] = $filtermenu;
+            } else if (isset($field->params['control']) && $field->params['control'] === 'datetime') {
+                $fieldfilters[] = new \deepsight_filter_date($this->DB, $filtername, $field->name, $filterfielddata);
             } else {
                 $fieldfilters[] = new \deepsight_filter_textsearch($this->DB, $filtername, $field->name, $filterfielddata);
             }
@@ -100,8 +103,12 @@ trait customfieldfilteringtrait {
         if (!empty($fields)) {
             $joinsql[] = 'JOIN {context} ctx ON ctx.instanceid = element.id AND ctx.contextlevel='.$ctxlevel;
             foreach ($fields as $fieldname => $field) {
-                $customfieldjoin = 'LEFT JOIN {local_eliscore_fld_data_'.$field->datatype.'} '.$fieldname.' ON ';
+                $datatable = ($field->datatype == 'datetime') ? 'int' : $field->datatype;
+                $customfieldjoin = 'LEFT JOIN {local_eliscore_fld_data_'.$datatable.'} '.$fieldname.' ON ';
                 $customfieldjoin .= $fieldname.'.contextid = ctx.id AND '.$fieldname.'.fieldid = '.$field->id;
+                $customfieldjoin .= '
+                    LEFT JOIN {local_eliscore_fld_data_'.$datatable.'} '.$fieldname.'_default ON ';
+                $customfieldjoin .= $fieldname.'_default.contextid IS NULL AND '.$fieldname.'_default.fieldid = '.$field->id;
                 $joinsql[] = $customfieldjoin;
             }
         }

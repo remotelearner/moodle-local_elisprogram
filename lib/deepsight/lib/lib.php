@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2013 onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -1637,7 +1637,17 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
     protected function get_select_fields(array $filters) {
         $selectfields = array('element.id AS element_id');
         foreach ($this->fixed_columns as $field => $label) {
-            $selectfields[] = $field.' AS '.str_replace('.', '_', $field);
+            if (substr($field, 0, 3) == 'cf_') {
+                $basetable = substr($field, 0, -5);
+                $fielddefault = $basetable.'_default.data';
+                $selectfields[] = "
+                        (CASE
+                            WHEN {$field} IS NULL THEN {$fielddefault}
+                            ELSE {$field}
+                         END) AS ".str_replace('.', '_', $field);
+            } else {
+                $selectfields[] = $field.' AS '.str_replace('.', '_', $field);
+            }
         }
 
         foreach ($filters as $filtername => $data) {
@@ -1830,5 +1840,21 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
         }
 
         return array($additionalfilters, $additionalparams);
+    }
+
+    /**
+     * results_row_transform() method to transform custom datetime fields
+     *
+     * @param array $row An array for a single result.
+     * @return array The transformed result.
+     */
+    protected function results_row_transform(array $row) {
+        foreach ($this->customfields as $fieldname => $field) {
+            $elem = $fieldname.'_data';
+            if (isset($row[$elem]) && isset($field->params['control']) && $field->params['control'] == 'datetime') {
+                $row[$elem] = ds_process_displaytime($row[$elem]);
+            }
+        }
+        return $row;
     }
 }

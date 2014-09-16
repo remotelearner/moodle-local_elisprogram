@@ -121,7 +121,7 @@ class deepsight_datatable_courseset extends deepsight_datatable_standard {
         if (isset($row['element_timemodified'])) {
             $row['element_timemodified'] = ds_process_displaytime($row['element_timemodified']);
         }
-        return $row;
+        return parent::results_row_transform($row);
     }
 
     /**

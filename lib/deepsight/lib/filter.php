@@ -191,7 +191,17 @@ abstract class deepsight_filter_standard implements deepsight_filter {
     public function get_select_fields() {
         $displayfields = array();
         foreach ($this->field_aliases as $field => $fieldalias) {
-            $displayfields[] = $field.' AS '.$fieldalias;
+            if (substr($field, 0, 3) == 'cf_') {
+                $basetable = substr($field, 0, -5);
+                $fielddefault = $basetable.'_default.data';
+                $displayfields[] = "
+                        (CASE
+                            WHEN {$field} IS NULL THEN {$fielddefault}
+                            ELSE {$field}
+                         END) AS ".str_replace('.', '_', $field);
+            } else {
+                $displayfields[] = $field.' AS '.$fieldalias;
+            }
         }
         return $displayfields;
     }
