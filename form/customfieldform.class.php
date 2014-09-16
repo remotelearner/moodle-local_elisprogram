@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -377,12 +377,12 @@ class customfieldform extends cmform {
                 $editsql = "AND ef.id != {$fid}";
             }
 
-            $sql = "SELECT ef.id
-                    FROM {".field::TABLE."} ef
-                    INNER JOIN {".field_contextlevel::TABLE."} cl ON ef.id = cl.fieldid
-                    WHERE ef.shortname = ?
-                    AND cl.contextlevel = ?
-                    {$editsql}";
+            $sql = 'SELECT ef.id
+                      FROM {'.field::TABLE.'} ef
+                INNER JOIN {'.field_contextlevel::TABLE."} cl ON ef.id = cl.fieldid
+                     WHERE LOWER(ef.shortname) = LOWER(?)
+                           AND cl.contextlevel = ?
+                           {$editsql}";
 
             $params =  array($data['shortname'], $contextlevel);
 
