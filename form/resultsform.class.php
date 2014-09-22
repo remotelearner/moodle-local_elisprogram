@@ -83,6 +83,7 @@ class cmEngineForm extends cmform {
         $PAGE->requires->css('/local/elisprogram/js/results_engine/jquery-ui-1.8.16.custom.css', true);
         $PAGE->requires->js('/local/elisprogram/js/results_engine/jquery-1.6.2.min.js', true);
         $PAGE->requires->js('/local/elisprogram/js/results_engine/jquery-ui-1.8.16.custom.js', true);
+        $PAGE->requires->js('/local/elisprogram/js/results_engine/custom-delete.js', true);
         $PAGE->requires->yui_module('moodle-local_elisprogram-resultsengine', 'M.local_elisprogram.init_resultsengineform',
                 array(array('wwwroot' => $CFG->wwwroot))
         );
@@ -358,8 +359,7 @@ class cmEngineForm extends cmform {
         $parsed = array();
 
         $langsuffix = $this->types[$actiontype];
-        $prefix = $langsuffix .'_';
-
+        $prefix = $langsuffix.'_';
         // Fallback check, if add another range button pushed skip vaidation.
         // Otherwise validate and make sure all rows have been filled correctly out
         if (!array_key_exists($prefix .'add', $data)) {
@@ -653,7 +653,8 @@ class cmEngineForm extends cmform {
                 'title' => $deletescoretype,
                 'alt' => $deletescoretype,
                 'class' => 'elisicon-remove elisiconcolored',
-                'onclick' => $this->prefixes[$type].'_object.deleteRow(this); return false;'
+                //use the custom delete function to delete rows (custom-delete.js)
+                'onclick' => "customDeleteRow(this); return false;"
             );
             $group[] = $mform->createElement('link', 'delete', '', "#", '', $attributes);
 
