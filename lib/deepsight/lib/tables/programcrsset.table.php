@@ -136,6 +136,8 @@ class deepsight_datatable_programcrsset_assigned extends deepsight_datatable_pro
                 break;
             }
         }
+        $row['meta']['numcredits'] = $prgcrsset->crsset->total_credits();
+        $row['meta']['numcourses'] = $prgcrsset->crsset->total_courses();
         $row['meta']['isactive'] = ($isactive > 0);
         $row['meta']['candel'] = !$row['meta']['isactive'] || $crssetpage->_has_capability('local/elisprogram:courseset_delete_active');
         $row['meta']['canedit'] = !$row['meta']['isactive'] || $crssetpage->_has_capability('local/elisprogram:courseset_edit_active');
@@ -321,6 +323,24 @@ class deepsight_datatable_programcrsset_available extends deepsight_datatable_pr
             $additionalparams = array_merge($additionalparams, $associatefilter['where_parameters']);
         }
         return array($additionalfilters, $additionalparams);
+    }
+
+    /**
+     * Formats the delete active permission params.
+     *
+     * @param array $row An array for a single result.
+     * @return array The transformed result.
+     */
+    protected function results_row_transform(array $row) {
+        require_once(\elispm::lib('data/courseset.class.php'));
+        $row = parent::results_row_transform($row);
+        $filters = [new \field_filter('id', $row['element_id'])];
+        $crssets = \courseset::find(new \AND_filter($filters));
+        $crssets = $crssets->to_array();
+        $crsset = array_shift($crssets);
+        $row['meta']['numcredits'] = $crsset->total_credits();
+        $row['meta']['numcourses'] = $crsset->total_courses();
+        return $row;
     }
 
     /**

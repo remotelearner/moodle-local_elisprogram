@@ -36,12 +36,37 @@ class deepsight_datatable_crssetprogram_base extends deepsight_datatable_program
      */
     protected $id;
 
+    /** @var \courseset The courseset object that matches $this->id. */
+    protected $crsset = null;
+
+    /** @var float The total number of credits in the courseset. */
+    protected $crssettotalcredits = null;
+
+    /** @var int The total number of courses in the courseset. */
+    protected $crssettotalcourses = null;
+
     /**
      * Sets the current courseset ID
      * @param int $crssetid The ID of the courseset to use.
      */
     public function set_id($crssetid) {
         $this->id = (int)$crssetid;
+    }
+
+    /**
+     * Populate the internal courseset object and attributes.
+     */
+    protected function populate_crsset() {
+        if (empty($this->id)) {
+            return false;
+        }
+        require_once(\elispm::lib('data/courseset.class.php'));
+        $filters = [new \field_filter('id', $this->id)];
+        $crssets = \courseset::find(new \AND_filter($filters));
+        $crssets = $crssets->to_array();
+        $this->crsset = array_shift($crssets);
+        $this->crssettotalcredits = $this->crsset->total_credits();
+        $this->crssettotalcourses = $this->crsset->total_courses();
     }
 
     /**
@@ -147,6 +172,11 @@ class deepsight_datatable_crssetprogram_assigned extends deepsight_datatable_crs
                 break;
             }
         }
+        if ($this->crsset === null) {
+            $this->populate_crsset();
+        }
+        $row['meta']['numcredits'] = $this->crssettotalcredits;
+        $row['meta']['numcourses'] = $this->crssettotalcourses;
         $row['meta']['isactive'] = ($isactive > 0);
         $row['meta']['candel'] = !$row['meta']['isactive'] || $this->crssetpage->_has_capability('local/elisprogram:courseset_delete_active');
         $row['meta']['canedit'] = !$row['meta']['isactive'] || $this->crssetpage->_has_capability('local/elisprogram:courseset_edit_active');
@@ -330,6 +360,22 @@ class deepsight_datatable_crssetprogram_available extends deepsight_datatable_cr
             $additionalparams = array_merge($additionalparams, $associatefilter['where_parameters']);
         }
         return array($additionalfilters, $additionalparams);
+    }
+
+    /**
+     * Formats the delete active permission params.
+     *
+     * @param array $row An array for a single result.
+     * @return array The transformed result.
+     */
+    protected function results_row_transform(array $row) {
+        $row = parent::results_row_transform($row);
+        if ($this->crsset === null) {
+            $this->populate_crsset();
+        }
+        $row['meta']['numcredits'] = $this->crssettotalcredits;
+        $row['meta']['numcourses'] = $this->crssettotalcourses;
+        return $row;
     }
 
     /**

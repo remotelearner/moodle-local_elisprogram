@@ -182,6 +182,7 @@ class deepsight_action_crssetprogram_assign extends deepsight_action_crssetprogr
         if (!is_array($assocdata)) {
             throw new Exception('Did not receive valid association data.');
         }
+        $failedops = [];
         if (!empty($assocdata)) {
             foreach ($elements as $prgid => $label) {
                 if ($this->can_manage_assoc($crssetid, $prgid) === true) {
@@ -192,17 +193,41 @@ class deepsight_action_crssetprogram_assign extends deepsight_action_crssetprogr
                             $prgcrsset->$field = $assocdata[$field];
                         }
                     }
-                    $prgcrsset->save();
+                    if ($bulkaction === true) {
+                        try {
+                            $prgcrsset->save();
+                        } catch (\Exception $e) {
+                            $failedops[] = $prgid;
+                        }
+                    } else {
+                        $prgcrsset->save();
+                    }
                 }
             }
         }
-        $formatteddata = $this->format_assocdata_for_display($assocdata);
-        return array(
-            'result' => 'success',
-            'msg' => 'Success',
-            'displaydata' => $formatteddata,
-            'saveddata' => $assocdata
-        );
+
+        if ($bulkaction === true) {
+            if (!empty($failedops)) {
+                return [
+                    'result' => 'partialsuccess',
+                    'msg' => get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram'),
+                    'failedops' => $failedops,
+                ];
+            } else {
+                return [
+                    'result' => 'success',
+                    'msg' => 'Success',
+                ];
+            }
+        } else {
+            $formatteddata = $this->format_assocdata_for_display($assocdata);
+            return [
+                'result' => 'success',
+                'msg' => 'Success',
+                'displaydata' => $formatteddata,
+                'saveddata' => $assocdata,
+            ];
+        }
     }
 }
 
@@ -249,6 +274,7 @@ class deepsight_action_crssetprogram_edit extends deepsight_action_crssetprogram
         if (!is_array($assocdata)) {
             throw new Exception('Did not receive valid association data.');
         }
+        $failedops = [];
         if (!empty($assocdata)) {
             foreach ($elements as $prgid => $label) {
                 if ($this->can_manage_assoc($crssetid, $prgid) === true) {
@@ -261,18 +287,42 @@ class deepsight_action_crssetprogram_edit extends deepsight_action_crssetprogram
                                 $prgcrsset->$field = $assocdata[$field];
                             }
                         }
-                        $prgcrsset->save();
+                        if ($bulkaction === true) {
+                            try {
+                                $prgcrsset->save();
+                            } catch (\Exception $e) {
+                                $failedops[] = $prgid;
+                            }
+                        } else {
+                            $prgcrsset->save();
+                        }
                     }
                 }
             }
         }
-        $formatteddata = $this->format_assocdata_for_display($assocdata);
-        return array(
-            'result' => 'success',
-            'msg' => 'Success',
-            'displaydata' => $formatteddata,
-            'saveddata' => $assocdata
-        );
+
+        if ($bulkaction === true) {
+            if (!empty($failedops)) {
+                return [
+                    'result' => 'partialsuccess',
+                    'msg' => 'Partial Success',
+                    'failedops' => $failedops,
+                ];
+            } else {
+                return [
+                    'result' => 'success',
+                    'msg' => 'Success',
+                ];
+            }
+        } else {
+            $formatteddata = $this->format_assocdata_for_display($assocdata);
+            return [
+                'result' => 'success',
+                'msg' => 'Success',
+                'displaydata' => $formatteddata,
+                'saveddata' => $assocdata,
+            ];
+        }
     }
 }
 

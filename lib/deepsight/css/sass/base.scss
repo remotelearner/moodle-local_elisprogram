@@ -46,9 +46,6 @@
     top: 3px;
     margin: 0px 4px 0 2px;
 }
-.deepsight_datatable tr:hover {
-    background-color: #def;
-}
 .deepsight_datatable td {
     padding: 6px;
     vertical-align: middle;
@@ -74,7 +71,10 @@
     cursor: pointer;
 }
 .deepsight_datatable tr.selected {
-    background-color: #cde;
+    background-color: #cde !important;
+    td {
+        background: transparent !important;
+    }
 }
 .deepsight_datatable tr.active {
     background-color: rgba(0, 0, 0, 0.25);
@@ -122,6 +122,9 @@
 .deepsight_datatable.loading {
     opacity: 0.5;
     background: transparent url('./img/rlrotate_big_transwhite.gif') no-repeat center center;
+    td {
+        background: transparent !important;
+    }
 }
 .deepsight_datatable.loading tr {
     background: transparent;
@@ -196,6 +199,15 @@
     text-align: left;
     padding: 2px 5px;
     display: table-cell;
+    vertical-align: top;
+}
+.deepsight_actionpanel .data_wrpr input[type="text"].error {
+    border-color: rgba(236, 82, 82, 0.8);
+    outline: 0;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(236, 82, 82, 0.6);
+    -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(236, 82, 82, 0.6);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(236, 82, 82, 0.6);
+    background-color: rgba(255, 230, 230, 1);
 }
 .deepsight_actionpanel .data_wrpr > div:first-child > span {
     text-align: center;
