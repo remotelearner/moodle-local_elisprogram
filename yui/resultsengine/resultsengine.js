@@ -406,7 +406,9 @@ YUI.add('moodle-local_elisprogram-resultsengine', function(Y) {
 
             // Add a scroll bar to be displayed if the listing it larger than the panel height
             Y.one('.yui3-widget-bd').setStyle('max-height', '347px');
-            Y.one('.yui3-widget-bd').setStyle('overflow-y', 'auto');
+            Y.one('.yui3-widget-bd').setStyle('overflow', 'auto');
+            //to keep the widget from creeping up or down the screen
+            Y.one('.yui3-widget').setY(560);
             var selectorpanelmodalnode = Y.one('#selectorpanelmodal');
             this.selectorpanelmodalnodeprop = selectorpanelmodalnode;
 
