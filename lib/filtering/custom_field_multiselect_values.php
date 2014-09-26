@@ -175,7 +175,6 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
         $context = \local_eliscore\context\helper::get_level_from_name($field_type);
         $fields = field::get_for_context_level($context);
         $fields = $fields ? $fields : array();
-        $testfields = array();
         foreach ($fields as $field) {
             //make sure the current user can access this field in at least one
             //course context
@@ -257,6 +256,6 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
     }
 
     function reset_js() {
-        return 'cf_reset();';
+        return $this->check_for_custom_fields('course') ? 'cf_reset();' : '';
     }
 }
