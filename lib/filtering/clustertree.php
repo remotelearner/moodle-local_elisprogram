@@ -151,7 +151,7 @@ class checkbox_treerepresentation extends treerepresentation {
         }
 
         //use the appropriate css for the menu
-        $style = '<style>@import url("'.$CFG->wwwroot.'/lib/yui/2.9.0/build/treeview/assets/skins/sam/treeview.css");</style>'; // TBV
+        $style = '<style>@import url("'.$CFG->wwwroot.'/lib/yuilib/2in3/2.9.0/build/assets/skins/sam/treeview.css");</style>'; // TBV
 
         //YUI needs an appropriate div to place the tree in
         $result = $style ."<div id=\"cluster_param_tree_". $this->instanceid ."_". $uniqueid ."\" class=\"ygtv-checkbox felement\"></div>";
@@ -555,7 +555,7 @@ class generalized_filter_clustertree extends generalized_filter_type {
         /**
          * CSS includes
          */
-        $mform->addElement('html', '<style>@import url("'.$CFG->wwwroot.'/lib/yui/2.9.0/build/treeview/assets/skins/sam/treeview-skin.css");</style>'.$js);
+        $mform->addElement('html', '<style>@import url("'.$CFG->wwwroot.'/lib/yuilib/2in3/2.9.0/build/yui2-skin-sam-treeview/assets/skins/sam/treeview-skin.css");</style>'.$js);
 
         /**
          * Get set up necessary CSS classes
@@ -684,7 +684,7 @@ class generalized_filter_clustertree extends generalized_filter_type {
 
         // cluster tree
         $clustertreehtml = '<div class="fitem"><div class="fitemtitle"></div>'.
-                           '<style>@import url("'.$CFG->wwwroot.'/lib/yui/2.9.0/build/treeview/assets/skins/sam/treeview.css");</style>'.
+                           '<style>@import url("'.$CFG->wwwroot.'/lib/yuilib/2in3/2.9.0/build/assets/skins/sam/treeview.css");</style>'.
                            '<div id="cluster_param_tree_'.$tree->instanceid.'_'.$this->_uniqueid.'" class="ygtv-checkbox felement"></div>'.
                            '</div>';
         $mform->addElement('html', $clustertreehtml);
