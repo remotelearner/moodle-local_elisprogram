@@ -206,9 +206,11 @@ class widget extends \local_elisprogram\lib\widgetbase {
                 'generatortitle' => get_string('generatortitle', 'eliswidget_enrolment'),
             ],
         ];
-        $initjs = "document.addEventListener('DOMContentLoaded', function(event) { ";
+        $initjs = "\n(function($) {"."\n";
+        $initjs .= "$(function() { ";
         $initjs .= "$('#".$uniqid."').parents('.eliswidget_enrolment').eliswidget_enrolment(".json_encode($initopts)."); ";
-        $initjs .= "});";
+        $initjs .= "});\n";
+        $initjs .= "\n".'})(jQuery); jQuery.noConflict()';
         $html .= \html_writer::tag('script', $initjs);
 
         $html .= \html_writer::end_tag('div');
@@ -226,6 +228,18 @@ class widget extends \local_elisprogram\lib\widgetbase {
     }
 
     /**
+     * Get an array of javascript files that are needed by the widget and must be loaded in the head of the page.
+     *
+     * @param bool $fullscreen Whether the widget is being displayed full-screen or not.
+     * @return array Array of URLs or \moodle_url objects to require for the widget.
+     */
+    public function get_js_dependencies_head($fullscreen = false) {
+        return [
+                new \moodle_url('/local/elisprogram/lib/deepsight/js/jquery-1.9.1.min.js')
+        ];
+    }
+
+    /**
      * Get an array of js files that are needed by the widget.
      *
      * @param bool $fullscreen Whether the widget is being displayed full-screen or not.
@@ -233,7 +247,6 @@ class widget extends \local_elisprogram\lib\widgetbase {
      */
     public function get_js_dependencies($fullscreen = false) {
         return [
-                new \moodle_url('/local/elisprogram/lib/deepsight/js/jquery-1.9.1.min.js'),
                 new \moodle_url('/local/elisprogram/lib/deepsight/js/support.js'),
                 new \moodle_url('/local/elisprogram/lib/deepsight/js/filters/deepsight_filterbar.js'),
                 new \moodle_url('/local/elisprogram/lib/deepsight/js/filters/deepsight_filter_generator.js'),

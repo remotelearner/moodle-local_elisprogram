@@ -65,6 +65,14 @@ interface widgetinterface {
     public function get_identifier();
 
     /**
+     * Get an array of javascript files that are needed by the widget and must be loaded in the head of the page.
+     *
+     * @param bool $fullscreen Whether the widget is being displayed full-screen or not.
+     * @return array Array of URLs or \moodle_url objects to require for the widget.
+     */
+    public function get_js_dependencies_head($fullscreen = false);
+
+    /**
      * Get an array of javascript files that are needed by the widget.
      *
      * @param bool $fullscreen Whether the widget is being displayed full-screen or not.

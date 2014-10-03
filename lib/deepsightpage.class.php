@@ -148,6 +148,11 @@ abstract class deepsightpage extends pm_page {
     }
 
     public function print_header($_) {
+        global $PAGE;
+        $action = $this->optional_param('action', 'default', PARAM_ACTION);
+        if ($action === 'add' || $action === 'default') {
+            $PAGE->requires->js('/local/elisprogram/lib/deepsight/js/jquery-1.9.1.min.js', true);
+        }
         if (!$this->is_bare()) {
             parent::print_header($_);
             $this->print_tabs();
@@ -302,7 +307,6 @@ abstract class deepsightpage extends pm_page {
         echo $bulkactionpanel->get_html();
 
         // JS.
-        echo '<script src="'.$CFG->wwwroot.'/local/elisprogram/lib/deepsight/js/jquery-1.9.1.min.js"></script>';
         $jsdeps = $table->get_js_dependencies();
         foreach ($jsdeps as $jsfile) {
             $PAGE->requires->js($jsfile);
@@ -333,7 +337,6 @@ abstract class deepsightpage extends pm_page {
         echo $bulkactionpanel->get_html();
 
         // JS.
-        echo '<script src="'.$CFG->wwwroot.'/local/elisprogram/lib/deepsight/js/jquery-1.9.1.min.js"></script>';
         $jsdeps = $table->get_js_dependencies();
         foreach ($jsdeps as $jsfile) {
             $PAGE->requires->js($jsfile);
