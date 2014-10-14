@@ -105,6 +105,10 @@ fieldset fieldset.engineform {
     padding: 5px;
 }
 
+.engineform fieldset{
+    margin-left:0px !important;
+}
+
 .mform #activationrules .fitem .fitemtitle {
 	width: 0px;
 }
