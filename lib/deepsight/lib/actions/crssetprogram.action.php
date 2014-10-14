@@ -305,7 +305,7 @@ class deepsight_action_crssetprogram_edit extends deepsight_action_crssetprogram
             if (!empty($failedops)) {
                 return [
                     'result' => 'partialsuccess',
-                    'msg' => 'Partial Success',
+                    'msg' => get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram'),
                     'failedops' => $failedops,
                 ];
             } else {

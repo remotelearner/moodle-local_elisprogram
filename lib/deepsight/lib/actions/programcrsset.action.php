@@ -135,7 +135,7 @@ class deepsight_action_programcrsset_assign extends deepsight_action_programcrss
             if (!empty($failedops)) {
                 return [
                     'result' => 'partialsuccess',
-                    'msg' => 'Partial Success',
+                    'msg' => get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram'),
                     'failedops' => $failedops,
                 ];
             } else {
@@ -230,7 +230,7 @@ class deepsight_action_programcrsset_edit extends deepsight_action_programcrsset
             if (!empty($failedops)) {
                 return [
                     'result' => 'partialsuccess',
-                    'msg' => 'Partial Success',
+                    'msg' => get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram'),
                     'failedops' => $failedops,
                 ];
             } else {
