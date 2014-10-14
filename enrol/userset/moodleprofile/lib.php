@@ -307,7 +307,7 @@ function cluster_profile_update_handler($userdata) {
     }
 
     // make sure a CM user exists
-    pm_moodle_user_to_pm($userdata);
+    pm_moodle_user_to_pm($userdata, true);
 
     if (!isset($userdata->id)) {
         return true;
