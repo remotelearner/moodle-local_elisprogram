@@ -127,7 +127,7 @@ $observers = array(
         array (
             'eventname'   => '\core\event\user_updated',
             'includefile' => '/local/elisprogram/lib/lib.php',
-            'callback'    => 'pm_moodle_user_to_pm',
+            'callback'    => 'pm_moodle_user_to_pm_event',
             'internal'    => false
         ),
         array (
