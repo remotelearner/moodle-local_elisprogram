@@ -93,21 +93,13 @@ class deepsight_action_crssetcourse_assign extends deepsight_action_confirm {
      * @return array An array to format as JSON and return to the Javascript.
      */
     protected function _respond_to_js(array $elements, $bulkaction) {
-        global $DB;
         $crssetid = required_param('id', PARAM_INT);
-        // No association data
-        foreach ($elements as $courseid => $label) {
-            if ($this->can_manage_assoc($crssetid, $courseid) === true) {
-                $crssetcourse = new crssetcourse(array('crssetid' => $crssetid, 'courseid' => $courseid));
-                $crssetcourse->save();
-            }
-        }
-        return array(
-            'result' => 'success',
-            'msg' => 'Success',
-            'displaydata' => array(),
-            'saveddata' => array()
-        );
+        $assocclass = 'crssetcourse';
+        $assocparams = ['main' => 'crssetid', 'incoming' => 'courseid'];
+        $assocfields = [];
+        $assocdata = [];
+        $faillang = get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram');
+        return $this->attempt_associate($crssetid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata, $faillang);
     }
 
     /**
@@ -204,16 +196,11 @@ class deepsight_action_crssetcourse_unassign extends deepsight_action_confirm {
      * @return array An array to format as JSON and return to the Javascript.
      */
     protected function _respond_to_js(array $elements, $bulkaction) {
-        global $DB;
         $crssetid = required_param('id', PARAM_INT);
-        foreach ($elements as $courseid => $label) {
-            if ($this->can_unassign($crssetid, $courseid) === true) {
-                $assignrec = $DB->get_record(crssetcourse::TABLE, array('crssetid' => $crssetid, 'courseid' => $courseid));
-                $crssetcourse = new crssetcourse($assignrec);
-                $crssetcourse->delete();
-            }
-        }
-        return array('result' => 'success', 'msg'=>'Success');
+        $assocclass = 'crssetcourse';
+        $assocparams = ['main' => 'crssetid', 'incoming' => 'courseid'];
+        $faillang = get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram');
+        return $this->attempt_unassociate($crssetid, $elements, $bulkaction, $assocclass, $assocparams, $faillang);
     }
 
     /**
@@ -222,7 +209,7 @@ class deepsight_action_crssetcourse_unassign extends deepsight_action_confirm {
      * @param int $courseid The ID of the course, 0 means any course in courseset
      * @return bool Whether the current can unassign (true) or not (false)
      */
-    protected function can_unassign($crssetid, $courseid) {
+    protected function can_manage_assoc($crssetid, $courseid) {
         global $USER;
 
         $crssetctx = \local_elisprogram\context\courseset::instance($crssetid);

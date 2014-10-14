@@ -278,13 +278,16 @@ class deepsight_action_enrol extends deepsight_action_standard {
         if (empty($enroldata)) {
             throw new Exception('Did not receive valid enrolment data.');
         }
-
         // Attempt enrolment.
+        $failedops = [];
         $waitlist = array();
         foreach ($elements as $userid => $label) {
 
             // Skip invalid userids or users which we dont have permission to modify.
             if (!is_numeric($userid) || !student::can_manage_assoc($userid, $classid)) {
+                if ($bulkaction === true) {
+                    $failedops[] = $userid;
+                }
                 continue;
             }
 
@@ -305,9 +308,13 @@ class deepsight_action_enrol extends deepsight_action_standard {
                 $this->datatable->bulklist_modify(array(), array($userid));
             } catch (pmclass_enrolment_limit_validation_exception $e) {
                 $waitlist[] = array('userid' => $userid, 'name' => $label);
-            } catch (Exception $e) {
-                $param = array('message' => $e->getMessage());
-                throw new Exception(get_string('record_not_created_reason', 'local_elisprogram', $param));
+            } catch (\Exception $e) {
+                if ($bulkaction === true) {
+                    $failedops[] = $userid;
+                } else {
+                    $param = array('message' => $e->getMessage());
+                    throw new Exception(get_string('record_not_created_reason', 'local_elisprogram', $param));
+                }
             }
         }
 
@@ -319,8 +326,17 @@ class deepsight_action_enrol extends deepsight_action_standard {
                     'users' => 'bulklist',
                     'total' => $totalusers
                 );
+            } else if (!empty($failedops)) {
+                return [
+                    'result' => 'partialsuccess',
+                    'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                    'failedops' => $failedops,
+                ];
             } else {
-                return array('result' => 'success');
+                return [
+                    'result' => 'success',
+                    'msg' => 'Success',
+                ];
             }
         } else {
             return (!empty($waitlist))

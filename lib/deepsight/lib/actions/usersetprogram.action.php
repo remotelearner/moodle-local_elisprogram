@@ -25,9 +25,33 @@
  */
 
 /**
+ * Trait containing shared methods.
+ */
+trait deepsight_action_usersetprogram {
+    /**
+     * Determine whether the current user can manage an association.
+     *
+     * @param int $usersetid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param int $programid The ID of the incoming element. The is the ID of the 'many', in a 'many-to-one' association.
+     * @return bool Whether the current can manage (true) or not (false)
+     */
+    protected function can_manage_assoc($usersetid, $programid) {
+        global $USER;
+        $perm = 'local/elisprogram:associate';
+        $pgmassocctx = pm_context_set::for_user_with_capability('curriculum', $perm, $USER->id);
+        $programassociateallowed = ($pgmassocctx->context_allowed($programid, 'curriculum') === true) ? true : false;
+        $clstassocctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
+        $usersetassociateallowed = ($clstassocctx->context_allowed($usersetid, 'cluster') === true) ? true : false;
+        return ($programassociateallowed === true && $usersetassociateallowed === true) ? true : false;
+    }
+}
+
+/**
  * An action to assign programs to a userset and set the autoenrol flag.
  */
 class deepsight_action_usersetprogram_assign extends deepsight_action_standard {
+    use deepsight_action_usersetprogram;
+
     const TYPE = 'usersetprogram_assignedit';
     public $label = 'Assign';
     public $icon = 'elisicon-assoc';
@@ -90,28 +114,33 @@ class deepsight_action_usersetprogram_assign extends deepsight_action_standard {
         global $DB;
         $usersetid = required_param('id', PARAM_INT);
         $autoenrol = optional_param('autoenrol', 0, PARAM_INT);
+        $failedops = [];
+
         foreach ($elements as $programid => $label) {
-            if ($this->can_assign($usersetid, $programid) === true) {
-                clustercurriculum::associate($usersetid, $programid, $autoenrol);
+            if ($this->can_manage_assoc($usersetid, $programid) === true) {
+                try {
+                    clustercurriculum::associate($usersetid, $programid, $autoenrol);
+                } catch (\Exception $e) {
+                    if ($bulkaction === true) {
+                        $failedops[] = $programid;
+                    } else {
+                        throw $e;
+                    }
+                }
+            } else {
+                $failedops[] = $programid;
             }
         }
-        return array('result' => 'success', 'msg' => 'Success');
-    }
 
-    /**
-     * Determine whether the current user can assign the program to the userset.
-     * @param int $usersetid The ID of the userset.
-     * @param int $programid The ID of the program.
-     * @return bool Whether the current can assign (true) or not (false)
-     */
-    protected function can_assign($usersetid, $programid) {
-        global $USER;
-        $perm = 'local/elisprogram:associate';
-        $pgmassocctx = pm_context_set::for_user_with_capability('curriculum', $perm, $USER->id);
-        $programassociateallowed = ($pgmassocctx->context_allowed($programid, 'curriculum') === true) ? true : false;
-        $clstassocctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
-        $usersetassociateallowed = ($clstassocctx->context_allowed($usersetid, 'cluster') === true) ? true : false;
-        return ($programassociateallowed === true && $usersetassociateallowed === true) ? true : false;
+        if ($bulkaction === true && !empty($failedops)) {
+             return [
+                'result' => 'partialsuccess',
+                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'failedops' => $failedops,
+            ];
+        } else {
+            return array('result' => 'success', 'msg' => 'Success');
+        }
     }
 }
 
@@ -119,6 +148,8 @@ class deepsight_action_usersetprogram_assign extends deepsight_action_standard {
  * An action to edit the autoenrol flag on a clustercurriculum assignment.
  */
 class deepsight_action_usersetprogram_edit extends deepsight_action_standard {
+    use deepsight_action_usersetprogram;
+
     const TYPE = 'usersetprogram_assignedit';
     public $label = '';
     public $icon = 'elisicon-edit';
@@ -160,32 +191,39 @@ class deepsight_action_usersetprogram_edit extends deepsight_action_standard {
         global $DB;
         $usersetid = required_param('id', PARAM_INT);
         $autoenrol = required_param('autoenrol', PARAM_INT);
+        $failedops = [];
+
         foreach ($elements as $programid => $label) {
-            if ($this->can_edit($usersetid, $programid) === true) {
+            if ($this->can_manage_assoc($usersetid, $programid) === true) {
                 $associationfilters = array('clusterid' => $usersetid, 'curriculumid' => $programid);
                 $association = $DB->get_record(clustercurriculum::TABLE, $associationfilters);
                 if (!empty($association)) {
-                    clustercurriculum::update_autoenrol($association->id, $autoenrol);
+                    try {
+                        clustercurriculum::update_autoenrol($association->id, $autoenrol);
+                    } catch (\Exception $e) {
+                        if ($bulkaction === true) {
+                            $failedops[] = $programid;
+                        } else {
+                            throw $e;
+                        }
+                    }
+                } else {
+                    $failedops[] = $programid;
                 }
+            } else {
+                $failedops[] = $programid;
             }
         }
-        return array('result' => 'success', 'msg' => 'Success');
-    }
 
-    /**
-     * Determine whether the current user can edit the clustercurriculum association.
-     * @param int $usersetid The ID of the userset.
-     * @param int $programid The ID of the program.
-     * @return bool Whether the current can edit (true) or not (false)
-     */
-    protected function can_edit($usersetid, $programid) {
-        global $USER;
-        $perm = 'local/elisprogram:associate';
-        $pgmassocctx = pm_context_set::for_user_with_capability('curriculum', $perm, $USER->id);
-        $programassociateallowed = ($pgmassocctx->context_allowed($programid, 'curriculum') === true) ? true : false;
-        $clstassocctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
-        $usersetassociateallowed = ($clstassocctx->context_allowed($usersetid, 'cluster') === true) ? true : false;
-        return ($programassociateallowed === true && $usersetassociateallowed === true) ? true : false;
+        if ($bulkaction === true && !empty($failedops)) {
+             return [
+                'result' => 'partialsuccess',
+                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'failedops' => $failedops,
+            ];
+        } else {
+            return array('result' => 'success', 'msg' => 'Success');
+        }
     }
 }
 
@@ -193,6 +231,8 @@ class deepsight_action_usersetprogram_edit extends deepsight_action_standard {
  * An action to unassign programs from a userset.
  */
 class deepsight_action_usersetprogram_unassign extends deepsight_action_confirm {
+    use deepsight_action_usersetprogram;
+
     public $label = 'Unassign';
     public $icon = 'elisicon-unassoc';
 
@@ -229,30 +269,8 @@ class deepsight_action_usersetprogram_unassign extends deepsight_action_confirm 
     protected function _respond_to_js(array $elements, $bulkaction) {
         global $DB;
         $usersetid = required_param('id', PARAM_INT);
-        foreach ($elements as $programid => $label) {
-            if ($this->can_unassign($usersetid, $programid) === true) {
-                $assignrecfilters = array('clusterid' => $usersetid, 'curriculumid' => $programid);
-                $assignrec = $DB->get_record(clustercurriculum::TABLE, $assignrecfilters);
-                $clustercurriculum = new clustercurriculum($assignrec);
-                $clustercurriculum->delete();
-            }
-        }
-        return array('result' => 'success', 'msg'=>'Success');
-    }
-
-    /**
-     * Determine whether the current user can unassign the program from the userset.
-     * @param int $usersetid The ID of the userset.
-     * @param int $programid The ID of the program.
-     * @return bool Whether the current can unassign (true) or not (false)
-     */
-    protected function can_unassign($usersetid, $programid) {
-        global $USER;
-        $perm = 'local/elisprogram:associate';
-        $pgmassocctx = pm_context_set::for_user_with_capability('curriculum', $perm, $USER->id);
-        $programassociateallowed = ($pgmassocctx->context_allowed($programid, 'curriculum') === true) ? true : false;
-        $clstassocctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
-        $usersetassociateallowed = ($clstassocctx->context_allowed($usersetid, 'cluster') === true) ? true : false;
-        return ($programassociateallowed === true && $usersetassociateallowed === true) ? true : false;
+        $assocclass = 'clustercurriculum';
+        $assocparams = ['main' => 'clusterid', 'incoming' => 'curriculumid'];
+        return $this->attempt_unassociate($usersetid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 }

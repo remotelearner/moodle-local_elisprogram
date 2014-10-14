@@ -85,6 +85,8 @@ class deepsight_action_usersetsubuserset_makesubset extends deepsight_action_con
             throw new moodle_exception('not_permitted', 'local_elisprogram');
         }
 
+        $failedops = [];
+
         // Loop through requested elements to move. Check for permissions and do an sanity check on IDs and parent ID, then move.
         foreach ($elements as $tomoveusersetid => $label) {
 
@@ -98,11 +100,23 @@ class deepsight_action_usersetsubuserset_makesubset extends deepsight_action_con
                 if ($tomove->id !== $curusersetid && $tomove->parent !== $curusersetid) {
                     $tomove->parent = $curusersetid;
                     $tomove->save();
+                } else {
+                    $failedops[] = $tomoveusersetid;
                 }
+            } else {
+                $failedops[] = $tomoveusersetid;
             }
         }
 
-        return array('result' => 'success', 'msg' => 'Success');
+        if ($bulkaction === true && !empty($failedops)) {
+             return [
+                'result' => 'partialsuccess',
+                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'failedops' => $failedops,
+            ];
+        } else {
+            return array('result' => 'success', 'msg' => 'Success');
+        }
     }
 }
 

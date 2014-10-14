@@ -27,9 +27,27 @@
 require_once(elis::plugin_file('usetenrol_manual', 'lib.php'));
 
 /**
+ * Trait containing shared methods.
+ */
+trait deepsight_action_usersetuser {
+    /**
+     * Determine whether the current user can manage an association.
+     *
+     * @param int $usersetid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param int $userid The ID of the incoming element. The is the ID of the 'many', in a 'many-to-one' association.
+     * @return bool Whether the current can manage (true) or not (false)
+     */
+    protected function can_manage_assoc($usersetid, $userid) {
+        return clusteruserpage::can_manage_assoc($userid, $usersetid);
+    }
+}
+
+/**
  * An action to assign users to a userset.
  */
 class deepsight_action_usersetuser_assign extends deepsight_action_confirm {
+    use deepsight_action_usersetuser;
+
     public $label = 'Assign';
     public $icon = 'elisicon-assoc';
 
@@ -73,24 +91,32 @@ class deepsight_action_usersetuser_assign extends deepsight_action_confirm {
             return array('result' => 'fail', 'msg' => get_string('not_permitted', 'local_elisprogram'));
         }
 
+        $failedops = [];
         foreach ($elements as $userid => $label) {
-            if ($this->can_assign($userset->id, $userid) === true) {
-                cluster_manual_assign_user($userset->id, $userid);
+            if ($this->can_manage_assoc($userset->id, $userid) === true) {
+                try {
+                    cluster_manual_assign_user($userset->id, $userid);
+                } catch (\Exception $e) {
+                    if ($bulkaction === true) {
+                        $failedops[] = $userid;
+                    } else {
+                        throw $e;
+                    }
+                }
+            } else {
+                $failedops[] = $userid;
             }
         }
 
-        return array('result' => 'success', 'msg'=>'Success');
-    }
-
-    /**
-     * Determine whether the current user can assign the given user to the given userset.
-     *
-     * @param int $usersetid The ID of the userset.
-     * @param int $userid The ID of the user.
-     * @return bool Whether the user can assign (true) or not (false)
-     */
-    protected function can_assign($usersetid, $userid) {
-        return clusteruserpage::can_manage_assoc($userid, $usersetid);
+        if ($bulkaction === true && !empty($failedops)) {
+             return [
+                'result' => 'partialsuccess',
+                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'failedops' => $failedops,
+            ];
+        } else {
+            return array('result' => 'success', 'msg' => 'Success');
+        }
     }
 }
 
@@ -98,6 +124,8 @@ class deepsight_action_usersetuser_assign extends deepsight_action_confirm {
  * An action to unassign a user from a userset.
  */
 class deepsight_action_usersetuser_unassign extends deepsight_action_confirm {
+    use deepsight_action_usersetuser;
+
     public $label = 'Unassign';
     public $icon = 'elisicon-unassoc';
 
@@ -142,34 +170,37 @@ class deepsight_action_usersetuser_unassign extends deepsight_action_confirm {
             return array('result' => 'fail', 'msg' => get_string('not_permitted', 'local_elisprogram'));
         }
 
-        $unassignnotpermitted = false;
+        $failedops = [];
         foreach ($elements as $userid => $label) {
-            if ($this->can_unassign($usersetid, $userid)) {
+            if ($this->can_manage_assoc($usersetid, $userid)) {
                 $assignrec = $DB->get_record(clusterassignment::TABLE, array('userid' => $userid, 'clusterid' => $usersetid));
                 if (!empty($assignrec) && $assignrec->plugin === 'manual') {
-                    $curstu = new clusterassignment($assignrec);
-                    $curstu->delete();
+                    try {
+                        $curstu = new clusterassignment($assignrec);
+                        $curstu->delete();
+                    } catch (\Exception $e) {
+                        if ($bulkaction === true) {
+                            $failedops[] = $userid;
+                        } else {
+                            throw $e;
+                        }
+                    }
+                } else {
+                    $failedops[] = $userid;
                 }
             } else {
-                $unassignnotpermitted = true;
+                $failedops[] = $userid;
             }
         }
 
-        if ($unassignnotpermitted) {
-            return array('result' => 'fail', 'msg' => get_string('not_permitted', 'local_elisprogram'));
+        if ($bulkaction === true && !empty($failedops)) {
+             return [
+                'result' => 'partialsuccess',
+                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'failedops' => $failedops,
+            ];
         } else {
-            return array('result' => 'success', 'msg'=>'Success');
+            return array('result' => 'success', 'msg' => 'Success');
         }
-    }
-
-    /**
-     * Determine whether the current user can unassign the user from the userset.
-     *
-     * @param int $usersetid The ID of the userset.
-     * @param int $userid The ID of the user (the assignee).
-     * @return bool Whether the current can unassign (true) or not (false)
-     */
-    protected function can_unassign($usersetid, $userid) {
-        return clusteruserpage::can_manage_assoc($userid, $usersetid);
     }
 }

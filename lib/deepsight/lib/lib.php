@@ -319,6 +319,244 @@ abstract class deepsight_action_standard implements deepsight_action {
     public function get_name() {
         return $this->name;
     }
+
+    /**
+     * Attempt an association edit.
+     *
+     * @param int $mainelementid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param array $elements An array of items to associate to the main element.
+     * @param bool $bulkaction Whether this is a bulk-action or not.
+     * @param string $assocclass The class used for this association.
+     * @param string $assocparams Parameters used to check for/create the association. Must contain keys:
+     *                                 'main' => The field name that corresponds to the main element's ID. Ex. 'courseid'
+     *                                 'incoming' => The field name that corresponds to incoming elements' IDs. Ex. 'programid'
+     * @param array $assocfields If the association has additional parameters, this is an array of field names of those parameters.
+     * @param array $assocdata If the association has additional paramaters, this is that data.
+     * @param string $faillang If there were elements that failed, use this string as an error message. If null, language string
+     *                         ds_action_generic_bulkfail from local_elisprogram will be used.
+     * @return array An array to format as JSON and return to the Javascript.
+     */
+    protected function attempt_associate($mainelementid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata, $faillang = null) {
+        if (!is_array($assocdata)) {
+            throw new \Exception('Did not receive valid enrolment data.');
+        }
+        if (!isset($assocparams['main']) || !isset($assocparams['incoming'])) {
+            throw new \Exception('Bad association params - must be fixed in code.');
+        }
+        $failedops = [];
+        foreach ($elements as $incomingelementid => $label) {
+            if ($this->can_manage_assoc($mainelementid, $incomingelementid) === true) {
+                $assocclassconstructparams = [
+                    $assocparams['main'] => $mainelementid,
+                    $assocparams['incoming'] => $incomingelementid,
+                ];
+                $association = new $assocclass($assocclassconstructparams);
+                foreach ($assocfields as $field) {
+                    if (isset($assocdata[$field])) {
+                        $association->$field = $assocdata[$field];
+                    }
+                }
+                if ($bulkaction === true) {
+                    try {
+                        $association->save();
+                    } catch (\Exception $e) {
+                        $failedops[] = $incomingelementid;
+                    }
+                } else {
+                    $association->save();
+                }
+            } else {
+                $failedops[] = $incomingelementid;
+            }
+        }
+
+        if ($bulkaction === true) {
+            if (!empty($failedops)) {
+                if ($faillang === null || !is_string($faillang)) {
+                    $faillang = get_string('ds_action_generic_bulkfail', 'local_elisprogram');
+                }
+                return [
+                    'result' => 'partialsuccess',
+                    'msg' => $faillang,
+                    'failedops' => $failedops,
+                ];
+            } else {
+                return [
+                    'result' => 'success',
+                    'msg' => 'Success',
+                ];
+            }
+        } else {
+            $formatteddata = $this->format_assocdata_for_display($assocdata);
+            return array(
+                'result' => 'success',
+                'msg' => 'Success',
+                'displaydata' => $formatteddata,
+                'saveddata' => $assocdata
+            );
+        }
+    }
+
+    /**
+     * Attempt an association edit.
+     *
+     * @param int $mainelementid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param array $elements An array of items to associate to the main element.
+     * @param bool $bulkaction Whether this is a bulk-action or not.
+     * @param string $assocclass The class used for this association.
+     * @param string $assocparams Parameters used to check for/create the association. Must contain keys:
+     *                                 'main' => The field name that corresponds to the main element's ID. Ex. 'courseid'
+     *                                 'incoming' => The field name that corresponds to incoming elements' IDs. Ex. 'programid'
+     * @param array $assocfields If the association has additional parameters, this is an array of field names of those parameters.
+     * @param array $assocdata If the association has additional paramaters, this is that data.
+     * @param string $faillang If there were elements that failed, use this string as an error message. If null, language string
+     *                         ds_action_generic_bulkfail from local_elisprogram will be used.
+     * @return array An array to format as JSON and return to the Javascript.
+     */
+    protected function attempt_edit($mainelementid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata, $faillang = null) {
+        global $DB;
+        if (!is_array($assocdata)) {
+            throw new \Exception('Did not receive valid enrolment data.');
+        }
+        if (!isset($assocparams['main']) || !isset($assocparams['incoming'])) {
+            throw new \Exception('Bad association params - must be fixed in code.');
+        }
+        $failedops = [];
+        foreach ($elements as $incomingelementid => $label) {
+            if ($this->can_manage_assoc($mainelementid, $incomingelementid) === true) {
+                $assocqueryparams = [
+                    $assocparams['main'] => $mainelementid,
+                    $assocparams['incoming'] => $incomingelementid,
+                ];
+                $association = $DB->get_record($assocclass::TABLE, $assocqueryparams);
+                if (!empty($association)) {
+                    $association = new $assocclass($association);
+                    foreach ($assocfields as $field) {
+                        if (isset($assocdata[$field])) {
+                            $association->$field = $assocdata[$field];
+                        }
+                    }
+                    if ($bulkaction === true) {
+                        try {
+                            $association->save();
+                        } catch (\Exception $e) {
+                            $failedops[] = $incomingelementid;
+                        }
+                    } else {
+                        $association->save();
+                    }
+                }
+            } else {
+                $failedops[] = $incomingelementid;
+            }
+        }
+
+        if ($bulkaction === true) {
+            if (!empty($failedops)) {
+                if ($faillang === null || !is_string($faillang)) {
+                    $faillang = get_string('ds_action_generic_bulkfail', 'local_elisprogram');
+                }
+                return [
+                    'result' => 'partialsuccess',
+                    'msg' => $faillang,
+                    'failedops' => $failedops,
+                ];
+            } else {
+                return [
+                    'result' => 'success',
+                    'msg' => 'Success',
+                ];
+            }
+        } else {
+            $formatteddata = $this->format_assocdata_for_display($assocdata);
+            return array(
+                'result' => 'success',
+                'msg' => 'Success',
+                'displaydata' => $formatteddata,
+                'saveddata' => $assocdata
+            );
+        }
+    }
+
+    /**
+     * Attempt an unassociation.
+     *
+     * @param int $mainelementid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param array $elements An array of items to associate to the main element.
+     * @param bool $bulkaction Whether this is a bulk-action or not.
+     * @param string $assocclass The class used for this association.
+     * @param string $assocparams Parameters used to check for/create the association. Must contain keys:
+     *                                 'main' => The field name that corresponds to the main element's ID. Ex. 'courseid'
+     *                                 'incoming' => The field name that corresponds to incoming elements' IDs. Ex. 'programid'
+     * @param string $faillang If there were elements that failed, use this string as an error message. If null, language string
+     *                         ds_action_generic_bulkfail from local_elisprogram will be used.
+     * @return array An array to format as JSON and return to the Javascript.
+     */
+    protected function attempt_unassociate($mainelementid, $elements, $bulkaction, $assocclass, $assocparams, $faillang = null) {
+        global $DB;
+        $failedops = [];
+        foreach ($elements as $incomingelementid => $label) {
+            if ($this->can_manage_assoc($mainelementid, $incomingelementid) === true) {
+                $assocqueryparams = [
+                    $assocparams['main'] => $mainelementid,
+                    $assocparams['incoming'] => $incomingelementid,
+                ];
+                $assignrec = $DB->get_record($assocclass::TABLE, $assocqueryparams);
+                if (!empty($assignrec)) {
+                    try {
+                        $association = new $assocclass($assignrec);
+                        $association->delete();
+                    } catch (\Exception $e) {
+                        if ($bulkaction === true) {
+                            $failedops[] = $incomingelementid;
+                        } else {
+                            throw $e;
+                        }
+                    }
+                } else {
+                    $failedops[] = $incomingelementid;
+                }
+            } else {
+                $failedops[] = $incomingelementid;
+            }
+        }
+
+        if ($bulkaction === true && !empty($failedops)) {
+            if ($faillang === null || !is_string($faillang)) {
+                $faillang = get_string('ds_action_generic_bulkfail', 'local_elisprogram');
+            }
+            return [
+                'result' => 'partialsuccess',
+                'msg' => $faillang,
+                'failedops' => $failedops,
+            ];
+        } else {
+            return [
+                'result' => 'success',
+                'msg' => 'Success',
+            ];
+        }
+    }
+
+    /**
+     * Determine whether the current user can manage an association.
+     *
+     * @param int $mainelementid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param int $incomingelementid The ID of the incoming element. The is the ID of the 'many', in a 'many-to-one' association.
+     * @return bool Whether the current can manage (true) or not (false)
+     */
+    protected function can_manage_assoc($mainelementid, $incomingelementid) {
+        return false;
+    }
+
+    /**
+     * Formats association data for display in the table post-edit.
+     * @param array $assocdata The incoming association data
+     * @return array The formatted association data.
+     */
+    protected function format_assocdata_for_display($assocdata) {
+        return $assocdata;
+    }
 }
 
 /**

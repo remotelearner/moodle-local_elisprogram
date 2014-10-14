@@ -27,9 +27,27 @@
 require_once(elispm::lib('data/clusterassignment.class.php'));
 
 /**
+ * Trait containing shared methods.
+ */
+trait deepsight_action_programuser {
+    /**
+     * Determine whether the current user can manage an association.
+     *
+     * @param int $programid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param int $userid The ID of the incoming element. The is the ID of the 'many', in a 'many-to-one' association.
+     * @return bool Whether the current can manage (true) or not (false)
+     */
+    protected function can_manage_assoc($programid, $userid) {
+        return curriculumstudent::can_manage_assoc($userid, $programid);
+    }
+}
+
+/**
  * An action to assign a user to a program.
  */
 class deepsight_action_programuser_assign extends deepsight_action_confirm {
+    use deepsight_action_programuser;
+
     public $label = 'Assign User';
     public $icon = 'elisicon-assoc';
 
@@ -71,24 +89,11 @@ class deepsight_action_programuser_assign extends deepsight_action_confirm {
             return array('result' => 'fail', 'msg' => get_string('not_permitted', 'local_elisprogram'));
         }
 
-        foreach ($elements as $userid => $label) {
-            if ($this->can_assign($pgmid, $userid) === true) {
-                $stucur = new curriculumstudent(array('userid' => $userid, 'curriculumid' => $pgmid));
-                $stucur->save();
-            }
-        }
-
-        return array('result' => 'success', 'msg'=>'Success');
-    }
-
-    /**
-     * Determine whether the current user can assign the user to the program.
-     * @param int $programid The ID of the program.
-     * @param int $userid The ID of the user (the assignee).
-     * @return bool Whether the current user has permission.
-     */
-    protected function can_assign($programid, $userid) {
-        return curriculumstudent::can_manage_assoc($userid, $programid);
+        $assocclass = 'curriculumstudent';
+        $assocparams = ['main' => 'curriculumid', 'incoming' => 'userid'];
+        $assocfields = [];
+        $assocdata = [];
+        return $this->attempt_associate($pgmid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata);
     }
 }
 
@@ -96,6 +101,8 @@ class deepsight_action_programuser_assign extends deepsight_action_confirm {
  * An action to unassign a user from a program.
  */
 class deepsight_action_programuser_unassign extends deepsight_action_confirm {
+    use deepsight_action_programuser;
+
     public $label = 'Unassign User';
     public $icon = 'elisicon-unassoc';
 
@@ -139,26 +146,8 @@ class deepsight_action_programuser_unassign extends deepsight_action_confirm {
             return array('result' => 'fail', 'msg' => get_string('not_permitted', 'local_elisprogram'));
         }
 
-        foreach ($elements as $userid => $label) {
-            if ($this->can_unassign($pgmid, $userid) === true) {
-                $assignrec = $DB->get_record(curriculumstudent::TABLE, array('userid' => $userid, 'curriculumid' => $pgmid));
-                if (!empty($assignrec)) {
-                    $curstu = new curriculumstudent($assignrec);
-                    $curstu->delete();
-                }
-            }
-        }
-
-        return array('result' => 'success', 'msg'=>'Success');
-    }
-
-    /**
-     * Determine whether the current user can unassign the user from the program.
-     * @param int $programid The ID of the program.
-     * @param int $userid The ID of the user (the assignee).
-     * @return bool Whether the current user has permission.
-     */
-    protected function can_unassign($programid, $userid) {
-        return curriculumstudent::can_manage_assoc($userid, $programid);
+        $assocclass = 'curriculumstudent';
+        $assocparams = ['main' => 'curriculumid', 'incoming' => 'userid'];
+        return $this->attempt_unassociate($pgmid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 }

@@ -451,6 +451,7 @@ $string['ds_action_crssetcrs_unassign_active'] = 'The Course Description you\'ve
 $string['ds_action_crssetprg_unassign'] = 'You are about to unassign this Program from the Course Set, proceed?';
 $string['ds_action_crssetprg_unassign_active'] = 'The Program you\'ve selected to unassign from this Course Set has active enrolments! Removing the Program from the Course Set will change completion criteria for those enrolled users. Proceed?';
 $string['ds_action_crssetprg_bulkmaxexceeded'] = '<b>Some items couldn\'t be updated and have been left in the bulk list.</b><br /><br /> This happens when the entered required courses or credits exceeds the maximum. Please ensure required credits and courses don\'t exceed the maximum allowed for the courseset and try again.';
+$string['ds_action_generic_bulkfail'] = '<b>Some items couldn\'t be updated and have been left in the bulk list.</b><br /><br /> This can happen if there was an error processing these items. Please ensure you have the correct permissions and try again.';
 $string['ds_action_instructor_assign'] = 'You are about to assign this user as an instructor, proceed?';
 $string['ds_action_instructor_assign_multi'] = 'You are about to assign these users as instructors, proceed?';
 $string['ds_action_instructor_unassign'] = 'You are about to unassign this user as an instructor, proceed?';

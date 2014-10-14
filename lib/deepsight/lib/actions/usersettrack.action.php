@@ -25,9 +25,33 @@
  */
 
 /**
+ * Trait containing shared methods.
+ */
+trait deepsight_action_usersettrack {
+    /**
+     * Determine whether the current user can manage an association.
+     *
+     * @param int $usersetid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param int $trackid The ID of the incoming element. The is the ID of the 'many', in a 'many-to-one' association.
+     * @return bool Whether the current can manage (true) or not (false)
+     */
+    protected function can_manage_assoc($usersetid, $trackid) {
+        global $USER;
+        $perm = 'local/elisprogram:associate';
+        $trkassocctx = pm_context_set::for_user_with_capability('track', $perm, $USER->id);
+        $trackassociateallowed = ($trkassocctx->context_allowed($trackid, 'track') === true) ? true : false;
+        $clstassocctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
+        $usersetassociateallowed = ($clstassocctx->context_allowed($usersetid, 'cluster') === true) ? true : false;
+        return ($trackassociateallowed === true && $usersetassociateallowed === true) ? true : false;
+    }
+}
+
+/**
  * An action to assign tracks to a userset and set the autoenrol flag.
  */
 class deepsight_action_usersettrack_assign extends deepsight_action_standard {
+    use deepsight_action_usersettrack;
+
     const TYPE = 'usersettrack_assignedit';
     public $label = 'Assign';
     public $icon = 'elisicon-assoc';
@@ -92,28 +116,32 @@ class deepsight_action_usersettrack_assign extends deepsight_action_standard {
         $usersetid = required_param('id', PARAM_INT);
         $autoenrol = optional_param('autoenrol', 0, PARAM_INT);
         $autounenrol = optional_param('autounenrol', 1, PARAM_INT);
+        $failedops = [];
         foreach ($elements as $trackid => $label) {
-            if ($this->can_assign($usersetid, $trackid) === true) {
-                clustertrack::associate($usersetid, $trackid, $autounenrol, $autoenrol);
+            if ($this->can_manage_assoc($usersetid, $trackid) === true) {
+                try {
+                    clustertrack::associate($usersetid, $trackid, $autounenrol, $autoenrol);
+                } catch (\Exception $e) {
+                    if ($bulkaction === true) {
+                        $failedops[] = $trackid;
+                    } else {
+                        throw $e;
+                    }
+                }
+            } else {
+                $failedops[] = $trackid;
             }
         }
-        return array('result' => 'success', 'msg' => 'Success');
-    }
 
-    /**
-     * Determine whether the current user can assign the track to the userset.
-     * @param int $usersetid The ID of the userset.
-     * @param int $trackid The ID of the track.
-     * @return bool Whether the current can assign (true) or not (false)
-     */
-    protected function can_assign($usersetid, $trackid) {
-        global $USER;
-        $perm = 'local/elisprogram:associate';
-        $trkassocctx = pm_context_set::for_user_with_capability('track', $perm, $USER->id);
-        $trackassociateallowed = ($trkassocctx->context_allowed($trackid, 'track') === true) ? true : false;
-        $clstassocctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
-        $usersetassociateallowed = ($clstassocctx->context_allowed($usersetid, 'cluster') === true) ? true : false;
-        return ($trackassociateallowed === true && $usersetassociateallowed === true) ? true : false;
+        if ($bulkaction === true && !empty($failedops)) {
+             return [
+                'result' => 'partialsuccess',
+                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'failedops' => $failedops,
+            ];
+        } else {
+            return array('result' => 'success', 'msg' => 'Success');
+        }
     }
 }
 
@@ -121,6 +149,8 @@ class deepsight_action_usersettrack_assign extends deepsight_action_standard {
  * An action to edit the autoenrol flag on a clustertrack assignment.
  */
 class deepsight_action_usersettrack_edit extends deepsight_action_standard {
+    use deepsight_action_usersettrack;
+
     const TYPE = 'usersettrack_assignedit';
     public $label = '';
     public $icon = 'elisicon-edit';
@@ -162,31 +192,37 @@ class deepsight_action_usersettrack_edit extends deepsight_action_standard {
         global $DB;
         $usersetid = required_param('id', PARAM_INT);
         $autoenrol = required_param('autoenrol', PARAM_INT);
+        $failedops = [];
         foreach ($elements as $trackid => $label) {
-            if ($this->can_edit($usersetid, $trackid) === true) {
+            if ($this->can_manage_assoc($usersetid, $trackid) === true) {
                 $association = $DB->get_record(clustertrack::TABLE, array('clusterid' => $usersetid, 'trackid' => $trackid));
                 if (!empty($association)) {
-                    clustertrack::update_autoenrol($association->id, $autoenrol);
+                    try {
+                        clustertrack::update_autoenrol($association->id, $autoenrol);
+                    } catch (\Exception $e) {
+                        if ($bulkaction === true) {
+                            $failedops[] = $trackid;
+                        } else {
+                            throw $e;
+                        }
+                    }
+                } else {
+                    $failedops[] = $trackid;
                 }
+            } else {
+                $failedops[] = $trackid;
             }
         }
-        return array('result' => 'success', 'msg' => 'Success');
-    }
 
-    /**
-     * Determine whether the current user can edit the clustertrack association.
-     * @param int $usersetid The ID of the userset.
-     * @param int $trackid The ID of the track.
-     * @return bool Whether the current can edit (true) or not (false)
-     */
-    protected function can_edit($usersetid, $trackid) {
-        global $USER;
-        $perm = 'local/elisprogram:associate';
-        $trkassocctx = pm_context_set::for_user_with_capability('track', $perm, $USER->id);
-        $trackassociateallowed = ($trkassocctx->context_allowed($trackid, 'track') === true) ? true : false;
-        $clstassocctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
-        $usersetassociateallowed = ($clstassocctx->context_allowed($usersetid, 'cluster') === true) ? true : false;
-        return ($trackassociateallowed === true && $usersetassociateallowed === true) ? true : false;
+        if ($bulkaction === true && !empty($failedops)) {
+             return [
+                'result' => 'partialsuccess',
+                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'failedops' => $failedops,
+            ];
+        } else {
+            return array('result' => 'success', 'msg' => 'Success');
+        }
     }
 }
 
@@ -194,6 +230,8 @@ class deepsight_action_usersettrack_edit extends deepsight_action_standard {
  * An action to unassign tracks from a userset.
  */
 class deepsight_action_usersettrack_unassign extends deepsight_action_confirm {
+    use deepsight_action_usersettrack;
+
     public $label = 'Unassign';
     public $icon = 'elisicon-unassoc';
 
@@ -230,29 +268,8 @@ class deepsight_action_usersettrack_unassign extends deepsight_action_confirm {
     protected function _respond_to_js(array $elements, $bulkaction) {
         global $DB;
         $usersetid = required_param('id', PARAM_INT);
-        foreach ($elements as $trackid => $label) {
-            if ($this->can_unassign($usersetid, $trackid) === true) {
-                $assignrec = $DB->get_record(clustertrack::TABLE, array('clusterid' => $usersetid, 'trackid' => $trackid));
-                $usertrack = new clustertrack($assignrec);
-                $usertrack->delete();
-            }
-        }
-        return array('result' => 'success', 'msg'=>'Success');
-    }
-
-    /**
-     * Determine whether the current user can unassign the track from the userset.
-     * @param int $usersetid The ID of the userset.
-     * @param int $trackid The ID of the track.
-     * @return bool Whether the current can unassign (true) or not (false)
-     */
-    protected function can_unassign($usersetid, $trackid) {
-        global $USER;
-        $perm = 'local/elisprogram:associate';
-        $trkassocctx = pm_context_set::for_user_with_capability('track', $perm, $USER->id);
-        $trackassociateallowed = ($trkassocctx->context_allowed($trackid, 'track') === true) ? true : false;
-        $clstassocctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
-        $usersetassociateallowed = ($clstassocctx->context_allowed($usersetid, 'cluster') === true) ? true : false;
-        return ($trackassociateallowed === true && $usersetassociateallowed === true) ? true : false;
+        $assocclass = 'clustertrack';
+        $assocparams = ['main' => 'clusterid', 'incoming' => 'trackid'];
+        return $this->attempt_unassociate($usersetid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 }

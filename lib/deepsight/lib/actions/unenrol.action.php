@@ -59,27 +59,23 @@ class deepsight_action_unenrol extends deepsight_action_confirm {
         global $DB;
         $classid = required_param('id', PARAM_INT);
 
-        foreach ($elements as $userid => $label) {
-            $enrolrec = $DB->get_record(student::TABLE, array('userid' => $userid, 'classid' => $classid));
-            if (!empty($enrolrec) && $this->can_unenrol($enrolrec->id) === true) {
-                $stu = new student($enrolrec->id);
-                $stu->load();
-                $stu->delete();
-            }
-        }
-
-        return array('result' => 'success', 'msg'=>'Success');
+        $assocclass = 'student';
+        $assocparams = ['main' => 'classid', 'incoming' => 'userid'];
+        return $this->attempt_unassociate($classid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 
     /**
-     * Determine whether the current user has the ability to unenrol the user.
+     * Determine whether the current user can manage an association.
      *
-     * @param int $associationid The ID of the association record.
-     * @return bool Whether the user has permission.
+     * @param int $classid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param int $userid The ID of the incoming element. The is the ID of the 'many', in a 'many-to-one' association.
+     * @return bool Whether the current can manage (true) or not (false)
      */
-    protected function can_unenrol($associationid) {
+    protected function can_manage_assoc($classid, $userid) {
         global $DB;
-        $student = new student($associationid);
+        $association = ['userid' => $userid, 'classid' => $classid];
+        $student = new student($association);
+        $student->load();
         if (empty(elis::$config->local_elisprogram->force_unenrol_in_moodle)) {
             // Check whether the user is enrolled in the Moodle course via any plugin other than the elis plugin.
             $mcourse = $student->pmclass->classmoodle;

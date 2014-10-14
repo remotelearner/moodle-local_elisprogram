@@ -180,23 +180,10 @@ class deepsight_action_instructor_assign extends deepsight_action_instructor_ass
             throw new moodle_exception('not_permitted', 'local_elisprogram');
         }
 
-        foreach ($elements as $userid => $label) {
-            if ($this->can_manage_assoc($classid, $userid) === true) {
-                $instructor = array();
-                $instructor['classid'] = $classid;
-                $instructor['userid']  = $userid;
-
-                foreach (array('assigntime', 'completetime') as $param) {
-                    if (isset($assocdata[$param])) {
-                        $instructor[$param] = $assocdata[$param];
-                    }
-                }
-
-                $instructor = new instructor($instructor);
-                $status = $instructor->save();
-            }
-        }
-        return array('result' => 'success', 'msg' => 'Success');
+        $assocclass = 'instructor';
+        $assocparams = ['main' => 'classid', 'incoming' => 'userid'];
+        $assocfields = ['assigntime', 'completetime'];
+        return $this->attempt_associate($classid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata);
     }
 }
 
@@ -244,23 +231,11 @@ class deepsight_action_instructor_edit extends deepsight_action_instructor_assig
             throw new moodle_exception('not_permitted', 'local_elisprogram');
         }
 
-        foreach ($elements as $userid => $label) {
-            if ($this->can_manage_assoc($classid, $userid) === true) {
-                $assoc = $DB->get_record(instructor::TABLE, array('classid' => $classid, 'userid' => $userid));
-                if (!empty($assoc)) {
-                    $instructor = new instructor($assoc);
+        $assocclass = 'instructor';
+        $assocparams = ['main' => 'classid', 'incoming' => 'userid'];
+        $assocfields = ['assigntime', 'completetime'];
+        $result = $this->attempt_edit($classid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata);
 
-                    foreach (array('assigntime', 'completetime') as $param) {
-                        if (isset($assocdata[$param])) {
-                            $instructor->$param = $assocdata[$param];
-                        }
-                    }
-
-                    $status = $instructor->save();
-                }
-            }
-        }
-        $formatteddata = $this->format_assocdata_for_display($assocdata);
         $newassocdata = array();
         foreach ($assocdata as $key => $val) {
             $newassocdata[$key] = json_encode(array(
@@ -269,12 +244,8 @@ class deepsight_action_instructor_edit extends deepsight_action_instructor_assig
                 'year'=> date('Y', $val)
             ));
         }
-        return array(
-            'result' => 'success',
-            'msg' => 'Success',
-            'displaydata' => $formatteddata,
-            'saveddata' => $newassocdata
-        );
+        $result['saveddata'] = $newassocdata;
+        return $result;
     }
 }
 
@@ -325,18 +296,9 @@ class deepsight_action_instructor_unassign extends deepsight_action_confirm {
             throw new moodle_exception('not_permitted', 'local_elisprogram');
         }
 
-        foreach ($elements as $userid => $label) {
-            if ($this->can_manage_assoc($classid, $userid) === true) {
-                $assoc = $DB->get_record(instructor::TABLE, array('classid' => $classid, 'userid' => $userid));
-                if (!empty($assoc)) {
-                    $instructor = new instructor($assoc);
-                    $instructor->load();
-                    $instructor->delete();
-                }
-            }
-        }
-
-        return array('result' => 'success', 'msg' => 'Success');
+        $assocclass = 'instructor';
+        $assocparams = ['main' => 'classid', 'incoming' => 'userid'];
+        return $this->attempt_unassociate($classid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 
     /**

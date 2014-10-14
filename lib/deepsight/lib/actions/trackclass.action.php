@@ -141,14 +141,12 @@ class deepsight_action_trackclass_assign extends deepsight_action_trackclass_ass
     protected function _respond_to_js(array $elements, $bulkaction) {
         $trackid = required_param('id', PARAM_INT);
         $autoenrol = optional_param('autoenrol', 0, PARAM_BOOL);
-        foreach ($elements as $classid => $label) {
-            if ($this->can_manage_assoc($trackid, $classid) === true) {
-                $trackassignment = array('trackid' => $trackid, 'classid' => $classid, 'autoenrol' => $autoenrol);
-                $trackassignment = new trackassignment($trackassignment);
-                $trackassignment->save();
-            }
-        }
-        return array('result' => 'success', 'msg' => 'Success');
+
+        $assocclass = 'trackassignment';
+        $assocparams = ['main' => 'trackid', 'incoming' => 'classid'];
+        $assocfields = ['autoenrol'];
+        $assocdata = ['autoenrol' => $autoenrol];
+        return $this->attempt_associate($trackid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata);
     }
 }
 
@@ -189,17 +187,12 @@ class deepsight_action_trackclass_edit extends deepsight_action_trackclass_assig
         global $DB;
         $trackid = required_param('id', PARAM_INT);
         $autoenrol = optional_param('autoenrol', 0, PARAM_BOOL);
-        foreach ($elements as $classid => $label) {
-            if ($this->can_manage_assoc($trackid, $classid) === true) {
-                $assoc = $DB->get_record(trackassignment::TABLE, array('trackid' => $trackid, 'classid' => $classid));
-                if (!empty($assoc)) {
-                    $trackassignment = new trackassignment($assoc);
-                    $trackassignment->autoenrol = $autoenrol;
-                    $trackassignment->save();
-                }
-            }
-        }
-        return array('result' => 'success', 'msg' => 'Success');
+
+        $assocclass = 'trackassignment';
+        $assocparams = ['main' => 'trackid', 'incoming' => 'classid'];
+        $assocfields = ['autoenrol'];
+        $assocdata = ['autoenrol' => $autoenrol];
+        return $this->attempt_edit($trackid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata);
     }
 }
 
@@ -251,14 +244,9 @@ class deepsight_action_trackclass_unassign extends deepsight_action_confirm {
     protected function _respond_to_js(array $elements, $bulkaction) {
         global $DB;
         $trackid = required_param('id', PARAM_INT);
-        foreach ($elements as $classid => $label) {
-            if ($this->can_unassign($trackid, $classid) === true) {
-                $assignrec = $DB->get_record(trackassignment::TABLE, array('trackid' => $trackid, 'classid' => $classid));
-                $trackassignment = new trackassignment($assignrec);
-                $trackassignment->delete();
-            }
-        }
-        return array('result' => 'success', 'msg'=>'Success');
+        $assocclass = 'trackassignment';
+        $assocparams = ['main' => 'trackid', 'incoming' => 'classid'];
+        return $this->attempt_unassociate($trackid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 
     /**
@@ -267,7 +255,7 @@ class deepsight_action_trackclass_unassign extends deepsight_action_confirm {
      * @param int $classid The ID of the class.
      * @return bool Whether the current can unassign (true) or not (false)
      */
-    protected function can_unassign($trackid, $classid) {
+    protected function can_manage_assoc($trackid, $classid) {
         global $USER;
         $perm = 'local/elisprogram:associate';
         $trkassocctx = pm_context_set::for_user_with_capability('track', $perm, $USER->id);

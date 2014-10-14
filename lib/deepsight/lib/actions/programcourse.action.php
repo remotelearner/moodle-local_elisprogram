@@ -192,30 +192,10 @@ class deepsight_action_programcourse_assign extends deepsight_action_programcour
         $programid = required_param('id', PARAM_INT);
         $assocdata = required_param('assocdata', PARAM_CLEAN);
         $assocdata = $this->process_incoming_assoc_data($assocdata, $bulkaction);
-        if (!is_array($assocdata)) {
-            throw new Exception('Did not receive valid enrolment data.');
-        }
-        if (!empty($assocdata)) {
-            foreach ($elements as $courseid => $label) {
-                if ($this->can_manage_assoc($programid, $courseid) === true) {
-                    $curriculumcourse = new curriculumcourse(array('curriculumid' => $programid, 'courseid' => $courseid));
-                    $fields = array('required', 'frequency', 'timeperiod', 'position');
-                    foreach ($fields as $field) {
-                        if (isset($assocdata[$field])) {
-                            $curriculumcourse->$field = $assocdata[$field];
-                        }
-                    }
-                    $curriculumcourse->save();
-                }
-            }
-        }
-        $formatteddata = $this->format_assocdata_for_display($assocdata);
-        return array(
-            'result' => 'success',
-            'msg' => 'Success',
-            'displaydata' => $formatteddata,
-            'saveddata' => $assocdata
-        );
+        $assocclass = 'curriculumcourse';
+        $assocparams = ['main' => 'curriculumid', 'incoming' => 'courseid'];
+        $assocfields = ['required', 'frequency', 'timeperiod', 'position'];
+        return $this->attempt_associate($programid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata);
     }
 }
 
@@ -259,33 +239,10 @@ class deepsight_action_programcourse_edit extends deepsight_action_programcourse
         $programid = required_param('id', PARAM_INT);
         $assocdata = required_param('assocdata', PARAM_CLEAN);
         $assocdata = $this->process_incoming_assoc_data($assocdata, $bulkaction);
-        if (!is_array($assocdata)) {
-            throw new Exception('Did not receive valid enrolment data.');
-        }
-        if (!empty($assocdata)) {
-            foreach ($elements as $courseid => $label) {
-                if ($this->can_manage_assoc($programid, $courseid) === true) {
-                    $assoc = $DB->get_record(curriculumcourse::TABLE, array('curriculumid' => $programid, 'courseid' => $courseid));
-                    if (!empty($assoc)) {
-                        $curriculumcourse = new curriculumcourse($assoc);
-                        $fields = array('required', 'frequency', 'timeperiod', 'position');
-                        foreach ($fields as $field) {
-                            if (isset($assocdata[$field])) {
-                                $curriculumcourse->$field = $assocdata[$field];
-                            }
-                        }
-                        $curriculumcourse->save();
-                    }
-                }
-            }
-        }
-        $formatteddata = $this->format_assocdata_for_display($assocdata);
-        return array(
-            'result' => 'success',
-            'msg' => 'Success',
-            'displaydata' => $formatteddata,
-            'saveddata' => $assocdata
-        );
+        $assocclass = 'curriculumcourse';
+        $assocparams = ['main' => 'curriculumid', 'incoming' => 'courseid'];
+        $assocfields = ['required', 'frequency', 'timeperiod', 'position'];
+        return $this->attempt_edit($programid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata);
     }
 }
 
@@ -396,23 +353,18 @@ class deepsight_action_programcourse_unassign extends deepsight_action_confirm {
     protected function _respond_to_js(array $elements, $bulkaction) {
         global $DB;
         $programid = required_param('id', PARAM_INT);
-        foreach ($elements as $courseid => $label) {
-            if ($this->can_unassign($programid, $courseid) === true) {
-                $assignrec = $DB->get_record(curriculumcourse::TABLE, array('curriculumid' => $programid, 'courseid' => $courseid));
-                $curriculumcourse = new curriculumcourse($assignrec);
-                $curriculumcourse->delete();
-            }
-        }
-        return array('result' => 'success', 'msg'=>'Success');
+        $assocclass = 'curriculumcourse';
+        $assocparams = ['main' => 'curriculumid', 'incoming' => 'courseid'];
+        return $this->attempt_unassociate($programid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 
     /**
-     * Determine whether the current user can unassign the course from the program.
+     * Determine whether the current user can manage the program - course association.
      * @param int $programid The ID of the program.
      * @param int $courseid The ID of the course.
-     * @return bool Whether the current can unassign (true) or not (false)
+     * @return bool Whether the current can manage (true) or not (false)
      */
-    protected function can_unassign($programid, $courseid) {
+    protected function can_manage_assoc($programid, $courseid) {
         global $USER;
         $perm = 'local/elisprogram:associate';
         $programassocctx = pm_context_set::for_user_with_capability('curriculum', $perm, $USER->id);

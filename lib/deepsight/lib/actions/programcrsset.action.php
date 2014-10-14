@@ -62,6 +62,22 @@ abstract class deepsight_action_programcrsset_assignedit extends deepsight_actio
         $opts['opts']['activelist'] = 1;
         return $opts;
     }
+
+    /**
+     * Determine whether the current user can manage the crsset - program association.
+     * @param int $prgid The ID of the Program.
+     * @param int $crssetid The ID of the courseset.
+     * @return bool Whether the current can manage (true) or not (false)
+     */
+    protected function can_manage_assoc($prgid, $crssetid) {
+        global $USER;
+        $perm = 'local/elisprogram:associate';
+        $crssetassocctx = pm_context_set::for_user_with_capability('courseset', $perm, $USER->id);
+        $crssetassociateallowed = ($crssetassocctx->context_allowed($crssetid, 'courseset') === true) ? true : false;
+        $programassocctx = pm_context_set::for_user_with_capability('curriculum', $perm, $USER->id);
+        $programassociateallowed = ($programassocctx->context_allowed($prgid, 'curriculum') === true) ? true : false;
+        return ($crssetassociateallowed === true && $programassociateallowed === true) ? true : false;
+    }
 }
 
 /**
@@ -107,52 +123,12 @@ class deepsight_action_programcrsset_assign extends deepsight_action_programcrss
         if (!is_array($assocdata)) {
             throw new Exception('Did not receive valid association data.');
         }
-        $failedops = [];
-        if (!empty($assocdata)) {
-            foreach ($elements as $crssetid => $label) {
-                if ($this->can_manage_assoc($crssetid, $prgid) === true) {
-                    $prgcrsset = new programcrsset(array('crssetid' => $crssetid, 'prgid' => $prgid));
-                    $fields = array('reqcredits', 'reqcourses', 'andor');
-                    foreach ($fields as $field) {
-                        if (isset($assocdata[$field])) {
-                            $prgcrsset->$field = $assocdata[$field];
-                        }
-                    }
-                    if ($bulkaction === true) {
-                        try {
-                            $prgcrsset->save();
-                        } catch (\Exception $e) {
-                            $failedops[] = $crssetid;
-                        }
-                    } else {
-                        $prgcrsset->save();
-                    }
-                }
-            }
-        }
 
-        if ($bulkaction === true) {
-            if (!empty($failedops)) {
-                return [
-                    'result' => 'partialsuccess',
-                    'msg' => get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram'),
-                    'failedops' => $failedops,
-                ];
-            } else {
-                return [
-                    'result' => 'success',
-                    'msg' => 'Success',
-                ];
-            }
-        } else {
-            $formatteddata = $this->format_assocdata_for_display($assocdata);
-            return [
-                'result' => 'success',
-                'msg' => 'Success',
-                'displaydata' => $formatteddata,
-                'saveddata' => $assocdata,
-            ];
-        }
+        $assocclass = 'programcrsset';
+        $assocparams = ['main' => 'prgid', 'incoming' => 'crssetid'];
+        $assocfields = ['reqcredits', 'reqcourses', 'andor'];
+        $faillang = get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram');
+        return $this->attempt_associate($prgid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata, $faillang);
     }
 }
 
@@ -200,54 +176,12 @@ class deepsight_action_programcrsset_edit extends deepsight_action_programcrsset
         if (!is_array($assocdata)) {
             throw new Exception('Did not receive valid association data.');
         }
-        $failedops = [];
-        if (!empty($assocdata)) {
-            foreach ($elements as $crssetid => $label) {
-                if ($this->can_manage_assoc($crssetid, $prgid) === true) {
-                    $assoc = $DB->get_record(programcrsset::TABLE, array('crssetid' => $crssetid, 'prgid' => $prgid));
-                    if (!empty($assoc)) {
-                        $prgcrsset = new programcrsset($assoc);
-                        $fields = array('reqcredits', 'reqcourses', 'andor');
-                        foreach ($fields as $field) {
-                            if (isset($assocdata[$field])) {
-                                $prgcrsset->$field = $assocdata[$field];
-                            }
-                        }
-                        if ($bulkaction === true) {
-                            try {
-                                $prgcrsset->save();
-                            } catch (\Exception $e) {
-                                $failedops[] = $crssetid;
-                            }
-                        } else {
-                            $prgcrsset->save();
-                        }
-                    }
-                }
-            }
-        }
-        if ($bulkaction === true) {
-            if (!empty($failedops)) {
-                return [
-                    'result' => 'partialsuccess',
-                    'msg' => get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram'),
-                    'failedops' => $failedops,
-                ];
-            } else {
-                return [
-                    'result' => 'success',
-                    'msg' => 'Success',
-                ];
-            }
-        } else {
-            $formatteddata = $this->format_assocdata_for_display($assocdata);
-            return [
-                'result' => 'success',
-                'msg' => 'Success',
-                'displaydata' => $formatteddata,
-                'saveddata' => $assocdata,
-            ];
-        }
+
+        $assocclass = 'programcrsset';
+        $assocparams = ['main' => 'prgid', 'incoming' => 'crssetid'];
+        $assocfields = ['reqcredits', 'reqcourses', 'andor'];
+        $faillang = get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram');
+        return $this->attempt_edit($prgid, $elements, $bulkaction, $assocclass, $assocparams, $assocfields, $assocdata, $faillang);
     }
 }
 
@@ -333,16 +267,11 @@ class deepsight_action_programcrsset_unassign extends deepsight_action_standard 
      * @return array An array to format as JSON and return to the Javascript.
      */
     protected function _respond_to_js(array $elements, $bulkaction) {
-        global $DB;
         $prgid = required_param('id', PARAM_INT);
-        foreach ($elements as $crssetid => $label) {
-            if ($this->can_unassign($prgid, $crssetid) === true) {
-                $assignrec = $DB->get_record(programcrsset::TABLE, array('crssetid' => $crssetid, 'prgid' => $prgid));
-                $prgcrsset = new programcrsset($assignrec);
-                $prgcrsset->delete();
-            }
-        }
-        return array('result' => 'success', 'msg'=>'Success');
+        $assocclass = 'programcrsset';
+        $assocparams = ['main' => 'prgid', 'incoming' => 'crssetid'];
+        $faillang = get_string('ds_action_crssetprg_bulkmaxexceeded', 'local_elisprogram');
+        return $this->attempt_unassociate($prgid, $elements, $bulkaction, $assocclass, $assocparams, $faillang);
     }
 
     /**
@@ -351,7 +280,7 @@ class deepsight_action_programcrsset_unassign extends deepsight_action_standard 
      * @param int $crssetid The ID of the courseset.
      * @return bool Whether the current can unassign (true) or not (false)
      */
-    protected function can_unassign($prgid, $crssetid) {
+    protected function can_manage_assoc($prgid, $crssetid) {
         global $USER;
 
         $crssetctx = \local_elisprogram\context\courseset::instance($crssetid);

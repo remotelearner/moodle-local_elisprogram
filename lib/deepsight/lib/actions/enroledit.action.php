@@ -57,7 +57,7 @@ class deepsight_action_enroledit extends deepsight_action_standard {
     protected function _respond_to_js(array $elements, $bulkaction) {
         $classid = required_param('id', PARAM_INT);
         $mode = optional_param('mode', 'complete', PARAM_ALPHA);
-
+        $failedops = [];
         if ($mode == 'getinfo') {
             foreach ($elements as $userid => $label) {
                 return array(
@@ -83,18 +83,35 @@ class deepsight_action_enroledit extends deepsight_action_standard {
                 : array();
 
             foreach ($elements as $userid => $label) {
-                $this->do_update($userid, $classid, $enroldata, $learningobjectives);
+                try {
+                    $this->do_update($userid, $classid, $enroldata, $learningobjectives);
+                } catch (\Exception $e) {
+                    if ($bulkaction === true) {
+                        $failedops[] = $incomingelementid;
+                    } else {
+                        throw $e;
+                    }
+                }
             }
 
             $formattedenroldata = $this->format_enroldata_for_display($enroldata);
         }
 
-        return array(
-            'result' => 'success',
-            'msg' => 'Success',
-            'enroldata' => $enroldata,
-            'displaydata' => $formattedenroldata
-        );
+        if ($bulkaction === true && !empty($failedops)) {
+            return [
+                'result' => 'partialsuccess',
+                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'failedops' => $failedops,
+            ];
+        } else {
+            return [
+                'result' => 'success',
+                'msg' => 'Success',
+                'enroldata' => $enroldata,
+                'displaydata' => $formattedenroldata
+            ];
+        }
+
     }
 
     /**

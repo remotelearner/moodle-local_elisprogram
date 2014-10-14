@@ -25,9 +25,27 @@
  */
 
 /**
+ * Trait containing shared methods.
+ */
+trait deepsight_action_usertrack {
+    /**
+     * Determine whether the current user can manage an association.
+     *
+     * @param int $userid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param int $trackid The ID of the incoming element. The is the ID of the 'many', in a 'many-to-one' association.
+     * @return bool Whether the current can manage (true) or not (false)
+     */
+    protected function can_manage_assoc($userid, $trackid) {
+        return usertrack::can_manage_assoc($userid, $trackid);
+    }
+}
+
+/**
  * An action to assign tracks to a user.
  */
 class deepsight_action_usertrack_assign extends deepsight_action_confirm {
+    use deepsight_action_usertrack;
+
     public $label = 'Assign';
     public $icon = 'elisicon-assoc';
 
@@ -65,23 +83,32 @@ class deepsight_action_usertrack_assign extends deepsight_action_confirm {
         $userid = required_param('id', PARAM_INT);
         $user = new user($userid);
 
+        $failedops = [];
         foreach ($elements as $trackid => $label) {
-            if ($this->can_assign($user->id, $trackid) === true) {
-                usertrack::enrol($user->id, $trackid);
+            if ($this->can_manage_assoc($user->id, $trackid) === true) {
+                try {
+                    usertrack::enrol($user->id, $trackid);
+                } catch (\Exception $e) {
+                    if ($bulkaction === true) {
+                        $failedops[] = $trackid;
+                    } else {
+                        throw $e;
+                    }
+                }
+            } else {
+                $failedops[] = $trackid;
             }
         }
 
-        return array('result' => 'success', 'msg'=>'Success');
-    }
-
-    /**
-     * Determine whether the current user can assign the given track to the given user.
-     * @param int $userid The ID of the user (the assignee).
-     * @param int $trkid The ID of the track.
-     * @return bool Whether the user can assign (true) or not (false)
-     */
-    protected function can_assign($userid, $trkid) {
-        return usertrack::can_manage_assoc($userid, $trkid);
+        if ($bulkaction === true && !empty($failedops)) {
+             return [
+                'result' => 'partialsuccess',
+                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'failedops' => $failedops,
+            ];
+        } else {
+            return array('result' => 'success', 'msg' => 'Success');
+        }
     }
 }
 
@@ -89,6 +116,8 @@ class deepsight_action_usertrack_assign extends deepsight_action_confirm {
  * An action to unassign tracks from a user.
  */
 class deepsight_action_usertrack_unassign extends deepsight_action_confirm {
+    use deepsight_action_usertrack;
+
     public $label = 'Unassign';
     public $icon = 'elisicon-unassoc';
 
@@ -126,24 +155,8 @@ class deepsight_action_usertrack_unassign extends deepsight_action_confirm {
         global $DB;
         $userid = required_param('id', PARAM_INT);
 
-        foreach ($elements as $trackid => $label) {
-            if ($this->can_unassign($userid, $trackid) === true) {
-                $assignrec = $DB->get_record(usertrack::TABLE, array('userid' => $userid, 'trackid' => $trackid));
-                $usertrack = new usertrack($assignrec);
-                $usertrack->delete();
-            }
-        }
-
-        return array('result' => 'success', 'msg'=>'Success');
-    }
-
-    /**
-     * Determine whether the current user can unassign the user from the track.
-     * @param int $userid The ID of the user (the assignee).
-     * @param int $trackid The ID of the track.
-     * @return bool Whether the current can unassign (true) or not (false)
-     */
-    protected function can_unassign($userid, $trackid) {
-        return usertrack::can_manage_assoc($userid, $trackid);
+        $assocclass = 'usertrack';
+        $assocparams = ['main' => 'userid', 'incoming' => 'trackid'];
+        return $this->attempt_unassociate($userid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 }
