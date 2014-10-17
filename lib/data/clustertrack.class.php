@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -83,14 +82,18 @@ class clustertrack extends elis_data_object {
 
     /**
      * Associates a cluster with a track.
+     * @param int $cluster the cluster/userset id
+     * @param int $track the track id
+     * @param bool $autounenrol the auto unenrolment setting, default true
+     * @param bool $autoenrol the auto enrolment setting, default true
      */
-    public static function associate($cluster, $track, $autounenrol=true, $autoenrol=true) {
+    public static function associate($cluster, $track, $autounenrol = true, $autoenrol = true) {
         global $DB;
 
-        // make sure we don't double-associate
-        if ($DB->record_exists(self::TABLE, array('clusterid' => $cluster,
-                                                  'trackid'   => $track)))
-        {
+        // Make sure we don't double-associate.
+        if (($assoc = $DB->get_record(self::TABLE, array('clusterid' => $cluster, 'trackid' => $track)))) {
+            // Note reversed params for autoenrol & autounenrol
+            static::update_autoenrol($assoc->id, $autoenrol, $autounenrol);
             return;
         }
 
@@ -342,21 +345,25 @@ class clustertrack extends elis_data_object {
     /**
      * Updates the autoenrol flag for a particular cluster-track association
      *
-     * @param   int     $association_id  The id of the appropriate association record
-     * @param   int     $autoenrol       The new autoenrol value
+     * @param int $association_id  The id of the appropriate association record
+     * @param bool $autoenrol The new autoenrol value
+     * @param bool $autounenrol The new autounenrol value
      *
-     * @return  object                   The updated record
+     * @return object The updated record
      */
-    public static function update_autoenrol($association_id, $autoenrol) {
+    public static function update_autoenrol($association_id, $autoenrol, $autounenrol = null) {
         global $DB;
 
         $old_autoenrol = $DB->get_field(self::TABLE, 'autoenrol', array('id' => $association_id));
 
         // update the flag on the association record
-        $update_record = new stdClass;
-        $update_record->id = $association_id;
-        $update_record->autoenrol = $autoenrol;
-        $result = $DB->update_record(self::TABLE, $update_record);
+        $updaterecord = new stdClass;
+        $updaterecord->id = $association_id;
+        $updaterecord->autoenrol = $autoenrol;
+        if (!is_null($autounenrol)) {
+            $updaterecord->autounenrol = $autounenrol;
+        }
+        $result = $DB->update_record(self::TABLE, $updaterecord);
 
         if (!empty($autoenrol) && empty($old_autoenrol) && ($cluster = $DB->get_field(self::TABLE, 'clusterid',
             array('id' => $association_id))) && ($track = $DB->get_field(self::TABLE, 'trackid', array('id' => $association_id)))) {

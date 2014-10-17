@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -73,6 +73,7 @@ class deepsight_action_programuserset_assign extends deepsight_action_standard {
         $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
         $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
         $opts['opts']['langautoenrol'] = get_string('usersetprogramform_auto_enrol', 'local_elisprogram');
+        $opts['opts']['langrecursive'] = get_string('usersetprogramform_recursive', 'local_elisprogram');
         $opts['opts']['langyes'] = get_string('yes', 'moodle');
         $opts['opts']['langno'] = get_string('no', 'moodle');
         return $opts;
@@ -88,9 +89,19 @@ class deepsight_action_programuserset_assign extends deepsight_action_standard {
         global $DB;
         $programid = required_param('id', PARAM_INT);
         $autoenrol = optional_param('autoenrol', 0, PARAM_INT);
+        $recursive = optional_param('recursive', 0, PARAM_INT);
         foreach ($elements as $usersetid => $label) {
             if ($this->can_assign($programid, $usersetid) === true) {
                 clustercurriculum::associate($usersetid, $programid, $autoenrol);
+                if ($recursive) {
+                    $userset = new userset($usersetid);
+                    $subsets = $userset->get_all_subsets();
+                    foreach ($subsets as $subset) {
+                        if ($this->can_assign($programid, $subset->id) === true) {
+                            clustercurriculum::associate($subset->id, $programid, $autoenrol);
+                        }
+                    }
+                }
             }
         }
         return array('result' => 'success', 'msg' => 'Success');
@@ -143,6 +154,7 @@ class deepsight_action_programuserset_edit extends deepsight_action_standard {
         $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
         $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
         $opts['opts']['langautoenrol'] = get_string('usersetprogramform_auto_enrol', 'local_elisprogram');
+        $opts['opts']['langrecursive'] = get_string('usersetprogramform_recursive', 'local_elisprogram');
         $opts['opts']['langyes'] = get_string('yes', 'moodle');
         $opts['opts']['langno'] = get_string('no', 'moodle');
         return $opts;
@@ -158,12 +170,26 @@ class deepsight_action_programuserset_edit extends deepsight_action_standard {
         global $DB;
         $programid = required_param('id', PARAM_INT);
         $autoenrol = required_param('autoenrol', PARAM_INT);
+        $recursive = optional_param('recursive', 0, PARAM_INT);
         foreach ($elements as $usersetid => $label) {
             if ($this->can_edit($programid, $usersetid) === true) {
                 $associationfilters = array('clusterid' => $usersetid, 'curriculumid' => $programid);
                 $association = $DB->get_record(clustercurriculum::TABLE, $associationfilters);
                 if (!empty($association)) {
                     clustercurriculum::update_autoenrol($association->id, $autoenrol);
+                }
+                if ($recursive) {
+                    $userset = new userset($usersetid);
+                    $subsets = $userset->get_all_subsets();
+                    foreach ($subsets as $subset) {
+                        if ($this->can_edit($programid, $subset->id) === true) {
+                            $associationfilters = array('clusterid' => $subset->id, 'curriculumid' => $programid);
+                            $association = $DB->get_record(clustercurriculum::TABLE, $associationfilters);
+                            if (!empty($association)) {
+                                clustercurriculum::update_autoenrol($association->id, $autoenrol);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -190,7 +216,8 @@ class deepsight_action_programuserset_edit extends deepsight_action_standard {
 /**
  * An action to unassign usersets from a program.
  */
-class deepsight_action_programuserset_unassign extends deepsight_action_confirm {
+class deepsight_action_programuserset_unassign extends deepsight_action_standard {
+    const TYPE = 'usersetprogram_unassign';
     public $label = 'Unassign';
     public $icon = 'elisicon-unassoc';
 
@@ -219,6 +246,26 @@ class deepsight_action_programuserset_unassign extends deepsight_action_confirm 
     }
 
     /**
+     * Provide options to the javascript.
+     * @return array An array of options.
+     */
+    public function get_js_opts() {
+        global $CFG;
+        $opts = parent::get_js_opts();
+        $opts['condition'] = $this->condition;
+        $opts['opts']['actionurl'] = $this->endpoint;
+        $opts['opts']['desc_single'] = $this->descsingle;
+        $opts['opts']['desc_multiple'] = $this->descmultiple;
+        $opts['opts']['mode'] = 'unassign'; // TBD
+        $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
+        $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
+        $opts['opts']['langrecursive'] = get_string('usersetprogramform_recursive_unassign', 'local_elisprogram');
+        $opts['opts']['langyes'] = get_string('yes', 'moodle');
+        $opts['opts']['langno'] = get_string('no', 'moodle');
+        return $opts;
+    }
+
+    /**
      * Unassign the usersets from the program.
      * @param array $elements An array of userset information to unassign from the program.
      * @param bool $bulkaction Whether this is a bulk-action or not.
@@ -227,15 +274,30 @@ class deepsight_action_programuserset_unassign extends deepsight_action_confirm 
     protected function _respond_to_js(array $elements, $bulkaction) {
         global $DB;
         $programid = required_param('id', PARAM_INT);
+        $recursive = optional_param('recursive', 0, PARAM_INT);
         foreach ($elements as $usersetid => $label) {
             if ($this->can_unassign($programid, $usersetid) === true) {
                 $assignrecfilters = array('clusterid' => $usersetid, 'curriculumid' => $programid);
-                $assignrec = $DB->get_record(clustercurriculum::TABLE, $assignrecfilters);
-                $clustercurriculum = new clustercurriculum($assignrec);
-                $clustercurriculum->delete();
+                if (($assignrec = $DB->get_record(clustercurriculum::TABLE, $assignrecfilters))) {
+                    $clustercurriculum = new clustercurriculum($assignrec);
+                    $clustercurriculum->delete();
+                }
+                if ($recursive) {
+                    $userset = new userset($usersetid);
+                    $subsets = $userset->get_all_subsets();
+                    foreach ($subsets as $subset) {
+                        if ($this->can_unassign($programid, $subset->id) === true) {
+                            $assignrecfilters = array('clusterid' => $subset->id, 'curriculumid' => $programid);
+                            if (($assignrec = $DB->get_record(clustercurriculum::TABLE, $assignrecfilters))) {
+                                $clustercurriculum = new clustercurriculum($assignrec);
+                                $clustercurriculum->delete();
+                            }
+                        }
+                    }
+                }
             }
         }
-        return array('result' => 'success', 'msg'=>'Success');
+        return array('result' => 'success', 'msg' => 'Success');
     }
 
     /**
