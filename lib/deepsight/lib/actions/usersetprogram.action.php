@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -99,6 +99,7 @@ class deepsight_action_usersetprogram_assign extends deepsight_action_standard {
         $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
         $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
         $opts['opts']['langautoenrol'] = get_string('usersetprogramform_auto_enrol', 'local_elisprogram');
+        $opts['opts']['langrecursive'] = get_string('usersetprogramform_recursive', 'local_elisprogram');
         $opts['opts']['langyes'] = get_string('yes', 'moodle');
         $opts['opts']['langno'] = get_string('no', 'moodle');
         return $opts;
@@ -114,17 +115,34 @@ class deepsight_action_usersetprogram_assign extends deepsight_action_standard {
         global $DB;
         $usersetid = required_param('id', PARAM_INT);
         $autoenrol = optional_param('autoenrol', 0, PARAM_INT);
+        $recursive = optional_param('recursive', 0, PARAM_INT);
+        if ($recursive) {
+            $userset = new userset($usersetid);
+        }
         $failedops = [];
-
         foreach ($elements as $programid => $label) {
             if ($this->can_manage_assoc($usersetid, $programid) === true) {
                 try {
                     clustercurriculum::associate($usersetid, $programid, $autoenrol);
                 } catch (\Exception $e) {
-                    if ($bulkaction === true) {
+                    if ($bulkaction === true || $recursive) {
                         $failedops[] = $programid;
                     } else {
                         throw $e;
+                    }
+                }
+                if ($recursive) {
+                    $subsets = $userset->get_all_subsets();
+                    foreach ($subsets as $subset) {
+                        if ($this->can_manage_assoc($subset->id, $programid) === true) {
+                            try {
+                                clustercurriculum::associate($subset->id, $programid, $autoenrol);
+                            } catch (\Exception $e) {
+                                $failedops[] = $programid; // TBD?
+                            }
+                        } else {
+                            $failedops[] = $programid; // TBD?
+                        }
                     }
                 }
             } else {
@@ -132,10 +150,10 @@ class deepsight_action_usersetprogram_assign extends deepsight_action_standard {
             }
         }
 
-        if ($bulkaction === true && !empty($failedops)) {
+        if (!empty($failedops)) {
              return [
                 'result' => 'partialsuccess',
-                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'msg' => get_string($recursive ? 'ds_action_generic_recursive' : 'ds_action_generic_bulkfail', 'local_elisprogram'),
                 'failedops' => $failedops,
             ];
         } else {
@@ -176,6 +194,8 @@ class deepsight_action_usersetprogram_edit extends deepsight_action_standard {
         $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
         $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
         $opts['opts']['langautoenrol'] = get_string('usersetprogramform_auto_enrol', 'local_elisprogram');
+        $opts['opts']['langrecursive'] = get_string('usersetprogramform_recursive_edit', 'local_elisprogram');
+        $opts['opts']['langautoassoc'] = get_string('usersetprogramform_autoassoc', 'local_elisprogram');
         $opts['opts']['langyes'] = get_string('yes', 'moodle');
         $opts['opts']['langno'] = get_string('no', 'moodle');
         return $opts;
@@ -191,8 +211,12 @@ class deepsight_action_usersetprogram_edit extends deepsight_action_standard {
         global $DB;
         $usersetid = required_param('id', PARAM_INT);
         $autoenrol = required_param('autoenrol', PARAM_INT);
+        $autoassoc = optional_param('autoassoc', 0, PARAM_INT);
+        $recursive = optional_param('recursive', 0, PARAM_INT);
+        if ($recursive) {
+            $userset = new userset($usersetid);
+        }
         $failedops = [];
-
         foreach ($elements as $programid => $label) {
             if ($this->can_manage_assoc($usersetid, $programid) === true) {
                 $associationfilters = array('clusterid' => $usersetid, 'curriculumid' => $programid);
@@ -201,7 +225,7 @@ class deepsight_action_usersetprogram_edit extends deepsight_action_standard {
                     try {
                         clustercurriculum::update_autoenrol($association->id, $autoenrol);
                     } catch (\Exception $e) {
-                        if ($bulkaction === true) {
+                        if ($bulkaction === true || $recursive) {
                             $failedops[] = $programid;
                         } else {
                             throw $e;
@@ -210,15 +234,41 @@ class deepsight_action_usersetprogram_edit extends deepsight_action_standard {
                 } else {
                     $failedops[] = $programid;
                 }
+                if ($recursive) {
+                    $subsets = $userset->get_all_subsets();
+                    foreach ($subsets as $subset) {
+                        if ($this->can_manage_assoc($subset->id, $programid) === true) {
+                            $associationfilters = array('clusterid' => $subset->id, 'curriculumid' => $programid);
+                            $association = $DB->get_record(clustercurriculum::TABLE, $associationfilters);
+                            if (empty($association)) {
+                                if ($autoassoc) {
+                                    try {
+                                        clustercurriculum::associate($subset->id, $programid, $autoenrol);
+                                    } catch (\Exception $e) {
+                                        $failedops[] = $programid;
+                                    }
+                                }
+                            } else {
+                                try {
+                                    clustercurriculum::update_autoenrol($association->id, $autoenrol);
+                                } catch (\Exception $e) {
+                                    $failedops[] = $programid; // TBD?
+                                }
+                            }
+                        } else {
+                            $failedops[] = $programid; // TBD?
+                        }
+                    }
+                }
             } else {
                 $failedops[] = $programid;
             }
         }
 
-        if ($bulkaction === true && !empty($failedops)) {
+        if (!empty($failedops)) {
              return [
                 'result' => 'partialsuccess',
-                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'msg' => get_string($recursive ? 'ds_action_generic_recursive' : 'ds_action_generic_bulkfail', 'local_elisprogram'),
                 'failedops' => $failedops,
             ];
         } else {
@@ -230,8 +280,9 @@ class deepsight_action_usersetprogram_edit extends deepsight_action_standard {
 /**
  * An action to unassign programs from a userset.
  */
-class deepsight_action_usersetprogram_unassign extends deepsight_action_confirm {
+class deepsight_action_usersetprogram_unassign extends deepsight_action_standard {
     use deepsight_action_usersetprogram;
+    const TYPE = 'usersetprogram_unassign';
 
     public $label = 'Unassign';
     public $icon = 'elisicon-unassoc';
@@ -261,6 +312,26 @@ class deepsight_action_usersetprogram_unassign extends deepsight_action_confirm 
     }
 
     /**
+     * Provide options to the javascript.
+     * @return array An array of options.
+     */
+    public function get_js_opts() {
+        global $CFG;
+        $opts = parent::get_js_opts();
+        $opts['condition'] = $this->condition;
+        $opts['opts']['actionurl'] = $this->endpoint;
+        $opts['opts']['desc_single'] = $this->descsingle;
+        $opts['opts']['desc_multiple'] = $this->descmultiple;
+        $opts['opts']['mode'] = 'unassign'; // TBD
+        $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
+        $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
+        $opts['opts']['langrecursive'] = get_string('usersetprogramform_recursive_unassign', 'local_elisprogram');
+        $opts['opts']['langyes'] = get_string('yes', 'moodle');
+        $opts['opts']['langno'] = get_string('no', 'moodle');
+        return $opts;
+    }
+
+    /**
      * Unassign the programs from the userset.
      * @param array $elements An array of program information to unassign from the userset.
      * @param bool $bulkaction Whether this is a bulk-action or not.
@@ -269,6 +340,14 @@ class deepsight_action_usersetprogram_unassign extends deepsight_action_confirm 
     protected function _respond_to_js(array $elements, $bulkaction) {
         global $DB;
         $usersetid = required_param('id', PARAM_INT);
+        $recursive = optional_param('recursive', 0, PARAM_INT);
+        if ($recursive) {
+            $userset = new userset($usersetid);
+            $subsets = $userset->get_all_subsets();
+            foreach ($subsets as $subset) {
+                $elements[$subset->id] = '';
+            }
+        }
         $assocclass = 'clustercurriculum';
         $assocparams = ['main' => 'clusterid', 'incoming' => 'curriculumid'];
         return $this->attempt_unassociate($usersetid, $elements, $bulkaction, $assocclass, $assocparams);

@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -84,14 +83,16 @@ class clustercurriculum extends elis_data_object {
 
     /**
      * Associates a cluster with a curriculum.
+     * @param int $cluster the cluster/userset id
+     * @param int $curriculum the curriculum/program id
+     * @param bool $autoenrol the auto enrolment setting, default true
      */
-    public static function associate($cluster, $curriculum, $autoenrol=true) {
+    public static function associate($cluster, $curriculum, $autoenrol = true) {
         global $DB;
 
-        // make sure we don't double-associate
-        if ($DB->record_exists(self::TABLE, array('clusterid'    => $cluster,
-                                                   'curriculumid' => $curriculum)))
-        {
+        // Make sure we don't double-associate.
+        if (($assoc = $DB->get_record(self::TABLE, array('clusterid' => $cluster, 'curriculumid' => $curriculum)))) {
+            static::update_autoenrol($assoc->id, $autoenrol);
             return;
         }
 

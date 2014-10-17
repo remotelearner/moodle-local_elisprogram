@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -98,6 +98,7 @@ class deepsight_action_trackuserset_assign extends deepsight_action_standard {
         $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
         $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
         $opts['opts']['langautoenrol'] = get_string('usersettrack_auto_enrol', 'local_elisprogram');
+        $opts['opts']['langrecursive'] = get_string('usersettrack_recursive', 'local_elisprogram');
         $opts['opts']['langyes'] = get_string('yes', 'moodle');
         $opts['opts']['langno'] = get_string('no', 'moodle');
         return $opts;
@@ -114,17 +115,35 @@ class deepsight_action_trackuserset_assign extends deepsight_action_standard {
         $trackid = required_param('id', PARAM_INT);
         $autoenrol = optional_param('autoenrol', 0, PARAM_INT);
         $autounenrol = optional_param('autounenrol', 1, PARAM_INT);
+        $recursive = optional_param('recursive', 0, PARAM_INT);
         $failedops = [];
-
         foreach ($elements as $usersetid => $label) {
             if ($this->can_manage_assoc($trackid, $usersetid) === true) {
                 try {
                     clustertrack::associate($usersetid, $trackid, $autounenrol, $autoenrol);
                 } catch (\Exception $e) {
-                    if ($bulkaction === true) {
+                    if ($bulkaction === true || $recursive) {
                         $failedops[] = $usersetid;
                     } else {
                         throw $e;
+                    }
+                }
+                if ($recursive) {
+                    $userset = new userset($usersetid);
+                    $subsets = $userset->get_all_subsets();
+                    foreach ($subsets as $subset) {
+                        if (isset($elements[$subset->id])) {
+                            continue;
+                        }
+                        if ($this->can_manage_assoc($trackid, $subset->id) === true) {
+                            try {
+                                clustertrack::associate($subset->id, $trackid, $autounenrol, $autoenrol);
+                            } catch (\Exception $e) {
+			        $failedops[] = $usersetid;
+                            }
+			} else {
+			    $failedops[] = $usersetid;
+                        }
                     }
                 }
             } else {
@@ -132,10 +151,10 @@ class deepsight_action_trackuserset_assign extends deepsight_action_standard {
             }
         }
 
-        if ($bulkaction === true && !empty($failedops)) {
+        if (!empty($failedops)) {
              return [
                 'result' => 'partialsuccess',
-                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'msg' => get_string($recursive ? 'ds_action_generic_recursive' : 'ds_action_generic_bulkfail', 'local_elisprogram'),
                 'failedops' => $failedops,
             ];
         } else {
@@ -176,6 +195,8 @@ class deepsight_action_trackuserset_edit extends deepsight_action_standard {
         $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
         $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
         $opts['opts']['langautoenrol'] = get_string('usersettrack_auto_enrol', 'local_elisprogram');
+        $opts['opts']['langrecursive'] = get_string('usersettrack_recursive_edit', 'local_elisprogram');
+        $opts['opts']['langautoassoc'] = get_string('usersettrack_autoassoc', 'local_elisprogram');
         $opts['opts']['langyes'] = get_string('yes', 'moodle');
         $opts['opts']['langno'] = get_string('no', 'moodle');
         return $opts;
@@ -191,8 +212,10 @@ class deepsight_action_trackuserset_edit extends deepsight_action_standard {
         global $DB;
         $trackid = required_param('id', PARAM_INT);
         $autoenrol = required_param('autoenrol', PARAM_INT);
+        $autounenrol = optional_param('autounenrol', 1, PARAM_INT);
+        $recursive = optional_param('recursive', 0, PARAM_INT);
+        $autoassoc = optional_param('autoassoc', 0, PARAM_INT);
         $failedops = [];
-
         foreach ($elements as $usersetid => $label) {
             if ($this->can_manage_assoc($trackid, $usersetid) === true) {
                 $association = $DB->get_record(clustertrack::TABLE, array('clusterid' => $usersetid, 'trackid' => $trackid));
@@ -200,7 +223,7 @@ class deepsight_action_trackuserset_edit extends deepsight_action_standard {
                     try {
                         clustertrack::update_autoenrol($association->id, $autoenrol);
                     } catch (\Exception $e) {
-                        if ($bulkaction === true) {
+                        if ($bulkaction === true || $recursive) {
                             $failedops[] = $usersetid;
                         } else {
                             throw $e;
@@ -209,15 +232,44 @@ class deepsight_action_trackuserset_edit extends deepsight_action_standard {
                 } else {
                     $failedops[] = $usersetid;
                 }
+                if ($recursive) {
+                    $userset = new userset($usersetid);
+                    $subsets = $userset->get_all_subsets();
+                    foreach ($subsets as $subset) {
+                        if (isset($elements[$subset->id])) {
+                            continue;
+                        }
+                        if ($this->can_manage_assoc($trackid, $subset->id) === true) {
+                            $association = $DB->get_record(clustertrack::TABLE, array('clusterid' => $subset->id, 'trackid' => $trackid));
+                            if (empty($association)) {
+                                if ($autoassoc) {
+                                    try {
+                                        clustertrack::associate($subset->id, $trackid, $autounenrol, $autoenrol);
+                                    } catch (\Exception $e) {
+                                        $failedops[] = $usersetid;
+                                    }
+                                }
+                            } else {
+                                try {
+                                    clustertrack::update_autoenrol($association->id, $autoenrol);
+                                } catch (\Exception $e) {
+                                    $failedops[] = $usersetid;
+                                }
+                            }
+                        } else {
+                            $failedops[] = $usersetid;
+                        }
+                    }
+                }
             } else {
                 $failedops[] = $usersetid;
             }
         }
 
-        if ($bulkaction === true && !empty($failedops)) {
+        if (!empty($failedops)) {
              return [
                 'result' => 'partialsuccess',
-                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'msg' => get_string($recursive ? 'ds_action_generic_recursive' : 'ds_action_generic_bulkfail', 'local_elisprogram'),
                 'failedops' => $failedops,
             ];
         } else {
@@ -229,8 +281,9 @@ class deepsight_action_trackuserset_edit extends deepsight_action_standard {
 /**
  * An action to unassign usersets from a track.
  */
-class deepsight_action_trackuserset_unassign extends deepsight_action_confirm {
+class deepsight_action_trackuserset_unassign extends deepsight_action_standard {
     use deepsight_action_trackuserset;
+    const TYPE = 'usersettrack_unassign';
 
     public $label = 'Unassign';
     public $icon = 'elisicon-unassoc';
@@ -260,6 +313,26 @@ class deepsight_action_trackuserset_unassign extends deepsight_action_confirm {
     }
 
     /**
+     * Provide options to the javascript.
+     * @return array An array of options.
+     */
+    public function get_js_opts() {
+        global $CFG;
+        $opts = parent::get_js_opts();
+        $opts['condition'] = $this->condition;
+        $opts['opts']['actionurl'] = $this->endpoint;
+        $opts['opts']['desc_single'] = $this->descsingle;
+        $opts['opts']['desc_multiple'] = $this->descmultiple;
+        $opts['opts']['mode'] = 'unassign'; // TBD
+        $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
+        $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
+        $opts['opts']['langrecursive'] = get_string('usersettrack_recursive_unassign', 'local_elisprogram');
+        $opts['opts']['langyes'] = get_string('yes', 'moodle');
+        $opts['opts']['langno'] = get_string('no', 'moodle');
+        return $opts;
+    }
+
+    /**
      * Unassign the usersets from the track.
      * @param array $elements An array of userset information to unassign from the track.
      * @param bool $bulkaction Whether this is a bulk-action or not.
@@ -268,6 +341,16 @@ class deepsight_action_trackuserset_unassign extends deepsight_action_confirm {
     protected function _respond_to_js(array $elements, $bulkaction) {
         global $DB;
         $trackid = required_param('id', PARAM_INT);
+        $recursive = optional_param('recursive', 0, PARAM_INT);
+        if ($recursive) {
+            foreach ($elements as $usersetid => $label) {
+                $userset = new userset($usersetid);
+                $subsets = $userset->get_all_subsets();
+                foreach ($subsets as $subset) {
+                    $elements[$subset->id] = '';
+                }
+            }
+        }
         $assocclass = 'clustertrack';
         $assocparams = ['main' => 'trackid', 'incoming' => 'clusterid'];
         return $this->attempt_unassociate($trackid, $elements, $bulkaction, $assocclass, $assocparams);

@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -81,6 +81,18 @@ class userset extends data_object_with_custom_fields {
     public $deletesubs = false;
 
     /**
+     * Method to return all nested subsets of the current userset.
+     *
+     * @return recordset recordset of all subsets
+     */
+    public function get_all_subsets() {
+        $contextinst = \local_elisprogram\context\userset::instance($this->id);
+        return userset::find(new join_filter('id', 'context', 'instanceid',
+                new AND_filter(array(new field_filter('path', "{$contextinst->path}/%", field_filter::LIKE),
+                new field_filter('contextlevel', CONTEXT_ELIS_USERSET)))), array('depth' => 'ASC'), 0, 0, $this->_db);
+    }
+
+    /**
      * Perform the necessary actions required to "delete" a cluster from the system.
      *
      * @param none
@@ -123,42 +135,21 @@ class userset extends data_object_with_custom_fields {
             $event = \local_elisprogram\event\cluster_deleted::create($eventdata);
             $event->trigger();
 
-            return;
+            return true;
         }
 
-        $result = true;
-        $children = array();
-        $delete_ids = array();
-        $promote_ids = array();
-
-        /// Figure out all the sub-clusters
-        $cluster_context_instance = \local_elisprogram\context\userset::instance($this->id);
-        $instance_id = $cluster_context_instance->id;
-        $instance_path = $cluster_context_instance->path;
-        $children = userset::find(new join_filter('id', 'context', 'instanceid',
-                                                  new AND_filter(array(new field_filter('path', "{$instance_path}/%", field_filter::LIKE),
-                                                                       new field_filter('contextlevel', CONTEXT_ELIS_USERSET)))),
-                                  array('depth' => 'ASC'), 0, 0, $this->_db);
-        $children = $children->to_array();
-
+        $children = $this->get_all_subsets();
         if ($this->deletesubs) {
-            $todelete = $children;
-            $todelete[] = $this; // The specified cluster always gets deleted
+            foreach ($children as $userset) {
+                // Delete without recursion.
+                $userset->deletesimple = true;
+                $userset->delete();
+            }
         } else {
-            $todelete = array($this);
-        }
-
-        foreach ($todelete as $userset) {
-            //delete without recursion
-            $userset->deletesimple = true;
-            $userset->delete();
-        }
-
-        if (!$this->deletesubs && !empty($children)) {
             foreach ($children as $child) {
                 $lower_depth = $child->depth - 1;
 
-                if (userset::exists(new field_filter('id', $child->parent))) {
+                if ($child->parent != $this->id && userset::exists(new field_filter('id', $child->parent))) {
                     /// A parent found so lets lower the depth
                     $child->depth = 0;
                 } else {
@@ -176,7 +167,9 @@ class userset extends data_object_with_custom_fields {
             \local_eliscore\context\helper::build_all_paths(false, array(CONTEXT_ELIS_USERSET)); // Re-build the context table for all sub-clusters
         }
 
-        return $result;
+        $this->deletesimple = true;
+        $this->delete();
+        return true;
     }
 
     static $validation_rules = array(
