@@ -91,6 +91,7 @@ class pmclass extends base {
             'enrol.id' => '',
             'enrol.completestatusid' => '',
             'enrol.grade' => '',
+            'enrol.completetime' => '',
             'waitlist.id' => '',
         ];
     }
@@ -102,6 +103,21 @@ class pmclass extends base {
      */
     public function get_fixed_visible_datafields() {
         return ['idnumber'];
+    }
+
+    /**
+     * Get an array containing a list of visible and hidden datafields.
+     *
+     * For fields that are not fixed (see self::get_fixed_visible_datafields), additional fields are displayed when the user
+     * searches on them. For fields that are not being searched on, they can be viewed by clicking a "more" link.
+     *
+     * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
+     * @return array Array of field information, first item is visible fields, second is hidden fields.
+     */
+    public function get_datafields_by_visibility(array $filters = array()) {
+       list($visible, $hidden) = parent::get_datafields_by_visibility($filters);
+       $hidden['enrol_completetime'] = get_string('data_completetime', 'eliswidget_enrolment');
+       return [$visible, $hidden];
     }
 
     /**
@@ -198,6 +214,11 @@ class pmclass extends base {
             }
             if (($mdlcourse = moodle_get_course($result->id))) {
                 $pageresultsar[$id]->element_idnumber .= ' - '.\html_writer::tag('a', get_string('moodlecourse', 'local_elisprogram'), array('href' => $CFG->wwwroot.'/course/view.php?id='.$mdlcourse));
+            }
+            if (isset($pageresultsar[$id]->enrol_completetime) && !empty($pageresultsar[$id]->enrol_completetime)) {
+                $pageresultsar[$id]->enrol_completetime = userdate($pageresultsar[$id]->enrol_completetime, $dateformat);
+            } else {
+                $pageresultsar[$id]->enrol_completetime = get_string('notavailable');
             }
         }
         unset($pageresults);

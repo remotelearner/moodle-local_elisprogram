@@ -36,6 +36,7 @@ $string['action_unenrol'] = 'Unenrol';
 $string['classes'] = 'Classes:';
 $string['courses'] = 'Courses:';
 $string['coursesets'] = 'Course Sets:';
+$string['data_completetime'] = 'Completed: ';
 $string['data_grade'] = 'Grade';
 $string['data_instructors'] = 'Instructors';
 $string['data_status'] = 'Status';
