@@ -165,7 +165,8 @@ class pmclass extends base {
      * @return \moodle_recordset A recordset of course information.
      */
     public function get_search_results(array $filters = array(), $page = 1) {
-        global $DB;
+        global $CFG, $DB;
+        require_once(\elispm::lib('data/classmoodlecourse.class.php'));
         list($pageresults, $totalresultsamt) = parent::get_search_results($filters, $page);
 
         if ($totalresultsamt <= 0) {
@@ -194,6 +195,9 @@ class pmclass extends base {
                 } else {
                     $pageresultsar[$id]->element_enddate = get_string('notavailable');
                 }
+            }
+            if (($mdlcourse = moodle_get_course($result->id))) {
+                $pageresultsar[$id]->element_idnumber .= ' - '.\html_writer::tag('a', get_string('moodlecourse', 'local_elisprogram'), array('href' => $CFG->wwwroot.'/course/view.php?id='.$mdlcourse));
             }
         }
         unset($pageresults);
