@@ -423,8 +423,48 @@ class pmclass extends data_object_with_custom_fields {
      * @param int courseid Course id
      */
     function count_course_assignments($courseid) {
-        $assignments = pmclass::count(new field_filter('courseid', $courseid), $this->_db);
+        $assignments = static::count(new field_filter('courseid', $courseid), $this->_db);
         return $assignments;
+    }
+
+    /**
+     * Checks to see if we should try enrolling a student from the waitlist.
+     * @return Boolean True if we should enroll, and false otherwise.
+     */
+    public function can_enrol_from_waitlist() {
+        // Check for a maximum student requirement and that the class is not full.
+        return $this->enrol_from_waitlist && ($this->maxstudents == null || $this->maxstudents == 0 || $this->maxstudents > $this->count_enroled());
+    }
+
+    /**
+     * Wrapper function for the student:count_enroled function
+     * @return int The number of enrolled students for this class instance.
+     */
+    public function count_enroled() {
+        return student::count_enroled($this->id);
+    }
+
+    /**
+     * Checks to see if the given user is able to enrol in the current course
+     * $param int userid the user id that we're checking.
+     * @return Boolean True is allowed to enrol, false otherwise.
+     */
+    public function check_user_prerequisite_status($userid) {
+        // Get the Parent Course Description ID.
+        $crsid = $this->course->id;
+        $isiterator = false;
+        foreach ($this->course->curriculumcourse as $curcrs) {
+            $isiterator = true;
+            // Find the Curriculum-Course object for this Course and check the prerequisites.
+            if ($curcrs->courseid == $crsid && $curcrs->prerequisites_satisfied($userid)) {
+                return true;
+            }
+        }
+        if ($isiterator) {
+            return false;
+        }
+        // Else this Course is not attached to a program and thus has no prerequisites.
+        return true;
     }
 
     /////////////////////////////////////////////////////////////////////

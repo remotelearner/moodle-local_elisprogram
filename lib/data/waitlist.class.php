@@ -173,25 +173,28 @@ class waitlist extends elis_data_object {
         return $DB->get_recordset_sql($sql, $params, $startrec, $perpage);
     }
 
+    /**
+     * After a student passes a course, this function checks to see if the next student
+     * in the waitlist can be enrolled automatically.
+     * @param type $enrolment Receives the current student enrollment object
+     * @return boolean True of enrolled, false otherwise
+     */
     public static function check_autoenrol_after_course_completion($enrolment) {
+        $return = false;
         if ($enrolment->completestatusid != STUSTATUS_NOTCOMPLETE) {
             $pmclass = new pmclass($enrolment->classid);
             $pmclass->load();
-
-            if ((empty($pmclass->maxstudents) || $pmclass->maxstudents > student::count_enroled($pmclass->id)) && !empty($pmclass->enrol_from_waitlist)) {
-                $wlst = waitlist::get_next($enrolment->classid);
-                if (!empty($wlst)) {
-                    $crsid = $pmclass->course->id;
-                    foreach ($pmclass->course->curriculumcourse as $curcrs) {
-                        if ($curcrs->courseid == $crsid && $curcrs->prerequisites_satisfied($wlst->userid)) {
-                            $wlst->enrol();
-                        }
-                    }
+            // Check to see if we should try to enroll from the waitlist.
+            if ($pmclass->can_enrol_from_waitlist()) {
+                // Fetch the next user in the waitlist.
+                $wlst = self::get_next($enrolment->classid);
+                if (!empty($wlst) && $pmclass->check_user_prerequisite_status($wlst->userid)) {
+                    $wlst->enrol();
+                    $return = true;
                 }
             }
         }
-
-        return true;
+        return $return;
     }
 
     /**
