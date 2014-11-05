@@ -433,7 +433,7 @@ class pmclass extends data_object_with_custom_fields {
      */
     public function can_enrol_from_waitlist() {
         // Check for a maximum student requirement and that the class is not full.
-        return $this->enrol_from_waitlist && ($this->maxstudents == null || $this->maxstudents == 0 || $this->maxstudents > $this->count_enroled());
+        return (!empty($this->enrol_from_waitlist) && (empty($this->maxstudents) || $this->maxstudents > $this->count_enroled()));
     }
 
     /**
@@ -450,20 +450,18 @@ class pmclass extends data_object_with_custom_fields {
      * @return Boolean True is allowed to enrol, false otherwise.
      */
     public function check_user_prerequisite_status($userid) {
-        // Get the Parent Course Description ID.
-        $crsid = $this->course->id;
-        $isiterator = false;
-        foreach ($this->course->curriculumcourse as $curcrs) {
-            $isiterator = true;
-            // Find the Curriculum-Course object for this Course and check the prerequisites.
-            if ($curcrs->courseid == $crsid && $curcrs->prerequisites_satisfied($userid)) {
-                return true;
+        // Get all curriculumcourse records containing this course.
+        $curcrses = curriculumcourse::find(new field_filter('courseid', $this->courseid));
+        if ($curcrses && $curcrses->valid()) {
+            $filters = array(new field_filter('userid', $userid));
+            foreach ($curcrses as $curcrs) {
+                $filters[1] = new field_filter('curriculumid', $curcrs->curriculumid);
+                if (curriculumstudent::exists($filters) && !$curcrs->prerequisites_satisfied($userid)) {
+                    // User in program but hasn't satisfied all prerequisites.
+                    return false;
+                }
             }
         }
-        if ($isiterator) {
-            return false;
-        }
-        // Else this Course is not attached to a program and thus has no prerequisites.
         return true;
     }
 
@@ -997,7 +995,7 @@ class pmclass extends data_object_with_custom_fields {
             moodle_attach_class($this->id, $this->moodlecourseid, '', true, true, $this->autocreate);
         }
 
-        if (!$isnew) {
+        if (!$isnew && !empty($this->enrol_from_waitlist)) {
             if (!empty($this->oldmax) &&
                 (!$this->maxstudents || $this->oldmax < $this->maxstudents) &&
                 ($waiting = waitlist::count_records($this->id)) > 0) {
@@ -1006,11 +1004,16 @@ class pmclass extends data_object_with_custom_fields {
                                           : ($start + $waiting + 1);
                 //error_log("pmclass.class.php::save() oldmax = {$this->oldmax}, start = {$start}, newmax = {$this->maxstudents}, waiting = {$waiting} ... max = {$max}");
                 for ($i = $start; $i < $max; $i++) {
-                    $next_student = waitlist::get_next($this->id);
-                    if (empty($next_student)) {
+                    $nextstudents = waitlist::get_next($this->id);
+                    if (!$nextstudents || !$nextstudents->valid()) {
                         break;
                     }
-                    $next_student->enrol();
+                    foreach ($nextstudents as $nextstudent) {
+                        if ($this->check_user_prerequisite_status($nextstudent->userid)) {
+                            $nextstudent->enrol();
+                            break;
+                        }
+                    }
                 }
             }
         }

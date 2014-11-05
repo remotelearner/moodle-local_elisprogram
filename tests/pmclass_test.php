@@ -251,58 +251,58 @@ class pmclass_testcase extends elis_database_test {
     public function dataprovider_pmclass_can_enrol_from_waitlist() {
         return array(
             // Var enrol_from_waitlist not set, no maxstudents set - default values.
-            array(
-                array(
-                    'enrol_from_waitlist' => 0,
-                    'maxstudents' => null,
-                ),
-                2,
-                false
+            'noenrolfromwaitlist_nomaxstudents' => array(
+                    array(
+                        'enrol_from_waitlist' => 0,
+                        'maxstudents' => null,
+                    ),
+                    2,
+                    false
             ),
             // Var enrol_from_waitlist not set, maxstudents set with low current enrollment.
-            array(
-                array(
-                    'enrol_from_waitlist' => 0,
-                    'maxstudents' => 2,
-                ),
-                1,
-                false
+            'noenrolfromwaitlist_maxstudentsset_lowenrolment' => array(
+                    array(
+                        'enrol_from_waitlist' => 0,
+                        'maxstudents' => 2,
+                    ),
+                    1,
+                    false
             ),
             // Var enrol_from_waitlist not set, maxstudents set with high enrollment.
-            array(
-                array(
-                    'enrol_from_waitlist' => 0,
-                    'maxstudents' => 2,
-                ),
-                2,
-                false
+            'noenrolfromwaitlist_maxstudentsset_highenrolment' => array(
+                    array(
+                        'enrol_from_waitlist' => 0,
+                        'maxstudents' => 2,
+                    ),
+                    2,
+                    false
             ),
             // Var enrol_from_waitlist set, maxstudents not set.
-            array(
-                array(
-                    'enrol_from_waitlist' => 1,
-                    'maxstudents' => 0
-                ),
-                1,
-                true
+            'enrolfromwaitlist_maxstudentsnotset' => array(
+                    array(
+                        'enrol_from_waitlist' => 1,
+                        'maxstudents' => 0
+                    ),
+                    1,
+                    true
             ),
             // Var enrol_from_waitlist set, maxstudents set high.
-            array(
-                array(
-                    'enrol_from_waitlist' => 1,
-                    'maxstudents' => 2
-                ),
-                1,
-                true
+            'enrolfromwaitlist_maxstudentssethigh' => array(
+                    array(
+                        'enrol_from_waitlist' => 1,
+                        'maxstudents' => 2
+                    ),
+                    1,
+                    true
             ),
             // Var enrol_from_waitlist set, maxstudents set low.
-            array(
-                array(
-                    'enrol_from_waitlist' => 1,
-                    'maxstudents' => 2,
-                ),
-                2,
-                false
+            'enrolfromwaitlist_maxstudentssetlow' => array(
+                    array(
+                        'enrol_from_waitlist' => 1,
+                        'maxstudents' => 2,
+                    ),
+                    2,
+                    false
             )
         );
     }
@@ -344,29 +344,13 @@ class pmclass_testcase extends elis_database_test {
     public function dataprovider_check_user_prerequisite_status() {
         return array(
             // Class has prerequisites and specified user meets all of the prerequisites.
-            array(
-                200,
-                603,
-                true
-            ),
+            'meetsallprerequistites' => array(200, 603, true),
             // Class has prerequisites and specified user does not meet all of the prerequisites.
-            array(
-                200,
-                606,
-                false
-            ),
+            'doesnotmeetsallprerequistites' => array(200, 606, false),
             // Class is in a program but has no prerequisites.
-            array(
-                202,
-                605,
-                true
-            ),
+            'noprogramprerequistites' => array(202, 605, true),
             // Class is not in a program and thus has no prerequisites.
-            array(
-                203,
-                605,
-                true
-            )
+            'notinprogram' => array(203, 605, true)
         );
     }
 
@@ -381,13 +365,14 @@ class pmclass_testcase extends elis_database_test {
         // Load the data sets.
         $dataset = $this->createCsvDataSet(array(
             curriculum::TABLE => elispm::file('tests/fixtures/elisprogram_pgm.csv'),
+            curriculumstudent::TABLE => elispm::file('tests/fixtures/elisprogram_pgm_assign.csv'),
             course::TABLE => elispm::file('tests/fixtures/elisprogram_crs.csv'),
             pmclass::TABLE => elispm::file('tests/fixtures/elisprogram_cls.csv'),
             curriculumcourse::TABLE =>elispm::file('tests/fixtures/elisprogram_pgm_crs.csv'),
             user::TABLE => elispm::file('tests/fixtures/elisprogram_usr.csv'),
-            student::TABLE=>elispm::file('tests/fixtures/elisprogram_cls_enrol.csv'),
-            waitlist::TABLE=>elispm::file('tests/fixtures/elisprogram_waitlist.csv'),
-            courseprerequisite::TABLE=>elispm::file('tests/fixtures/elisprogram_prereq.csv'),
+            student::TABLE => elispm::file('tests/fixtures/elisprogram_cls_enrol.csv'),
+            waitlist::TABLE => elispm::file('tests/fixtures/elisprogram_waitlist.csv'),
+            courseprerequisite::TABLE => elispm::file('tests/fixtures/elisprogram_prereq.csv'),
         ));
         $this->loadDataSet($dataset);
         // Load the first Course Description's Class Instance.

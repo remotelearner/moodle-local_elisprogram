@@ -111,97 +111,55 @@ class waitlist_testcase extends elis_database_test {
      * Data provider for test method test_check_autoenrol_after_course_completion()
      * @return array Parameters for test method
      *               format: array(
-     *                  completion status,
-     *                  student enrollment id
-     *                  expected outcome
+     *                      completion status,
+     *                      student enrollment id,
+     *                      autoenrol enabled flag,
+     *                      expected outcome
      *               )
      */
     public function dataprovider_check_autoenrol_after_course_completion() {
         return array(
             // Completion status is not complete.
-            array(
-                STUSTATUS_NOTCOMPLETE,
-                704,
-                1,
-                false
-            ),
+            'studentnotcomplete' => array(STUSTATUS_NOTCOMPLETE, 704, 1, false),
             // Course complete, class has a waitlist, meets prereq, auto_enroll off.
-            array(
-                STUSTATUS_PASSED,
-                704,
-                0,
-                false
-            ),
+            'waitlist_meetsprereqs_autoenroloff' => array(STUSTATUS_PASSED, 704, 0, false),
             // Course complete, class has a waitlist, meets prereq, auto_enroll on.
-            array(
-                STUSTATUS_PASSED,
-                704,
-                1,
-                true
-            ),
+            'waitlist_meetsprereqs_autoenrolon' => array(STUSTATUS_PASSED, 704, 1, true),
             // Course complete, class has a waitlist, fails prereq, auto_enroll off.
-            array(
-                STUSTATUS_PASSED,
-                706,
-                0,
-                false
-            ),
+            'waitlist_failsprereqs_autoenroloff' => array(STUSTATUS_PASSED, 706, 0, false),
             // Course complete, class has a waitlist, fails prereq, auto_enroll on.
-            array(
-                STUSTATUS_PASSED,
-                706,
-                1,
-                false
-            ),
+            'waitlist_failsprereqs_autoenrolon' => array(STUSTATUS_PASSED, 706, 1, false),
             // Course complete, class has no waitlist, meets prereq, auto_enroll off.
-            array(
-                STUSTATUS_PASSED,
-                705,
-                0,
-                false
-            ),
+            'nowaitlist_meetsprereqs_autoenroloff' => array(STUSTATUS_PASSED, 705, 0, false),
             // Course complete, class has no waitlist, meets prereq, auto_enroll on.
-            array(
-                STUSTATUS_PASSED,
-                705,
-                1,
-                false
-            ),
+            'nowaitlist_meetsprereqs_autoenrolon' => array(STUSTATUS_PASSED, 705, 1, false),
             // Course complete, class has no waitlist, fails prereq, auto_enroll off.
-            array(
-                STUSTATUS_PASSED,
-                707,
-                0,
-                false
-            ),
+            'nowaitlist_failsprereqs_autoenroloff' => array(STUSTATUS_PASSED, 707, 0, false),
             // Course complete, class has no waitlist, fails prereq, auto_enroll on.
-            array(
-                STUSTATUS_PASSED,
-                707,
-                1,
-                false
-            ),
+            'nowaitlist_failsprereqs_autoenrolon' => array(STUSTATUS_PASSED, 707, 1, false),
         );
     }
 
     /**
      * Test the check_user_prerequisite_status function.
      * @dataProvider dataprovider_check_autoenrol_after_course_completion
-     * @param int $classid The class instance to check against.
-     * @param int $userid The number enrolled to return from the mocked count_enroled function.
+     * @param int $completionstatus completionstatus setting.
+     * @param int $enrollid the student enrolment record id.
+     * @param int $enableautoenroll Flag whether to enable autoenrol.
      * @param boolean $expected The expected result.
      */
     public function test_check_autoenrol_after_course_completion($completionstatus, $enrollid, $enableautoenroll, $expected) {
         // Load the data sets.
         $dataset = $this->createCsvDataSet(array(
             curriculum::TABLE => elispm::file('tests/fixtures/elisprogram_pgm.csv'),
+            curriculumstudent::TABLE => elispm::file('tests/fixtures/elisprogram_pgm_assign.csv'),
             course::TABLE => elispm::file('tests/fixtures/elisprogram_crs.csv'),
             pmclass::TABLE => elispm::file('tests/fixtures/elisprogram_cls.csv'),
-            curriculumcourse::TABLE =>elispm::file('tests/fixtures/elisprogram_pgm_crs.csv'),
+            curriculumcourse::TABLE => elispm::file('tests/fixtures/elisprogram_pgm_crs.csv'),
             user::TABLE => elispm::file('tests/fixtures/elisprogram_usr.csv'),
-            student::TABLE=>elispm::file('tests/fixtures/elisprogram_cls_enrol.csv'),
-            waitlist::TABLE=>elispm::file('tests/fixtures/elisprogram_waitlist.csv'),
-            courseprerequisite::TABLE=>elispm::file('tests/fixtures/elisprogram_prereq.csv'),
+            student::TABLE => elispm::file('tests/fixtures/elisprogram_cls_enrol.csv'),
+            waitlist::TABLE => elispm::file('tests/fixtures/elisprogram_waitlist.csv'),
+            courseprerequisite::TABLE => elispm::file('tests/fixtures/elisprogram_prereq.csv'),
         ));
         $this->loadDataSet($dataset);
 
