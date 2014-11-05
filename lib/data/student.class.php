@@ -370,8 +370,11 @@ class student extends elis_data_object {
             $pmclass->load();
             if ($pmclass->can_enrol_from_waitlist()) {
                 $wlst = waitlist::get_next($this->classid);
-                if (!empty($wlst) && $pmclass->check_user_prerequisite_status($wlst->userid)) {
-                    $wlst->enrol();
+                foreach ($wlst as $nextstudent) {
+                    if ($pmclass->check_user_prerequisite_status($nextstudent->userid)) {
+                        $nextstudent->enrol();
+                        break;
+                    }
                 }
             }
         }
