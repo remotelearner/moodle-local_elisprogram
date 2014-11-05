@@ -367,10 +367,10 @@ class student extends elis_data_object {
 
         if ($this->completestatusid == STUSTATUS_NOTCOMPLETE) {
             $pmclass = $this->pmclass;
-            if (empty($pmclass->maxstudents) || $pmclass->maxstudents > static::count_enroled($pmclass->id)) {
+            $pmclass->load();
+            if ($pmclass->can_enrol_from_waitlist()) {
                 $wlst = waitlist::get_next($this->classid);
-
-                if (!empty($wlst)) {
+                if (!empty($wlst) && $pmclass->check_user_prerequisite_status($wlst->userid)) {
                     $wlst->enrol();
                 }
             }
