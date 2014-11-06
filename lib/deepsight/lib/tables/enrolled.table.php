@@ -87,6 +87,7 @@ class deepsight_datatable_enrolled extends deepsight_datatable_user {
         $langgrade = get_string('student_grade', 'local_elisprogram');
         $langcredits = get_string('student_credits', 'local_elisprogram');
         $langcompletestatus = get_string('student_status', 'local_elisprogram');
+        $langlocked = get_string('student_locked', 'local_elisprogram');
 
         $completestatus = new deepsight_filter_menuofchoices($this->DB, 'completestatus', $langcompletestatus,
                                                              array('enrol.completestatusid' => $langcompletestatus),
@@ -98,14 +99,18 @@ class deepsight_datatable_enrolled extends deepsight_datatable_user {
         );
         $completestatus->set_choices($choices);
 
+        $locked = new deepsight_filter_menuofchoices($this->DB, 'locked', $langlocked, array('enrol.locked' => $langlocked), $this->endpoint);
+        $locked->set_choices(array(0 => get_string('no', 'moodle'), 1 => get_string('yes', 'moodle')));
+
         $filters = array(
-            new deepsight_filter_date($this->DB, 'enrolmenttime', $langenrolmenttime,
-                                      array('enrol.enrolmenttime' => $langenrolmenttime)),
-            $completestatus,
-            new deepsight_filter_date($this->DB, 'completetime', $langcompletetime,
-                                      array('enrol.completetime' => $langcompletetime)),
-            new deepsight_filter_textsearch($this->DB, 'grade', $langgrade, array('enrol.grade' => $langgrade)),
-            new deepsight_filter_textsearch($this->DB, 'credits', $langcredits, array('enrol.credits' => $langcredits)),
+                new deepsight_filter_date($this->DB, 'enrolmenttime', $langenrolmenttime,
+                        array('enrol.enrolmenttime' => $langenrolmenttime)),
+                $completestatus,
+                new deepsight_filter_date($this->DB, 'completetime', $langcompletetime,
+                        array('enrol.completetime' => $langcompletetime)),
+                new deepsight_filter_textsearch($this->DB, 'grade', $langgrade, array('enrol.grade' => $langgrade)),
+                new deepsight_filter_textsearch($this->DB, 'credits', $langcredits, array('enrol.credits' => $langcredits)),
+                $locked
         );
 
         $filters = array_merge(parent::get_filters(), $filters);
