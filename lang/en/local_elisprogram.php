@@ -269,7 +269,7 @@ $string['courseform:curriculum_help'] = '<p>Select the program the course descri
 $string['courseform:duration'] = 'Duration';
 $string['courseform:duration_help'] = '<p>Number of units the course descriptions runs.</p>';
 $string['courseform:environment'] = 'Environment';
-$string['courseform:environment_help'] = '<p>Where/how is the course description delivered. Select from the choices available.  If no enviroments have been entered into the system, go to Program Administration block &gt; Information Elements &gt; Environments to enter environment options, such as online, face-to-face, blended, etc.</p>';
+$string['courseform:environment_help'] = '<p>Where/how is the course description delivered. Select from the choices available.  If no enviroments have been entered into the system, go to ELIS Administration block &gt; Information Elements &gt; Environments to enter environment options, such as online, face-to-face, blended, etc.</p>';
 $string['courseform:length_description'] = 'Length Description';
 $string['courseform:length_description_help'] = '<p>Defines the units for duration, such as days, weeks, months, semesters, etc.</p>';
 $string['course_assigncurriculum'] = 'Assign Program';
@@ -290,7 +290,8 @@ $string['courses'] = 'Course Descriptions';
 $string['coursetemplate'] = 'Course Template in Moodle';
 $string['credits'] = 'Credits';
 $string['credits_rec'] = 'Credits Rec\'vd.';
-$string['crlm_admin_blk_settings'] = 'Program Management Block Settings';
+$string['crlm_admin_blk_settings'] = 'ELIS Administration Block Settings';
+$string['crlm_curriculum_course_associated'] = 'Program course associated.';
 $string['crlm_expire_setting'] = 'Enable program expiration';
 $string['cron_notrun'] = '<b>Never!</b>';
 $string['currentcourses'] = 'Current Classes';
@@ -709,7 +710,7 @@ $string['health_user_syncsoln'] = 'Users need to be synchronized by running the 
 $string['hidecompletedcourses'] = 'Hide Completed Courses';
 $string['hidecourses'] = 'Hide Courses';
 
-$string['icon_collapse_help'] = 'This setting determines the number of icons of each type to display in the Program Administration block.
+$string['icon_collapse_help'] = 'This setting determines the number of icons of each type to display in the ELIS Administration block.
 This setting applies at the top level and also for nest entities.
 Please set this value to a number greater than zero.';
 $string['icon_collapse_setting'] = 'Number of entity icons to display before collapsing';
@@ -1187,10 +1188,10 @@ $string['time_settings'] = 'Time Settings';
 $string['tips_time_format'] = "The format of this is ' *h, *d, *w, *m, *y ' (representing hours, days, weeks, months and years - where * can be any number) Each format must be separated by a comma";
 $string['time_to_complete'] = 'Time to complete';
 $string['top'] = 'Top';
-$string['top_clusters_help'] = 'This setting controls whether existing user sets are listed at the top level of the Program Administration block.
+$string['top_clusters_help'] = 'This setting controls whether existing user sets are listed at the top level of the ELIS Administration block.
 When changing the value of this setting, please navigate to another page to determine whether this functionality is working as expected.';
 $string['top_clusters_setting'] = 'Display User Sets at the Top Level';
-$string['top_curricula_help'] = 'This setting controls whether existing programs are listed at the top level of the Program Administration block.
+$string['top_curricula_help'] = 'This setting controls whether existing programs are listed at the top level of the ELIS Administration block.
 When changing the value of this setting, please navigate to another page to determine whether this functionality is working as expected.';
 $string['top_curricula_setting'] = 'Display Programs at the Top Level';
 $string['track'] = 'Track';
