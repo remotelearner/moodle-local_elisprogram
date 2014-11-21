@@ -1642,6 +1642,7 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
 
         // Add fixed columns to list of valid columns.
         foreach ($this->fixed_columns as $column => $label) {
+            $column = str_replace('.', '_', $column);
             if (!isset($columns[$column])) {
                 $columns[$column] = $label;
             }
