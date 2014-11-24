@@ -118,7 +118,7 @@
                     main.children().remove();
                     if (typeof data.data.children === 'object' && data.data.children.length > 0) {
                         for (var i in data.data.children) {
-                            var child = $('<div></div>')[opts.childrenderer](data.data.children[i], opts.ids, data.data.fields, opts.childopts);
+                            var child = $('<div></div>')[opts.childrenderer](data.data.children[i], opts.ids, data.data.fields, opts.childopts, main);
                             main.append(child);
                         }
 
@@ -220,9 +220,10 @@
      * @param object ids An object of relevant IDs. This should contain 'widgetid', 'programid', and 'courseid'.
      * @param object fieldvisibility An object listing visible and hidden fields for the element.
      * @param object opts Options object (See Options section above for description)
+     * @param object datatable The datatable object
      * @return object jQuery object for each instance.
      */
-    $.fn.eliswidget_enrolment_pmclass = function(data, ids, fieldvisibility, opts) {
+    $.fn.eliswidget_enrolment_pmclass = function(data, ids, fieldvisibility, opts, datatable) {
         return this.each(function() {
             var jqthis = $(this);
             var ajaxendpoint = opts.endpoint;
@@ -241,6 +242,9 @@
 
             /** @var int The ID of the widget this class belongs to. */
             this.widgetid = ids.widgetid;
+
+            /** @var object The datatable object */
+            this.datatable = datatable;
 
             var main = this;
 
@@ -286,7 +290,8 @@
                     passed: '',
                     failed: '',
                     waitlist: 'leavewaitlist',
-                    available: 'enrol'
+                    available: 'enrol',
+                    unavailable: ''
                 };
                 var action = status2action[status];
                 if (action == 'enrol' && opts.enrolallowed != '1') {
@@ -351,8 +356,7 @@
                                         dataType: 'json',
                                         type: 'POST',
                                         success: function(data, textStatus, jqXHR) {
-                                            var newstatus = main.renderstatus(data.data.newstatus);
-                                            $('#'+main.generateid('status')).replaceWith(newstatus);
+                                            main.datatable.doupdatetable();
                                         }
                                     });
                             }
@@ -372,18 +376,19 @@
              * @return object jQuery object for the class.
              */
             this.render = function() {
+                var status = 'unavailable';
                 if (this.data.enrol_id != null) {
                     if (this.data.enrol_completestatusid == 2) {
-                        var status = 'passed';
+                        status = 'passed';
                     } else if (this.data.enrol_completestatusid == 1) {
-                        var status = 'failed';
+                        status = 'failed';
                     } else {
-                        var status = 'enroled';
+                        status = 'enroled';
                     }
                 } else if (this.data.waitlist_id != null) {
-                    var status = 'waitlist';
-                } else {
-                    var status = 'available';
+                    status = 'waitlist';
+                } else if (this.data.meta.enrolallowed) {
+                    status = 'available';
                 }
 
                 var details = $('<div class="details"></div>');
@@ -452,9 +457,10 @@
      * @param object ids An object of relevant IDs. This should contain 'widgetid' and 'programid'.
      * @param object fieldvisibility An object listing visible and hidden fields for the element.
      * @param object opts Options object (See Options section above for description)
+     * @param object datatable The datatable object
      * @return object jQuery object for each instance.
      */
-    $.fn.eliswidget_enrolment_course = function(data, ids, fieldvisibility, opts) {
+    $.fn.eliswidget_enrolment_course = function(data, ids, fieldvisibility, opts, datatable) {
         return this.each(function() {
             var jqthis = $(this);
 
@@ -469,6 +475,9 @@
 
             /** @var int The ID of the widget this course belongs to. */
             this.widgetid = ids.widgetid;
+
+            /** @var object The datatable object */
+            this.datatable = datatable;
 
             var main = this;
 
@@ -614,9 +623,10 @@
      * @param object ids An object of relevant IDs. This should contain 'widgetid' and 'programid'.
      * @param object fieldvisibility An object listing visible and hidden fields for the element.
      * @param object opts Options object (See Options section above for description)
+     * @param object datatable The datatable object
      * @return object jQuery object for each instance.
      */
-    $.fn.eliswidget_enrolment_courseset = function(data, ids, fieldvisibility, opts) {
+    $.fn.eliswidget_enrolment_courseset = function(data, ids, fieldvisibility, opts, datatable) {
         return this.each(function() {
             var jqthis = $(this);
 
@@ -631,6 +641,10 @@
 
             /** @var int The ID of the widget this courseset belongs to. */
             this.widgetid = ids.widgetid;
+
+            /** @var object The datatable object */
+            this.datatable = datatable;
+
             var main = this;
 
             /**

@@ -72,5 +72,6 @@ $string['status_enroled'] = 'Enroled';
 $string['status_passed'] = 'Passed';
 $string['status_prereqnotmet'] = 'Prerequisites not complete';
 $string['status_failed'] = 'Failed';
+$string['status_unavailable'] = 'Unavailable';
 $string['status_waitlist'] = 'On the waitlist';
 $string['working'] = 'Working...';

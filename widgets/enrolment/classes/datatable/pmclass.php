@@ -183,14 +183,23 @@ class pmclass extends base {
     public function get_search_results(array $filters = array(), $page = 1) {
         global $CFG, $DB;
         require_once(\elispm::lib('data/classmoodlecourse.class.php'));
+        require_once(\elispm::lib('data/student.class.php'));
+        require_once(\elispm::lib('data/waitlist.class.php'));
         list($pageresults, $totalresultsamt) = parent::get_search_results($filters, $page);
 
         if ($totalresultsamt <= 0) {
             return [$pageresults, $totalresultsamt];
         }
 
-        // Assemble class ids.
         // Note: get_search results returns a recordset, so we also array-ify pageresults - recordsets are one-time-use.
+        $timenow = time();
+        $enrolallowed = true;
+        if (($classids = $DB->get_records($this->maintable, array('courseid' => $this->courseid), '', 'id'))) {
+            $userfilter = new \field_filter('userid', \user::get_current_userid());
+            $classfilter =  new \in_list_filter('classid', array_keys($classids));
+            $enrolallowed = !\student::exists(array($userfilter, $classfilter)) && !\waitlist::exists(array($userfilter, $classfilter));
+        }
+        // Assemble class ids.
         $classids = [];
         $pageresultsar = [];
         $dateformat = get_string('strftimedate');
@@ -198,6 +207,10 @@ class pmclass extends base {
             $classids[] = $result->id;
             $pageresultsar[$id] = $result;
             $pageresultsar[$id]->instructors = [];
+            if (!isset($pageresultsar[$id]->meta)) {
+                $pageresultsar[$id]->meta = new \stdClass;
+            }
+            $pageresultsar[$id]->meta->enrolallowed = $enrolallowed;
             if (isset($pageresultsar[$id]->element_startdate)) {
                 if ($pageresultsar[$id]->element_startdate > 0) {
                     $pageresultsar[$id]->element_startdate = userdate($pageresultsar[$id]->element_startdate, $dateformat);
@@ -207,6 +220,9 @@ class pmclass extends base {
             }
             if (isset($pageresultsar[$id]->element_enddate)) {
                 if ($pageresultsar[$id]->element_enddate > 0) {
+                    if ($pageresultsar[$id]->element_enddate < $timenow) {
+                        $pageresultsar[$id]->meta->enrolallowed = false;
+                    }
                     $pageresultsar[$id]->element_enddate = userdate($pageresultsar[$id]->element_enddate, $dateformat);
                 } else {
                     $pageresultsar[$id]->element_enddate = get_string('notavailable');
