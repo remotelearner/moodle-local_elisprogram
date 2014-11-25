@@ -204,6 +204,15 @@ class widget extends \local_elisprogram\lib\widgetbase {
                 'working' => get_string('working', 'eliswidget_enrolment'),
                 'nonefound' => get_string('nonefound', 'eliswidget_enrolment'),
                 'generatortitle' => get_string('generatortitle', 'eliswidget_enrolment'),
+                'cancel' => get_string('cancel'),
+                'enddate' => get_string('enddate', 'eliswidget_enrolment'),
+                'enrol_confirm_enrol' => get_string('enrol_confirm_enrol', 'eliswidget_enrolment'),
+                'enrol_confirm_leavewaitlist' => get_string('enrol_confirm_leavewaitlist', 'eliswidget_enrolment'),
+                'enrol_confirm_title' => get_string('enrol_confirm_title', 'eliswidget_enrolment'),
+                'enrol_confirm_unenrol' => get_string('enrol_confirm_unenrol', 'eliswidget_enrolment'),
+                'idnumber' => get_string('idnumber', 'eliswidget_enrolment'),
+                'startdate' => get_string('startdate', 'eliswidget_enrolment'),
+                'yes' => get_string('yes'),
             ],
         ];
         $initjs = "\n(function($) {"."\n";
@@ -224,7 +233,9 @@ class widget extends \local_elisprogram\lib\widgetbase {
      * @return array Array of URLs or \moodle_url objects to require for the widget.
      */
     public function get_css_dependencies($fullscreen = false) {
-        return [new \moodle_url('/local/elisprogram/widgets/enrolment/css/widget.css')];
+        return [new \moodle_url('/local/elisprogram/widgets/enrolment/css/widget.css'),
+                new \moodle_url('/lib/jquery/ui-1.10.4/css/base/jquery-ui.min.css')
+        ];
     }
 
     /**
@@ -235,7 +246,8 @@ class widget extends \local_elisprogram\lib\widgetbase {
      */
     public function get_js_dependencies_head($fullscreen = false) {
         return [
-                new \moodle_url('/local/elisprogram/lib/deepsight/js/jquery-1.9.1.min.js')
+                new \moodle_url('/local/elisprogram/lib/deepsight/js/jquery-1.9.1.min.js'),
+                new \moodle_url('/local/elisprogram/lib/deepsight/js/jquery-ui-1.10.1.custom.min.js')
         ];
     }
 

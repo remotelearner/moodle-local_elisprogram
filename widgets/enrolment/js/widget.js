@@ -315,20 +315,54 @@
             this.changestatus = function(e, action) {
                 e.preventDefault();
                 e.stopPropagation();
-                var data = {
-                    m: 'changeclassstatus',
-                    data: {action: action, classid: main.classid},
-                };
-                $('#'+main.generateid('status')).find('a').replaceWith('<span class="smloader">'+opts.lang.working+'</span>');
-                $.ajax({
-                    url: ajaxendpoint,
-                    data: data,
-                    dataType: 'json',
-                    type: 'POST',
-                    success: function(data, textStatus, jqXHR) {
-                        var newstatus = main.renderstatus(data.data.newstatus);
-                        $('#'+main.generateid('status')).replaceWith(newstatus);
+                // Add confirm dialog.
+                var height = 175;
+                var prompt = '<b>'+opts.lang['enrol_confirm_'+action]+'</b><br/>&nbsp;&nbsp;'+opts.lang.idnumber+': '+main.data.element_idnumber;
+                if (action == 'enrol' || action == 'unenrol') {
+                    if (Date.parse(main.data.element_startdate)) {
+                        height += 25;
+                        prompt += '<br/>&nbsp;&nbsp;'+opts.lang.startdate+': '+main.data.element_startdate;
                     }
+                    if (Date.parse(main.data.element_enddate)) {
+                        height += 25;
+                        prompt += '<br/>&nbsp;&nbsp;'+opts.lang.enddate+': '+main.data.element_enddate;
+                    }
+                }
+                $('<div></div>').appendTo('body')
+                    .html(prompt)
+                    .dialog({
+                        modal: true,
+                        resizable: true,
+                        height: height,
+                        width: 500,
+                        title: opts.lang.enrol_confirm_title,
+                        buttons: [{
+                            text: opts.lang.yes,
+                            click: function() {
+                                    $(this).dialog("close");
+                                    var data = {
+                                        m: 'changeclassstatus',
+                                        data: {action: action, classid: main.classid},
+                                    };
+                                    $('#'+main.generateid('status')).find('a').replaceWith('<span class="smloader">'+opts.lang.working+'</span>');
+                                    $.ajax({
+                                        url: ajaxendpoint,
+                                        data: data,
+                                        dataType: 'json',
+                                        type: 'POST',
+                                        success: function(data, textStatus, jqXHR) {
+                                            var newstatus = main.renderstatus(data.data.newstatus);
+                                            $('#'+main.generateid('status')).replaceWith(newstatus);
+                                        }
+                                    });
+                            }
+                        }, {
+                            text: opts.lang.cancel,
+                            click: function() {
+                                    $(this).dialog("close");
+                            }
+                        }],
+                        close: function(event, ui) { $(this).remove(); },
                 });
             }
 
