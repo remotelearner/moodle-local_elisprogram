@@ -493,6 +493,7 @@ class usersetpage extends managementpage {
 
         $parent = $this->optional_param('id', 0, PARAM_INT);
         $classification = $this->optional_param('classification', NULL, PARAM_SAFEDIR);
+        $subsets = $this->optional_param('subsets', 0, PARAM_INT);
 
         if ($parent) {
             $this->print_tabs('subclusters', array('id' => $parent));
@@ -515,16 +516,19 @@ class usersetpage extends managementpage {
             $columns[$sort]['sortable'] = $dir;
         }
 
-        $extrafilters = array('contexts' => self::get_contexts('local/elisprogram:userset_view'),
-                              'parent' => $parent,
-                              'classification' => $classification);
+        $extrafilters = array('contexts' => self::get_contexts('local/elisprogram:userset_view'), 'classification' => $classification);
+        if (!$subsets || $parent) {
+            $extrafilters['parent'] = $parent;
+        } else {
+            $columns['parent'] = array('header' => get_string('userset_parent', 'local_elisprogram'));
+        }
         $items = cluster_get_listing($sort, $dir, $page*$perpage, $perpage, $namesearch, $alpha, $extrafilters);
         $numitems = cluster_count_records($namesearch, $alpha, $extrafilters);
 
         self::get_contexts('local/elisprogram:userset_edit');
         self::get_contexts('local/elisprogram:userset_delete');
 
-        $this->print_list_view($items, $numitems, $columns, $filter=null, $alphaflag=true, $searchflag=true);
+        $this->print_list_view($items, $numitems, $columns, null, true, true);
 
         if ($this->optional_param('id', 0, PARAM_INT)) {
             //get the non-parent clusters that are accessible based on the edit capability
@@ -649,6 +653,23 @@ class usersetpage extends managementpage {
         $url = $target_page->url;
 
         echo html_writer::tag('div', $OUTPUT->single_button($url, get_string("add_{$this->data_class}",'local_elisprogram'), 'get'), array('style' => 'text-align: center'));
+    }
+
+    /**
+     * Prints the text substring search interface.
+     * And optional subsets checkbox
+     */
+    public function print_search() {
+        parent::print_search();
+        $parent = $this->optional_param('id', 0, PARAM_INT);
+        if (!$parent) {
+            $subsets = $this->optional_param('subsets', 0, PARAM_INT);
+            $url = $this->url;
+            $url->remove_params('subsets');
+            echo html_writer::checkbox('subsets', 1, $subsets, get_string('userset_subsets', 'local_elisprogram'), array(
+                'onclick' => 'window.location="'.$url.'&subsets="+(this.checked ? "1" : "0");',
+                'language' => 'javascript'));
+        }
     }
 
     function get_default_object_for_add() {
