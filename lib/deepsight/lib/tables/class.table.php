@@ -119,6 +119,11 @@ class deepsight_datatable_class extends deepsight_datatable_standard {
      * @return array The transformed result.
      */
     protected function results_row_transform(array $row) {
+        require_once(\elispm::file('pmclasspage.class.php'));
+        // Add Class Instance link for idnumber.
+        $clspg = new pmclasspage(array('id' => $row['element_id'], 'action' => 'view'));
+        $row['element_idnumber'] = html_writer::link($clspg->url, $row['element_idnumber']);
+
         if (isset($row['element_startdate'])) {
             $row['element_startdate'] = ds_process_displaytime($row['element_startdate']);
         }
