@@ -122,8 +122,10 @@ class widget extends \local_elisprogram\lib\widgetbase {
      * @return string The HTML to display the widget.
      */
     public function get_html($fullscreen = false) {
-        global $CFG;
+        global $CFG, $USER;
         require_once(\elispm::lib('data/user.class.php'));
+        require_once(\elispm::lib('lib.php'));
+        pm_update_user_information($USER->id);
 
         $uniqid = uniqid();
 
