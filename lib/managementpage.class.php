@@ -738,4 +738,16 @@ class management_page_table extends display_table {
         }
         return $display;
     }
+
+    /**
+     * Method for userset parent when displaying all subsets
+     * @param string $column the column
+     * @param object $item the row data
+     * @return string the parent userset name or 'top' if none
+     */
+    function get_item_display_parent($column, $item) {
+        global $DB;
+        $parent = $item->$column;
+        return $parent ? $DB->get_field(userset::TABLE, 'name', array('id' => $parent)) : get_string('top', 'local_elisprogram');
+    }
 }
