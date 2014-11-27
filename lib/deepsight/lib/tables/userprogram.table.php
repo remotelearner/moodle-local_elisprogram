@@ -125,6 +125,9 @@ class deepsight_datatable_userprogram_assigned extends deepsight_datatable_userp
         if (isset($row['currass_timecompleted'])) {
             $row['currass_timecompleted'] = ds_process_displaytime($row['currass_timecompleted']);
         }
+        if (empty($row['currass_completed'])) {
+            $row['currass_credits'] = get_string('n_completed', 'local_elisprogram');
+        }
         return $row;
     }
 
