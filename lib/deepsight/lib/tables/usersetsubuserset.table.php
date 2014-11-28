@@ -52,6 +52,7 @@ class deepsight_datatable_usersetsubuserset_base extends deepsight_datatable_use
         $deps = parent::get_js_dependencies();
         $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_confirm.js';
         $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_link.js';
+        $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_usersetsubset_delete.js';
         return $deps;
     }
 
@@ -63,6 +64,19 @@ class deepsight_datatable_usersetsubuserset_base extends deepsight_datatable_use
         $opts = parent::get_table_js_opts();
         $opts['dragdrop'] = true;
         $opts['multiselect'] = true;
+        $opts['desc_single'] = get_string('ds_action_usersetsubset_delete', 'local_elisprogram');
+        $opts['desc_multiple'] = get_string('ds_bulk_confirm', 'local_elisprogram');
+        $opts['langbulkconfirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
+        $opts['langdeletesubs'] = get_string('deletesubs', 'local_elisprogram');
+        $opts['langpromotesubs'] = get_string('promotesubs', 'local_elisprogram');
+        $opts['langworking'] = get_string('ds_working', 'local_elisprogram');
+        $opts['langyes'] = get_string('yes', 'moodle');
+        $opts['langno'] = get_string('no', 'moodle');
+        $opts['langchanges'] = get_string('ds_changes', 'local_elisprogram');
+        $opts['langnochanges'] = get_string('ds_nochanges', 'local_elisprogram');
+        $opts['langgeneralerror'] = get_string('ds_unknown_error', 'local_elisprogram');
+        $opts['langtitle'] = get_string('ds_assocdata', 'local_elisprogram');
+        $opts['no_permission'] = get_string('not_permitted', 'local_elisprogram');
         return $opts;
     }
 }
@@ -91,8 +105,10 @@ class deepsight_datatable_usersetsubuserset_assigned extends deepsight_datatable
         $langpgms = get_string('curricula', 'local_elisprogram');
         $actions[] = new deepsight_action_usersetsubuserset_programslink($this->DB, 'usersetsubuserset_programslink', $langpgms);
 
-        $langdelete = get_string('delete', 'local_elisprogram');
-        $actions[] = new deepsight_action_usersetsubuserset_deletelink($this->DB, 'usersetsubuserset_deletelink', $langdelete);
+        // Delete action.
+        $delete = new deepsight_action_usersetsubuserset_delete($this->DB, 'usersetsubuserset_delete');
+        $delete->endpoint = (strpos($this->endpoint, '?') !== false) ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
+        $actions[] = $delete;
 
         return $actions;
     }
