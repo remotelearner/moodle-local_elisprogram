@@ -234,30 +234,98 @@ class deepsight_action_usersetsubuserset_programslink extends deepsight_action_l
 }
 
 /**
- * Provide a link to delete userset.
+ * An action to delete usersets.
  */
-class deepsight_action_usersetsubuserset_deletelink extends deepsight_action_link {
-    /**
-     * @var string The label for the action.
-     */
+class deepsight_action_usersetsubuserset_delete extends deepsight_action_standard {
+    /** @const string the corresponding javascript action */
+    const TYPE = 'usersetsubset_delete';
+
+    /** @var string the action label */
     public $label = 'Delete';
 
-    /**
-     * @var string The icon for the action.
-     */
+    /** @var string the action icon */
     public $icon = 'elisicon-remove';
 
     /**
-     * @var string The link target (without query string)
+     * Constructor.
+     * @param moodle_database $DB The active database connection.
+     * @param string $name The unique name of the action to use.
      */
-    public $baseurl = '/local/elisprogram/index.php';
+    public function __construct(moodle_database &$DB, $name) {
+        parent::__construct($DB, $name);
+        $this->label = ucwords(get_string('delete', 'local_elisprogram'));
+
+        $this->descsingle = get_string('ds_action_usersetsubset_delete', 'local_elisprogram');
+        $this->descmultiple = get_string('ds_action_usersetsubsets_delete', 'local_elisprogram');
+    }
 
     /**
-     * @var array Query parameters for the link target
+     * Provide options to the javascript.
+     * @return array An array of options.
      */
-    public $params = array(
-        's' => 'clst',
-        'action' => 'delete',
-        'id' => '{element_id}',
-    );
+    public function get_js_opts() {
+        $opts = parent::get_js_opts();
+        $opts['condition'] = $this->condition;
+        $opts['opts']['actionurl'] = $this->endpoint;
+        $opts['opts']['desc_single'] = $this->descsingle;
+        $opts['opts']['desc_multiple'] = $this->descmultiple;
+        $opts['opts']['mode'] = 'delete'; // TBD
+        $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
+        $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
+        $opts['opts']['langdeletesubs'] = get_string('deletesubs', 'local_elisprogram');
+        $opts['opts']['langpromotesubs'] = get_string('promotesubs', 'local_elisprogram');
+        $opts['opts']['langyes'] = get_string('yes', 'moodle');
+        $opts['opts']['langno'] = get_string('no', 'moodle');
+        return $opts;
+    }
+
+    /**
+     * Determine whether the current user can delete the userset.
+     *
+     * @param int $usersetid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @return bool Whether the current user can delete the specified userset
+     */
+    protected function can_delete($usersetid) {
+        global $USER;
+        $clstctx = pm_context_set::for_user_with_capability('cluster', 'local/elisprogram:userset_delete', $USER->id);
+        return $clstctx->context_allowed($usersetid, 'cluster');
+    }
+
+    /**
+     * Delete the userset/subsets.
+     * @param array $elements An array of userset information to delete.
+     * @param bool $bulkaction Whether this is a bulk-action or not.
+     * @return array An array to format as JSON and return to the Javascript.
+     */
+    protected function _respond_to_js(array $elements, $bulkaction) {
+        $subsets = optional_param('subsets', 0, PARAM_INT);
+        $failedops = [];
+        foreach ($elements as $usersetid => $elem) {
+            if (($userset = new userset($usersetid)) && $this->can_delete($usersetid)) {
+                try {
+                    $userset->load();
+                    $userset->deletesubs = $subsets ? 1 : 0;
+                    $userset->delete();
+                } catch (Exception $e) {
+                    if ($bulkaction === true) {
+                        $failedops[] = $usersetid;
+                    } else {
+                        throw $e;
+                    }
+                }
+            } else {
+                $failedops[] = $usersetid;
+            }
+        }
+        if (!empty($failedops)) {
+            return [
+                'result' => 'partialsuccess',
+                'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
+                'failedops' => $failedops,
+            ];
+        } else {
+            return array('result' => 'success', 'msg' => 'Success');
+        }
+    }
 }
+

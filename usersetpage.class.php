@@ -118,6 +118,14 @@ class usersetsubusersetpage extends deepsightpage {
     }
 
     /**
+     * Delete permission is handled at the action-object level.
+     * @return bool true
+     */
+    public function can_do_action_usersetsubuserset_delete() {
+        return true;
+    }
+
+    /**
      * Permission for this action is handled at the action-object level.
      * @return bool true
      */
