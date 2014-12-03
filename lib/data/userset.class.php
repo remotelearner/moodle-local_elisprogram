@@ -250,7 +250,7 @@ class userset extends data_object_with_custom_fields {
 
         $eventdata = array(
             'context' => context_system::instance(),
-            'other' => $this->to_array()
+            'other' => $this->to_array(true)
         );
 
         if (isset($old))  {
@@ -267,10 +267,17 @@ class userset extends data_object_with_custom_fields {
     }
 
     /**
-     * Add param fields to the form object
+     * Converts the data_object a dumb object representation (without
+     * associations).  This is required when using the Moodle *_record
+     * functions, or get_string.
+     *
+     * Overloaded to add profile field data to the returned object.
+     *
+     * @param bool $jsonsafe Whether the method should return a json safe object.
+     * @return object The standard PHP object representation of the ELIS data object.
      */
-    public function to_object() {
-        $obj = parent::to_object();
+    public function to_object($jsonsafe = false) {
+        $obj = parent::to_object($jsonsafe);
 
         $prof_fields = $this->_db->get_records(userset_profile::TABLE, array('clusterid'=>$this->id), '', '*', 0, 2);
 
@@ -283,7 +290,8 @@ class userset extends data_object_with_custom_fields {
                     $value = 'profile_value' . $i;
 
                     $obj->$field = $profile->fieldid;
-                    $obj->$value = $profile->value;
+                    $obj->$value = ($jsonsafe && gettype($profile->value) == 'double' && strpos((string)$profile->value, '.') === false)
+                            ? "{$profile->value}.0" : $profile->value;
                 }
 
                 next($prof_fields);
@@ -839,7 +847,7 @@ function cluster_assign_to_user($clusterid, $userid, $autoenrol=true, $leader=fa
 
     $eventdata = array(
         'context' => context_system::instance(),
-        'other' => $usass->to_array()
+        'other' => $usass->to_array(true)
     );
     $event = \local_elisprogram\event\cluster_assigned::create($eventdata);
     $event->trigger();
@@ -858,7 +866,7 @@ function cluster_deassign_user($clusterid, $userid) {
     foreach ($records as $rec) {
         $eventdata = array(
             'context' => context_system::instance(),
-            'other' => (array)$rec
+            'other' => $rec->to_array(true) // TBD.
         );
         $rec->delete();
         $event = \local_elisprogram\event\cluster_deassigned::create($eventdata);

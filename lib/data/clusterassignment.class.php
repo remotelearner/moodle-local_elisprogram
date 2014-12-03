@@ -77,7 +77,7 @@ class clusterassignment extends elis_data_object {
 
         $eventdata = array(
             'context' => context_system::instance(),
-            'other' => $this->to_array()
+            'other' => $this->to_array(true)
         );
         $event = \local_elisprogram\event\cluster_assigned::create($eventdata);
         $event->trigger();
@@ -116,10 +116,7 @@ class clusterassignment extends elis_data_object {
         if ($trigger) {
             $eventdata = array(
                 'context' => context_system::instance(),
-                'other' => array(
-                    'userid' => $this->userid,
-                    'clusterid' => $this->clusterid
-                )
+                'other' => $this->to_array(true)
             );
             $event = \local_elisprogram\event\cluster_assigned::create($eventdata);
             $event->trigger();

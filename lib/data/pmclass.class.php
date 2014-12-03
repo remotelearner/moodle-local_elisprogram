@@ -267,10 +267,17 @@ class pmclass extends data_object_with_custom_fields {
     }
 
     /**
-     * Add param fields to the form object
+     * Converts the data_object a dumb object representation (without
+     * associations).  This is required when using the Moodle *_record
+     * functions, or get_string.
+     *
+     * Overloaded to add optional param fields (moodlecourseid) to the returned object.
+     *
+     * @param bool $jsonsafe Whether the method should return a json safe object.
+     * @return object The standard PHP object representation of the ELIS data object.
      */
-    public function to_object() {
-        $obj = parent::to_object();
+    public function to_object($jsonsafe = false) {
+        $obj = parent::to_object($jsonsafe);
 
         $mdlcrsid = $this->get_moodle_course_id();
         if ($mdlcrsid != 0) {

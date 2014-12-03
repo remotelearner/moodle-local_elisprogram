@@ -134,7 +134,7 @@ class instructor extends elis_data_object {
         parent::save();
         $eventdata = array(
             'context' => context_system::instance(),
-            'other' => $this->to_array()
+            'other' => $this->to_array(true)
         );
         $event = \local_elisprogram\event\crlm_instructor_assigned::create($eventdata);
         $event->trigger();
@@ -146,7 +146,7 @@ class instructor extends elis_data_object {
     public function delete() {
         $eventdata = array(
             'context' => context_system::instance(),
-            'other' => $this->to_array()
+            'other' => $this->to_array(true)
         );
         $event = \local_elisprogram\event\crlm_instructor_unassigned::create($eventdata);
         $event->trigger();

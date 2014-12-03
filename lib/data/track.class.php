@@ -814,7 +814,7 @@ class trackassignment extends elis_data_object {
 
         $eventdata = array(
             'context' => context_system::instance(),
-            'other' => $this->to_array()
+            'other' => $this->to_array(true)
         );
         $event = \local_elisprogram\event\pm_track_class_associated::create($eventdata);
         $event->trigger();

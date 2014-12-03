@@ -653,7 +653,7 @@ class curriculumcourse extends elis_data_object {
     public function save() {
         parent::save();
         $eventdata = array('context' => context_system::instance(),
-            'other' => $this->to_array()
+            'other' => $this->to_array(true)
         );
         $event = \local_elisprogram\event\crlm_curriculum_course_associated::create($eventdata);
         $event->trigger();

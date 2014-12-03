@@ -147,7 +147,7 @@ class usertrack extends elis_data_object {
 
         $eventdata = array(
             'context' => context_system::instance(),
-            'other' => $record->to_array()
+            'other' => $record->to_array(true)
         );
         $event = \local_elisprogram\event\track_assigned::create($eventdata);
         $event->trigger();

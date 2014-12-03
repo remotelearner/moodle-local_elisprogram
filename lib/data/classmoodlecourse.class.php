@@ -443,7 +443,7 @@ function moodle_attach_class($clsid, $mdlid, $siteconfig = '', $enrolinstructor 
 
     $eventdata = array(
         'context' => context_system::instance(),
-        'other' => $clsmdl->to_array()
+        'other' => $clsmdl->to_array(true)
     );
     $event = \local_elisprogram\event\pm_classinstance_associated::create($eventdata);
     $event->trigger();

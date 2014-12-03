@@ -449,7 +449,7 @@ class student extends elis_data_object {
             require_once elispm::lib('notifications.php');
             $eventdata = array(
                 'context' => context_system::instance(),
-                'other' => $this->to_array()
+                'other' => $this->to_array(true)
             );
             $event = \local_elisprogram\event\crlm_class_completed::create($eventdata);
             $event->trigger();

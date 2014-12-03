@@ -89,25 +89,42 @@ class usersetclassification extends elis_data_object {
         return $this->name;
     }
 
-    function to_array() {
-        $arr = (array)$this;
+    /**
+     * Converts the data_object an array representation (without associations).
+     *
+     * Overloaded to add params to returned array.
+     *
+     * @param bool $jsonsafe Whether the method should return a json safe array.
+     * @return array The standard PHP associative array representation of the ELIS data object.
+     */
+    public function to_array($jsonsafe = false) {
+        $arr = parent::to_array($jsonsafe);
         foreach (unserialize($this->params) as $key => $value) {
-            $arr["param_$key"] = $value;
+            $arr["param_$key"] = ($jsonsafe && gettype($value) == 'double' && strpos((string)$value, '.') === false)
+                    ? "{$value}.0" : $value;
         }
         return $arr;
     }
 
     /**
-     * Add params fields to the form object
+     * Converts the data_object a dumb object representation (without
+     * associations).  This is required when using the Moodle *_record
+     * functions, or get_string.
+     *
+     * Overloaded to add params to returned object.
+     *
+     * @param bool $jsonsafe Whether the method should return a json safe object.
+     * @return object The standard PHP object representation of the ELIS data object.
      */
-    public function to_object() {
-        $obj = parent::to_object();
+    public function to_object($jsonsafe = false) {
+        $obj = parent::to_object($jsonsafe);
 
         $fields = array('autoenrol_curricula', 'autoenrol_tracks', 'child_classification', 'autoenrol_groups', 'autoenrol_groupings', 'elis_files_shared_folder');
         foreach ($fields as $field) {
             $field_name = "param_{$field}";
             if (isset($this->$field_name)) {
-                $obj->$field_name = $this->$field_name;
+                $obj->$field_name = ($jsonsafe && gettype($this->$field_name) == 'double' && strpos((string)$this->$field_name, '.') === false)
+                        ? "{$this->$field_name}.0" : $this->$field_name;
             }
         }
         return $obj;
