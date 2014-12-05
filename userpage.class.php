@@ -60,6 +60,18 @@ class userpage extends managementpage {
 
     static $contexts = array();
 
+    /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        if (($id = $this->optional_param('id', 0, PARAM_INT))) {
+            return \local_elisprogram\context\user::instance($id);
+        }
+        return parent::_get_page_context();
+    }
+
     public static function get_contexts($capability) {
         if (!isset(userpage::$contexts[$capability])) {
             global $USER;

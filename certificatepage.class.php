@@ -331,16 +331,20 @@ class course_certificatepage extends certificatepage {
     public $section = 'curr';
 
     /**
-     * This function returns (or sets if not already initialized) a context object for the course description
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\course::instance($id);
+    }
+
+    /**
+     * This function returns the page context object
      * @return object Course description context ojbect
      */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = $this->required_param('id', PARAM_INT);
-
-            $contextinstance = \local_elisprogram\context\course::instance($id);
-            $this->set_context($contextinstance);
-        }
+    public function get_context() {
         return $this->context;
     }
 

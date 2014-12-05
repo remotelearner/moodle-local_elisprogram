@@ -57,6 +57,17 @@ class coursesetpage extends managementpage {
     public static $contexts = array();
 
     /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     */
+    protected function _get_page_context() {
+        if (($id = $this->optional_param('id', 0, PARAM_INT))) {
+            return \local_elisprogram\context\courseset::instance($id);
+        }
+        return parent::_get_page_context();
+    }
+
+    /**
      * static method to get contexts
      * @param string $capability the capability to check
      * @return object the coursesetpage contexts for capability

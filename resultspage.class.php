@@ -538,16 +538,20 @@ class course_enginepage extends enginepage {
     public $type     = 'course';
 
     /**
-     * Get context
-     *
-     * @return object The context
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
      */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = $this->required_param('id', PARAM_INT);
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\course::instance($id);
+    }
 
-            $this->set_context(\local_elisprogram\context\course::instance($id));
-        }
+    /**
+     * This function returns the page context object
+     * @return object Course description context ojbect
+     */
+    public function get_context() {
         return $this->context;
     }
 
@@ -609,16 +613,20 @@ class class_enginepage extends enginepage {
     public $type     = 'class';
 
     /**
-     * Get context
-     *
-     * @return object The context
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
      */
-    protected function get_context() {
-        if (!isset($this->context)) {
-            $id = $this->required_param('id', PARAM_INT);
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\pmclass::instance($id);
+    }
 
-            $this->set_context(\local_elisprogram\context\pmclass::instance($id));
-        }
+    /**
+     * This function returns the page context object
+     * @return object pmclass context ojbect
+     */
+    public function get_context() {
         return $this->context;
     }
 

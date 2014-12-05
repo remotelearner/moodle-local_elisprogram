@@ -36,6 +36,16 @@ class class_reportlinkspage extends pm_page {
     var $tab_page = 'pmclasspage';
     var $section = 'curr';
 
+    /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\pmclass::instance($id);
+    }
+
     function build_navbar_default($who = null) {
         global $CFG;
         parent::build_navbar_default($who);

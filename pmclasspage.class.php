@@ -469,6 +469,23 @@ class pmclasspage extends managementpage {
     }
 
     /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        if (($id = $this->optional_param('id', 0, PARAM_INT))) {
+            $pgid = required_param('s', PARAM_TEXT);
+            $action = $this->optional_param('action', '', PARAM_ACTION);
+            return (($pgid == 'cls' || $pgid == 'crs') && ($action == 'default' || $action == '')) ? \local_elisprogram\context\course::instance($id)
+                    : \local_elisprogram\context\pmclass::instance($id);
+        } else if (($id = $this->optional_param('courseid', 0, PARAM_INT)) || ($id = $this->optional_param('parent', 0, PARAM_INT))) {
+            return \local_elisprogram\context\course::instance($id);
+        }
+        return parent::_get_page_context();
+    }
+
+    /**
      * Determines the name of the context class that represents this page's cm entity
      *
      * @return  string  The name of the context class that represents this page's cm entity
