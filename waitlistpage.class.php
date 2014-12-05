@@ -49,9 +49,19 @@ class waitlistpage extends selectionpage {
         parent::__construct($params);
     }
 
+    /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\pmclass::instance($id);
+    }
+
     function can_do_default() {
         $id = $this->required_param('id', PARAM_INT);
-        $pmclasspage = new pmclasspage(array('id' => $id));
+        $pmclasspage = new pmclasspage(array('id' => $id, 'action' => 'view'));
         return $pmclasspage->can_do('edit');
     }
 
@@ -60,7 +70,7 @@ class waitlistpage extends selectionpage {
      */
     function build_navbar_default($who = null) {
         $id = $this->required_param('id', PARAM_INT);
-        $classpage = new pmclasspage(array('id' => $id));
+        $classpage = new pmclasspage(array('id' => $id, 'action' => 'view'));
         $classpage->build_navbar_view();
         $this->_navbar = $classpage->navbar;
     }

@@ -39,10 +39,6 @@ abstract class rolepage extends associationpage2 {
         $this->section = $this->get_parent_page()->section;
     }
 
-    protected function _get_page_context() {
-        return $this->get_context();
-    }
-
     abstract protected function get_context();
 
     abstract protected function get_parent_page();
@@ -465,13 +461,22 @@ abstract class rolepage extends associationpage2 {
 class curriculum_rolepage extends rolepage {
     var $pagename = 'currole';
 
-    protected function get_context() {
-        if (!isset($this->_context)) {
-            $id = $this->required_param('id', PARAM_INT);
-            $context_instance = \local_elisprogram\context\program::instance($id);
-            $this->set_context($context_instance);
-        }
-        return $this->_context;
+    /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\program::instance($id);
+    }
+
+    /**
+     * This function returns the page context object
+     * @return object Curriculum context ojbect
+     */
+    public function get_context() {
+        return $this->context;
     }
 
     protected function get_parent_page() {
@@ -489,14 +494,22 @@ class curriculum_rolepage extends rolepage {
 class track_rolepage extends rolepage {
     var $pagename = 'trkrole';
 
-    protected function get_context() {
-        if (!isset($this->_context)) {
-            $id = $this->required_param('id', PARAM_INT);
+    /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\track::instance($id);
+    }
 
-            $context_instance = \local_elisprogram\context\track::instance($id);
-            $this->set_context($context_instance);
-        }
-        return $this->_context;
+    /**
+     * This function returns the page context object
+     * @return object Track context ojbect
+     */
+    public function get_context() {
+        return $this->context;
     }
 
     protected function get_parent_page() {
@@ -517,14 +530,22 @@ class track_rolepage extends rolepage {
 class course_rolepage extends rolepage {
     var $pagename = 'crsrole';
 
-    protected function get_context() {
-        if (!isset($this->_context)) {
-            $id = $this->required_param('id', PARAM_INT);
+    /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\course::instance($id);
+    }
 
-            $context_instance = \local_elisprogram\context\course::instance($id);
-            $this->set_context($context_instance);
-        }
-        return $this->_context;
+    /**
+     * This function returns the page context object
+     * @return object Course description context ojbect
+     */
+    public function get_context() {
+        return $this->context;
     }
 
     protected function get_parent_page() {
@@ -542,14 +563,22 @@ class course_rolepage extends rolepage {
 class class_rolepage extends rolepage {
     var $pagename = 'clsrole';
 
-    protected function get_context() {
-        if (!isset($this->_context)) {
-            $id = $this->required_param('id', PARAM_INT);
+    /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\pmclass::instance($id);
+    }
 
-            $context_instance = \local_elisprogram\context\pmclass::instance($id);
-            $this->set_context($context_instance);
-        }
-        return $this->_context;
+    /**
+     * This function returns the page context object
+     * @return object pmclass context ojbect
+     */
+    public function get_context() {
+        return $this->context;
     }
 
     protected function get_parent_page() {
@@ -567,14 +596,22 @@ class class_rolepage extends rolepage {
 class user_rolepage extends rolepage {
     var $pagename = 'usrrole';
 
-    protected function get_context() {
-        if (!isset($this->_context)) {
-            $id = $this->required_param('id', PARAM_INT);
+    /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\user::instance($id);
+    }
 
-            $context_instance = \local_elisprogram\context\user::instance($id);
-            $this->set_context($context_instance);
-        }
-        return $this->_context;
+    /**
+     * This function returns the page context object
+     * @return object PM User context ojbect
+     */
+    public function get_context() {
+        return $this->context;
     }
 
     protected function get_parent_page() {
@@ -592,14 +629,22 @@ class user_rolepage extends rolepage {
 class cluster_rolepage extends rolepage {
     var $pagename = 'clstrole';
 
-    protected function get_context() {
-        if (!isset($this->_context)) {
-            $id = $this->required_param('id', PARAM_INT);
+    /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        $id = $this->required_param('id', PARAM_INT);
+        return \local_elisprogram\context\userset::instance($id);
+    }
 
-            $context_instance = \local_elisprogram\context\userset::instance($id);
-            $this->set_context($context_instance);
-        }
-        return $this->_context;
+    /**
+     * This function returns the page context object
+     * @return object Userset context ojbect
+     */
+    public function get_context() {
+        return $this->context;
     }
 
     protected function get_parent_page() {

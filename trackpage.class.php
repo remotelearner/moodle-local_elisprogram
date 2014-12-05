@@ -405,6 +405,22 @@ class trackpage extends managementpage {
     }
 
     /**
+     * Return the context that the page is related to.  Used by the constructor
+     * for calling $this->set_context().
+     * @return object The page context
+     */
+    protected function _get_page_context() {
+        if (($id = $this->optional_param('id', 0, PARAM_INT))) {
+            $action = $this->optional_param('action', '', PARAM_ACTION);
+            return ($action == '' || $action == 'default') ? \local_elisprogram\context\program::instance($id)
+                    : \local_elisprogram\context\track::instance($id);
+        } else if (($id = $this->optional_param('parent', 0, PARAM_INT)) || ($id = $this->optional_param('curid', 0, PARAM_INT))) {
+            return \local_elisprogram\context\program::instance($id);
+        }
+        return parent::_get_page_context();
+    }
+
+    /**
      * Determines the name of the context class that represents this page's cm entity
      *
      * @return  string  The name of the context class that represents this page's cm entity
