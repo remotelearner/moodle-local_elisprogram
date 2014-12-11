@@ -130,74 +130,6 @@ class admininfo extends \pm_page {
     }
 
     /**
-     * Get jQuery library version info from specified file.
-     *
-     * @param array $files list of files to get info from
-     * @param array $infostrings associative array of default values,
-     *                           i.e. array('name' => 'Name', 'version' => 'Version', 'release' => 'Release date')
-     * @return array Array consisting of componentname, release, and version.
-     */
-    public function get_jquery_file_info($files, $infostrings) {
-        $ret = [null, null, null];
-        foreach ($files as $filename) {
-            $matches = [];
-            $name = null;
-            if (preg_match("/.*{$infostrings['name']}-([0-9.]*)/", $filename, $matches)) {
-                $name = $infostrings['name'];
-                $release = trim($matches[1], '.');
-                $version = '';
-                $ret = [$name, $release, $version];
-                break;
-            }
-        }
-        return $ret;
-    }
-
-    /**
-     * Get jQuery library version info.
-     *
-     * @return array Array consisting of componentname, release, and version.
-     */
-    public function get_re_jquery_info() {
-        global $CFG;
-        $files = glob($CFG->dirroot.'/local/elisprogram/js/results_engine/jquery-*');
-        return $this->get_jquery_file_info($files, ['name' => 'jquery']);
-    }
-
-    /**
-     * Get jQuery library version info.
-     *
-     * @return array Array consisting of componentname, release, and version.
-     */
-    public function get_re_jquery_ui_info() {
-        global $CFG;
-        $files = glob($CFG->dirroot.'/local/elisprogram/js/results_engine/jquery-ui-*');
-        return $this->get_jquery_file_info($files, ['name' => 'jquery-ui']);
-    }
-
-    /**
-     * Get jQuery library version info.
-     *
-     * @return array Array consisting of componentname, release, and version.
-     */
-    public function get_ds_jquery_info() {
-        global $CFG;
-        $files = glob($CFG->dirroot.'/local/elisprogram/lib/deepsight/js/jquery-*');
-        return $this->get_jquery_file_info($files, ['name' => 'jquery']);
-    }
-
-    /**
-     * Get jQuery library version info.
-     *
-     * @return array Array consisting of componentname, release, and version.
-     */
-    public function get_ds_jquery_ui_info() {
-        global $CFG;
-        $files = glob($CFG->dirroot.'/local/elisprogram/lib/deepsight/js/jquery-ui-*');
-        return $this->get_jquery_file_info($files, ['name' => 'jquery-ui']);
-    }
-
-    /**
      * Get all ELIS PM and component version info.
      * @return string
      */
@@ -218,10 +150,6 @@ class admininfo extends \pm_page {
             'repository_elisfiles' => null,
             'lib_tcpdf' => [$this, 'get_tcpdf_info'],
             'lib_pChart' => [$this, 'get_pchart_info'],
-            'lib_jquery1' => [$this, 'get_re_jquery_info'],
-            'lib_jquery_ui1' => [$this, 'get_re_jquery_ui_info'],
-            'lib_jquery2' => [$this, 'get_ds_jquery_info'],
-            'lib_jquery_ui2' => [$this, 'get_ds_jquery_ui_info']
         ];
 
         $versions = [];

@@ -1093,7 +1093,6 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
      */
     public function get_js_dependencies() {
         return array(
-            '/local/elisprogram/lib/deepsight/js/jquery-ui-1.10.1.custom.min.js',
             '/local/elisprogram/lib/deepsight/js/deepsight.js',
             '/local/elisprogram/lib/deepsight/js/support.js',
             '/local/elisprogram/lib/deepsight/js/filters/deepsight_filter_generator.js',

@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    eliswidget_enrolment
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -238,19 +238,6 @@ class widget extends \local_elisprogram\lib\widgetbase {
     public function get_css_dependencies($fullscreen = false) {
         return [new \moodle_url('/local/elisprogram/widgets/enrolment/css/widget.css'),
                 new \moodle_url('/lib/jquery/ui-1.10.4/css/base/jquery-ui.min.css')
-        ];
-    }
-
-    /**
-     * Get an array of javascript files that are needed by the widget and must be loaded in the head of the page.
-     *
-     * @param bool $fullscreen Whether the widget is being displayed full-screen or not.
-     * @return array Array of URLs or \moodle_url objects to require for the widget.
-     */
-    public function get_js_dependencies_head($fullscreen = false) {
-        return [
-                new \moodle_url('/local/elisprogram/lib/deepsight/js/jquery-1.9.1.min.js'),
-                new \moodle_url('/local/elisprogram/lib/deepsight/js/jquery-ui-1.10.1.custom.min.js')
         ];
     }
 
