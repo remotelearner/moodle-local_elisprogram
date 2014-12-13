@@ -230,7 +230,7 @@ class deepsight_action_usersetsubuserset_delete extends deepsight_action_standar
     public $label = 'Delete';
 
     /** @var string the action icon */
-    public $icon = 'elisicon-remove';
+    public $icon = 'elisicon-remove elisiconcolored';
 
     /**
      * Constructor.
