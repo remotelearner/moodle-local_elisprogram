@@ -236,9 +236,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
      * @return array Array of URLs or \moodle_url objects to require for the widget.
      */
     public function get_css_dependencies($fullscreen = false) {
-        return [new \moodle_url('/local/elisprogram/widgets/enrolment/css/widget.css'),
-                new \moodle_url('/lib/jquery/ui-1.10.4/css/base/jquery-ui.min.css')
-        ];
+        return [new \moodle_url('/local/elisprogram/widgets/enrolment/css/widget.css')];
     }
 
     /**
