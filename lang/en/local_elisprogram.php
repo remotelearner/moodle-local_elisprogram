@@ -1275,7 +1275,6 @@ $string['time_period_year'] = 'Years';
 $string['time_settings'] = 'Time Settings';
 $string['tips_time_format'] = "The format of this is ' *h, *d, *w, *m, *y ' (representing hours, days, weeks, months and years - where * can be any number) Each format must be separated by a comma";
 $string['time_to_complete'] = 'Time to complete';
-$string['top_clusters_help'] = 'This setting controls whether existing user sets are listed at the top level of the Program Administration block.
 $string['top'] = 'Top';
 $string['top_clusters_help'] = 'This setting controls whether existing user sets are listed at the top level of the ELIS Administration block.
 When changing the value of this setting, please navigate to another page to determine whether this functionality is working as expected.';
