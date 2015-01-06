@@ -149,10 +149,11 @@ class deepsight_datatable_user extends deepsight_datatable_standard {
 
         // Add link to view profile for idnumber column.
         if (isset($row['element_idnumber'])) {
-            $usermanagementpage = new userpage();
+            $pgparams = array('id' => $row['element_id'], 'action' => 'view');
+            $usermanagementpage = new userpage($pgparams);
             $classid = optional_param('id', null, PARAM_INT);
             if ($classid !== null && $usermanagementpage->can_do_view()) {
-                $target = $usermanagementpage->get_new_page(array('action' => 'view', 'id' => $row['element_id']));
+                $target = $usermanagementpage->get_new_page($pgparams);
                 $idnumber = $row['element_idnumber'];
                 $row['element_idnumber'] = '<a href="'.$target->url.'" alt="ELIS profile" title="ELIS profile">'.$idnumber.'</a>';
             }
