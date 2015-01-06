@@ -477,10 +477,34 @@ class pmclasspage extends managementpage {
         if (($id = $this->optional_param('id', 0, PARAM_INT))) {
             $pgid = required_param('s', PARAM_TEXT);
             $action = $this->optional_param('action', '', PARAM_ACTION);
-            return (($pgid == 'cls' || $pgid == 'crs') && ($action == 'default' || $action == '')) ? \local_elisprogram\context\course::instance($id)
-                    : \local_elisprogram\context\pmclass::instance($id);
+            if (($pgid == 'cls' || $pgid == 'crs') && ($action == 'default' || $action == '')) {
+                try {
+                    $pgcontext = \local_elisprogram\context\course::instance($id);
+                    return $pgcontext;
+                } catch (Exception $e) {
+                    ; // Ignore exception here.
+                }
+            } else {
+                try {
+                    $pgcontext = \local_elisprogram\context\pmclass::instance($id);
+                    return $pgcontext;
+                } catch (Exception $e) {
+                    ; // Ignore exception here.
+                }
+                try {
+                    $pgcontext = \local_elisprogram\context\course::instance($id);
+                    return $pgcontext;
+                } catch (Exception $e) {
+                    ; // Ignore exception here.
+                }
+            }
         } else if (($id = $this->optional_param('courseid', 0, PARAM_INT)) || ($id = $this->optional_param('parent', 0, PARAM_INT))) {
-            return \local_elisprogram\context\course::instance($id);
+            try {
+                $pgcontext = \local_elisprogram\context\course::instance($id);
+                return $pgcontext;
+            } catch (Exception $e) {
+                ; // Ignore exception here.
+            }
         }
         return parent::_get_page_context();
     }
