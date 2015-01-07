@@ -477,7 +477,9 @@ class pmclasspage extends managementpage {
         if (($id = $this->optional_param('id', 0, PARAM_INT))) {
             $pgid = required_param('s', PARAM_TEXT);
             $action = $this->optional_param('action', '', PARAM_ACTION);
-            if (($pgid == 'cls' || $pgid == 'crs') && ($action == 'default' || $action == '')) {
+            if (($pgid == 'cls' && ($action == 'default' || $action == '')) || strpos($pgid, 'crs') === 0) {
+                // If Class Instance listing or a Course page with Class tabs
+                // i.e. 'crsengine'.
                 try {
                     $pgcontext = \local_elisprogram\context\course::instance($id);
                     return $pgcontext;
@@ -487,12 +489,6 @@ class pmclasspage extends managementpage {
             } else {
                 try {
                     $pgcontext = \local_elisprogram\context\pmclass::instance($id);
-                    return $pgcontext;
-                } catch (Exception $e) {
-                    ; // Ignore exception here.
-                }
-                try {
-                    $pgcontext = \local_elisprogram\context\course::instance($id);
                     return $pgcontext;
                 } catch (Exception $e) {
                     ; // Ignore exception here.
