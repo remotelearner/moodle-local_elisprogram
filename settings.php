@@ -255,7 +255,7 @@ if ($ADMIN->fulltree) {
         }
 
         //get the list of instances of the current subplugin type
-        $directories = get_plugin_list($subplugintype);
+        $directories = core_component::get_plugin_list($subplugintype);
 
         //iterate thorugh each instance of this subplugin type
         foreach ($directories as $directory) {

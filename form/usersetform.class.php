@@ -71,7 +71,7 @@ class usersetform extends cmform {
 
         $mform->addElement('header', 'userassociationfieldset', get_string('userset_userassociation', 'local_elisprogram'));
 
-        $plugins = get_plugin_list(userset::ENROL_PLUGIN_TYPE);
+        $plugins = core_component::get_plugin_list(userset::ENROL_PLUGIN_TYPE);
         foreach ($plugins as $plugin => $plugindir) {
             require_once(elis::plugin_file(userset::ENROL_PLUGIN_TYPE.'_'.$plugin, 'lib.php'));
             call_user_func('cluster_' . $plugin . '_edit_form', $this, $mform, $current_cluster_id);

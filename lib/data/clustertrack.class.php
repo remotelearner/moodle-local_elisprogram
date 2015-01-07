@@ -195,7 +195,7 @@ class clustertrack extends elis_data_object {
         }
 
         //require plugin code if enabled
-        $plugins = get_plugin_list('elisprogram');
+        $plugins = core_component::get_plugin_list('elisprogram');
         $display_priority_enabled = isset($plugins['usetdisppriority']);
         if($display_priority_enabled) {
             require_once(elis::plugin_file('elisprogram_usetdisppriority', 'lib.php'));

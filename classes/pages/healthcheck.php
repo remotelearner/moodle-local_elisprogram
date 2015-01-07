@@ -74,7 +74,7 @@ class healthcheck extends \pm_page {
         $plugintypes = array('eliscore', 'elisprogram');
 
         foreach ($plugintypes as $plugintype) {
-            $plugins = get_plugin_list($plugintype);
+            $plugins = \core_component::get_plugin_list($plugintype);
             foreach ($plugins as $pluginshortname => $pluginpath) {
                 $healthfilepath = $pluginpath.'/health.php';
                 if (is_readable($healthfilepath)) {
@@ -209,7 +209,7 @@ class healthcheck extends \pm_page {
         $plugintypes = array('eliscore', 'elisprogram');
 
         foreach ($plugintypes as $plugintype) {
-            $plugins = get_plugin_list($plugintype);
+            $plugins = \core_component::get_plugin_list($plugintype);
             foreach ($plugins as $pluginshortname => $pluginpath) {
                 $healthfilepath = $pluginpath.'/health.php';
                 if (is_readable($healthfilepath)) {
