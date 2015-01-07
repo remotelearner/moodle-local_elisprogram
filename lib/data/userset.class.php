@@ -113,7 +113,7 @@ class userset extends data_object_with_custom_fields {
             clusterassignment::delete_records($filter, $this->_db);
 
             //cluster plugin cleanup
-            $plugins = get_plugin_list(self::ENROL_PLUGIN_TYPE);
+            $plugins = core_component::get_plugin_list(self::ENROL_PLUGIN_TYPE);
             foreach ($plugins as $plugin => $plugindir) {
                 require_once(elis::plugin_file(self::ENROL_PLUGIN_TYPE.'_'.$plugin, 'lib.php'));
                 call_user_func('cluster_' . $plugin . '_delete_for_cluster', $this->id);
@@ -189,7 +189,7 @@ class userset extends data_object_with_custom_fields {
      * save method
      */
     public function save() {
-        $plugins = get_plugin_list(self::ENROL_PLUGIN_TYPE);
+        $plugins = core_component::get_plugin_list(self::ENROL_PLUGIN_TYPE);
         foreach ($plugins as $plugin => $plugindir) {
             require_once(elis::plugin_file(self::ENROL_PLUGIN_TYPE.'_'.$plugin, 'lib.php'));
         }
@@ -236,7 +236,7 @@ class userset extends data_object_with_custom_fields {
             \local_eliscore\context\helper::build_all_paths(false, array(CONTEXT_ELIS_USERSET));
         }
 
-        $plugins = get_plugin_list(self::ENROL_PLUGIN_TYPE);
+        $plugins = core_component::get_plugin_list(self::ENROL_PLUGIN_TYPE);
         foreach ($plugins as $plugin => $plugindir) {
             call_user_func('userset_' . $plugin . '_update', $this);
         }
@@ -553,7 +553,7 @@ function cluster_get_listing($sort='name', $dir='ASC', $startrec=0, $perpage=0, 
     global $USER, $DB;
 
     //require plugin code if enabled
-    $plugins = get_plugin_list('elisprogram');
+    $plugins = core_component::get_plugin_list('elisprogram');
     $display_priority_enabled = isset($plugins['usetdisppriority']);
     if ($display_priority_enabled) {
         require_once(elis::plugin_file('elisprogram_usetdisppriority', 'lib.php'));
