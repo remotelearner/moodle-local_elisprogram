@@ -475,7 +475,7 @@ class pmclasspage extends managementpage {
      */
     protected function _get_page_context() {
         if (($id = $this->optional_param('id', 0, PARAM_INT))) {
-            $pgid = required_param('s', PARAM_TEXT);
+            $pgid = optional_param('s', 'cls', PARAM_TEXT);
             $action = $this->optional_param('action', '', PARAM_ACTION);
             if (($pgid == 'cls' && ($action == 'default' || $action == '')) || strpos($pgid, 'crs') === 0) {
                 // If Class Instance listing or a Course page with Class tabs
