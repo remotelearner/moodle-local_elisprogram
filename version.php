@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version = 2014082502;
-$plugin->release = '2.7.3.1 (Build: 20150104)';
+$plugin->release = '2.7.4.0 (Build: 20150112)';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->dependencies = array(
     'enrol_elis' => 2014082501,
