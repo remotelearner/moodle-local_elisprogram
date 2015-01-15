@@ -399,7 +399,7 @@ function pm_notify_send_handler($eventdata){
     }
 
     //send the message
-    return message_send($eventdata);
+    return message_send((object)(array)$eventdata);
 }
 
 /**
