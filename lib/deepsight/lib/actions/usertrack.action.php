@@ -106,8 +106,16 @@ class deepsight_action_usertrack_assign extends deepsight_action_confirm {
                 'msg' => get_string('ds_action_generic_bulkfail', 'local_elisprogram'),
                 'failedops' => $failedops,
             ];
+        } else if (empty($failedops)) {
+            return [
+                'result' => 'success',
+                'msg' => 'Success'
+            ];
         } else {
-            return array('result' => 'success', 'msg' => 'Success');
+            return [
+                'result' => 'fail',
+                'msg' => get_string('not_permitted', 'local_elisprogram')
+            ];
         }
     }
 }
