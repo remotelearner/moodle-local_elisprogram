@@ -387,13 +387,20 @@ abstract class deepsight_action_standard implements deepsight_action {
                 ];
             }
         } else {
-            $formatteddata = $this->format_assocdata_for_display($assocdata);
-            return array(
-                'result' => 'success',
-                'msg' => 'Success',
-                'displaydata' => $formatteddata,
-                'saveddata' => $assocdata
-            );
+            if (!empty($failedops)) {
+                return [
+                    'result' => 'fail',
+                    'msg' => get_string('not_permitted', 'local_elisprogram')
+                ];
+            } else {
+                $formatteddata = $this->format_assocdata_for_display($assocdata);
+                return [
+                    'result' => 'success',
+                    'msg' => 'Success',
+                    'displaydata' => $formatteddata,
+                    'saveddata' => $assocdata
+                ];
+            }
         }
     }
 
@@ -530,10 +537,15 @@ abstract class deepsight_action_standard implements deepsight_action {
                 'msg' => $faillang,
                 'failedops' => $failedops,
             ];
-        } else {
+        } else if (empty($failedops)) {
             return [
                 'result' => 'success',
                 'msg' => 'Success',
+            ];
+        } else {
+            return [
+                'result' => 'fail',
+                'msg' => get_string('not_permitted', 'local_elisprogram')
             ];
         }
     }
