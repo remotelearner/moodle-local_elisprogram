@@ -427,8 +427,7 @@ class curriculumstudent extends elis_data_object {
         global $USER, $DB;
 
         // TODO: Ugly, this needs to be overhauled
-        $cpage = new curriculumpage();
-
+        $cpage = new curriculumpage(array('id' => $curid, 'action' => 'view'));
         if (!curriculumpage::can_enrol_into_curriculum($curid)) {
             //the users who satisfty this condition are a superset of those who can manage associations
             return false;

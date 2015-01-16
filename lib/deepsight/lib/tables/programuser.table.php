@@ -113,7 +113,7 @@ class deepsight_datatable_programuser_assigned extends deepsight_datatable_progr
 
         // If not already set, determine whether the user can unassign anyone - but only if $canunassignany is true.
         if ($canunassignany === true && $canunassignall === null) {
-            $cpage = new curriculumpage();
+            $cpage = new curriculumpage(array('id' => $this->programid, 'action' => 'view'));
             if ($cpage->_has_capability('local/elisprogram:program_enrol', $this->programid)) {
                 $canunassignall = true;
             }
