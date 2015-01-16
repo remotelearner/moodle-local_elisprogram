@@ -182,13 +182,14 @@ class trackpage extends managementpage {
      * Overrides the default navigation to include curriculum breadcrumbs if appropriate
      */
     function build_navbar_default($who = null, $addparent = true, $params = array()) {
+        $pgid = optional_param('s', 'trk', PARAM_TEXT);
         $action = $this->optional_param('action', '', PARAM_CLEAN);
         $cancel = $this->optional_param('cancel', '', PARAM_CLEAN);
         $paramname = '';
         $parent = $this->get_cm_id(empty($action), $paramname);
         $params = array();
         $lp_bc = true;
-        if (!empty($parent) /* && (empty($action) ||empty($cancel)) */ ) {
+        if (!empty($parent) && strncmp($pgid, 'trk', 3) != 0)  {
             //viewing from within curriculum
             $params['id'] = $parent;
             //$params[$paramname] = $parent;
@@ -411,11 +412,38 @@ class trackpage extends managementpage {
      */
     protected function _get_page_context() {
         if (($id = $this->optional_param('id', 0, PARAM_INT))) {
+            $pgid = optional_param('s', 'trk', PARAM_TEXT);
             $action = $this->optional_param('action', '', PARAM_ACTION);
-            return ($action == '' || $action == 'default') ? \local_elisprogram\context\program::instance($id)
-                    : \local_elisprogram\context\track::instance($id);
+            if ($pgid == 'usrtrk') {
+                try {
+                    $pgcontext = \local_elisprogram\context\user::instance($id);
+                    return $pgcontext;
+                } catch (Execption $e) {
+                    ; // Ignore execption.
+                }
+            } else if ($pgid == 'clsttrk') {
+                try {
+                    $pgcontext = \local_elisprogram\context\userset::instance($id);
+                    return $pgcontext;
+                } catch (Execption $e) {
+                    ; // Ignore execption.
+                }
+            } else {
+                $isprogcontext = ($pgid == 'trk' && ($action == '' || $action == 'default')) || strncmp($pgid, 'cur', 3) == 0 || strncmp($pgid, 'prg', 3) == 0;
+                try {
+                    $pgcontext = $isprogcontext ? \local_elisprogram\context\program::instance($id) : \local_elisprogram\context\track::instance($id);
+                    return $pgcontext;
+                } catch (Execption $e) {
+                    ; // Ignore execption.
+                }
+            }
         } else if (($id = $this->optional_param('parent', 0, PARAM_INT)) || ($id = $this->optional_param('curid', 0, PARAM_INT))) {
-            return \local_elisprogram\context\program::instance($id);
+            try {
+                $pgcontext = \local_elisprogram\context\program::instance($id);
+                return $pgcontext;
+            } catch (Execption $e) {
+                ; // Ignore execption.
+            }
         }
         return parent::_get_page_context();
     }
