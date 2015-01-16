@@ -213,7 +213,7 @@ class usersetpage extends managementpage {
         global $USER;
 
         //check the standard capability
-        $page = new usersetpage();
+        $page = new usersetpage(array('id' => $clusterid, 'action' => 'view'));
         if ($page->_has_capability('local/elisprogram:userset_enrol', $clusterid)) {
             return true;
         }

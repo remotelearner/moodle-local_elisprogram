@@ -85,7 +85,7 @@ class deepsight_action_userprogram_assign extends deepsight_action_confirm {
         $userid = required_param('id', PARAM_INT);
 
         // Permissions.
-        $upage = new userpage();
+        $upage = new userpage(array('id' => $userid, 'action' => 'view'));
         if ($upage->_has_capability('local/elisprogram:user_view', $userid) !== true) {
             return array('result' => 'fail', 'msg' => get_string('not_permitted', 'local_elisprogram'));
         }
@@ -142,7 +142,7 @@ class deepsight_action_userprogram_unassign extends deepsight_action_confirm {
         $userid = required_param('id', PARAM_INT);
 
         // Permissions.
-        $upage = new userpage();
+        $upage = new userpage(array('id' => $userid, 'action' => 'view'));
         if ($upage->_has_capability('local/elisprogram:user_view', $userid) !== true) {
             return array('result' => 'fail', 'msg' => get_string('not_permitted', 'local_elisprogram'));
         }

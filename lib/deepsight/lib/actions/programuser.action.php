@@ -141,7 +141,7 @@ class deepsight_action_programuser_unassign extends deepsight_action_confirm {
         $pgmid = required_param('id', PARAM_INT);
 
         // Permissions.
-        $cpage = new curriculumpage();
+        $cpage = new curriculumpage(array('id' => $pgmid, 'action' => 'view'));
         if ($cpage->_has_capability('local/elisprogram:program_view', $pgmid) !== true) {
             return array('result' => 'fail', 'msg' => get_string('not_permitted', 'local_elisprogram'));
         }

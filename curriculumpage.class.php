@@ -94,8 +94,8 @@ class curriculumpage extends managementpage {
 
         //check the standard capability
         // TODO: Ugly, this needs to be overhauled
-        $cpage = new curriculumpage();
-        if($cpage->_has_capability('local/elisprogram:program_enrol', $curriculumid)) {
+        $cpage = new curriculumpage(array('id' => $curriculumid, 'action' => 'view'));
+        if ($cpage->_has_capability('local/elisprogram:program_enrol', $curriculumid)) {
             return true;
         }
 

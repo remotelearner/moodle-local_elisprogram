@@ -57,7 +57,7 @@ abstract class userclusterbase extends deepsightpage {
         $allowedusersets = array();
 
         // TODO: Ugly, this needs to be overhauled.
-        $upage = new usersetpage();
+        $upage = new usersetpage(array('id' => $usersetid, 'action' => 'view'));
 
         if (!usersetpage::can_enrol_into_cluster($usersetid)) {
             // The users who satisfty this condition are a superset of those who can manage associations.

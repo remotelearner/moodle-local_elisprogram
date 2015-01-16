@@ -179,7 +179,7 @@ class curriculumstudentpage extends deepsightpage {
      */
     public function can_do_default() {
         $id = $this->required_param('id');
-        $cpage = new curriculumpage();
+        $cpage = new curriculumpage(array('id' => $id, 'action' => 'view'));
         return $cpage->_has_capability('local/elisprogram:program_view', $id);
     }
 
