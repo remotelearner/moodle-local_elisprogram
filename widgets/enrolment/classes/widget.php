@@ -123,9 +123,13 @@ class widget extends \local_elisprogram\lib\widgetbase {
      */
     public function get_html($fullscreen = false) {
         global $CFG, $USER;
+        static $init = false;
         require_once(\elispm::lib('data/user.class.php'));
         require_once(\elispm::lib('lib.php'));
-        pm_update_user_information($USER->id);
+        if (!$init && isloggedin() && !empty($USER->id) && !isguestuser($USER->id)) {
+            $init = true;
+            pm_update_user_information($USER->id);
+        }
 
         $uniqid = uniqid();
 
