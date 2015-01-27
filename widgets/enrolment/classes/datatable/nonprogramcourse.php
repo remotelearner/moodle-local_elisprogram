@@ -73,8 +73,8 @@ class nonprogramcourse extends course {
      */
     protected function get_filter_sql(array $filters = array()) {
         $filters[] = ['sql' => 'stu.userid = ?', 'params' => [$this->userid]];
-        $filters[] = ['sql' => '(pgmcrs.id IS NULL or pgmstu.id IS NULL)'];
-        $filters[] = ['sql' => '(pgmstu2.id IS NULL or crssetcrs.id IS NULL or pgmcrsset.id IS NULL)'];
+        $filters[] = ['sql' => '(pgmcrs.id IS NULL AND pgmstu.id IS NULL)'];
+        $filters[] = ['sql' => '(pgmstu2.id IS NULL AND (crssetcrs.id IS NULL OR pgmcrsset.id IS NULL))'];
         return parent::get_filter_sql($filters);
     }
 
