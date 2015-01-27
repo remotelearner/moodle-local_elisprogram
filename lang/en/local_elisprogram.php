@@ -903,6 +903,7 @@ $string['moodlecourseurl'] = 'Mooodle Course URL';
 $string['moodleenrol'] = 'You have been removed from the waitlist for class instance {$a->idnumber}.
 Please visit {$a->wwwroot}/course/enrol.php?id={$a->id} to complete your enrolment.';
 $string['moodleenrol_subj'] = 'Ready to enrol in {$a->idnumber}.';
+$string['moodlecourse_enrolwidget'] = 'Moodle course: {$a->shortname}';
 
 $string['na'] = 'NA';
 $string['name'] = 'Name';

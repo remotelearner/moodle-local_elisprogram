@@ -39,6 +39,9 @@ class pmclass extends base {
     /** @var int The ID of the course we're getting classes for. */
     protected $courseid = null;
 
+    /** @var int The ID of the program we're getting classes for. Optional. */
+    protected $programid = null;
+
     /**
      * Gets an array of available filters.
      *
@@ -127,7 +130,11 @@ class pmclass extends base {
      * @return array An array consisting of the SQL WHERE clause, and the parameters for the SQL.
      */
     protected function get_filter_sql(array $filters = array()) {
-        $filters[] = ['sql' => 'element.courseid = ?', 'params' => [$this->courseid]];
+        if (!empty($this->programid)) {
+            $filters[] = ['sql' => '(element.courseid = ? AND (usrtrk.id IS NULL OR trkass.classid = element.id))', 'params' => [$this->courseid]];
+        } else {
+            $filters[] = ['sql' => 'element.courseid = ?', 'params' => [$this->courseid]];
+        }
         return parent::get_filter_sql($filters);
     }
 
@@ -141,6 +148,15 @@ class pmclass extends base {
     }
 
     /**
+     * Set the ID of the program we're getting classes for.
+     *
+     * @param int $programid The ID of the course we're getting classes for.
+     */
+    public function set_programid($programid) {
+        $this->programid = $programid;
+    }
+
+    /**
      * Get a list of desired table joins to be used in the get_search_results method.
      *
      * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
@@ -148,19 +164,32 @@ class pmclass extends base {
      *               the JOIN sql fragments.
      */
     protected function get_join_sql(array $filters = array()) {
-        require_once(\elispm::lib('data/user.class.php'));
+        require_once(\elispm::lib('data/usertrack.class.php'));
         list($sql, $params) = parent::get_join_sql($filters);
 
         // Custom field joins.
         $enabledcfields = array_intersect_key($this->customfields, $this->availablefilters);
         $ctxlevel = \local_eliscore\context\helper::get_level_from_name('class');
+        // Get current user id.
+        $euserid = \user::get_current_userid();
+
         $newsql = $this->get_custom_field_joins($ctxlevel, $enabledcfields);
+        $newparams = [];
+
+        // Get optional program for track class filtering
+        if (!empty($this->programid)) {
+            $newparams = [$euserid, $this->programid];
+            $newsql[] =  'LEFT JOIN ({'.\track::TABLE.'} trk
+                                     JOIN {'.\usertrack::TABLE.'} usrtrk ON trk.id = usrtrk.trackid
+                                          AND usrtrk.userid = ?
+                                     JOIN {'.\trackassignment::TABLE.'} trkass ON trk.id = trkass.trackid) ON trk.curid = ?
+                                    AND trkass.courseid = element.courseid';
+        }
 
         // Enrolment and waitlist information.
-        $euserid = \user::get_current_userid();
         $newsql[] = 'LEFT JOIN {local_elisprogram_cls_enrol} enrol ON enrol.classid = element.id AND enrol.userid = ?';
         $newsql[] = 'LEFT JOIN {local_elisprogram_waitlist} waitlist ON waitlist.classid = element.id AND waitlist.userid = ?';
-        $newparams = [$euserid, $euserid];
+        $newparams = array_merge($newparams, [$euserid, $euserid]);
 
         return [array_merge($sql, $newsql), array_merge($params, $newparams)];
     }
@@ -228,8 +257,9 @@ class pmclass extends base {
                     $pageresultsar[$id]->element_enddate = get_string('notavailable');
                 }
             }
-            if (($mdlcourse = moodle_get_course($result->id))) {
-                $pageresultsar[$id]->element_idnumber .= ' - '.\html_writer::tag('a', get_string('moodlecourse', 'local_elisprogram'), array('href' => $CFG->wwwroot.'/course/view.php?id='.$mdlcourse));
+            if (($mdlcourse = moodle_get_course($result->id)) && ($mdlcrsrec = $DB->get_record('course', array('id' => $mdlcourse)))) {
+                $pageresultsar[$id]->element_idnumber .= ' - '.\html_writer::tag('a', get_string('moodlecourse_enrolwidget', 'local_elisprogram', $mdlcrsrec),
+                        array('href' => $CFG->wwwroot.'/course/view.php?id='.$mdlcourse));
             }
             if (isset($pageresultsar[$id]->enrol_completetime) && !empty($pageresultsar[$id]->enrol_completetime)) {
                 $pageresultsar[$id]->enrol_completetime = userdate($pageresultsar[$id]->enrol_completetime, $dateformat);

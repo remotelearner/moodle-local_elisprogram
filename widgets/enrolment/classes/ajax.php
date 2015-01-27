@@ -237,6 +237,9 @@ class ajax {
         }
         $datatable = new \eliswidget_enrolment\datatable\pmclass($DB, $this->endpoint);
         $datatable->set_courseid($data['courseid']);
+        if (isset($data['programid']) && is_numeric($data['programid'])) {
+            $datatable->set_programid($data['programid']);
+        }
         return $this->get_listing_response($datatable, $data);
     }
 
