@@ -597,7 +597,7 @@
                             ids: {courseid: main.courseid, programid: main.programid, widgetid: main.widgetid},
                             endpoint: opts.endpoint,
                             requestmode: 'classesforcourse',
-                            requestdata: {courseid: main.courseid},
+                            requestdata: {courseid: main.courseid, programid: main.programid},
                             childrenderer: 'eliswidget_enrolment_pmclass',
                             childopts: opts,
                             lang: opts.lang
