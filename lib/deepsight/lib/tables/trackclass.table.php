@@ -190,10 +190,12 @@ class deepsight_datatable_trackclass_available extends deepsight_datatable_track
      */
     protected function get_join_sql(array $filters=array()) {
         $joinsql = parent::get_join_sql($filters);
-        $joinsql[] = 'LEFT JOIN {'.trackassignment::TABLE.'} trkass
-                                ON trkass.trackid='.$this->trackid.' AND trkass.classid = element.id';
-        $joinsql[] = 'JOIN {'.curriculumcourse::TABLE.'} curcrs ON curcrs.courseid = element.courseid';
-        $joinsql[] = 'JOIN {'.curriculum::TABLE.'} cur ON curcrs.curriculumid = cur.id';
+        $joinsql[] = 'LEFT JOIN {'.trackassignment::TABLE.'} trkass ON trkass.trackid = '.$this->trackid.'
+                                AND trkass.classid = element.id';
+        $joinsql[] = 'LEFT JOIN {'.curriculumcourse::TABLE.'} curcrs ON curcrs.courseid = element.courseid';
+        $joinsql[] = 'LEFT JOIN ({'.crssetcourse::TABLE.'} csetcrs
+                                 JOIN {'.programcrsset::TABLE.'} prgcset ON prgcset.crssetid = csetcrs.crssetid) ON csetcrs.courseid = element.courseid';
+        $joinsql[] = 'JOIN {'.curriculum::TABLE.'} cur ON (curcrs.curriculumid = cur.id OR (prgcset.id IS NOT NULL AND prgcset.prgid = cur.id))';
         $joinsql[] = 'JOIN {'.track::TABLE.'} trk ON trk.curid = cur.id';
         return $joinsql;
     }
