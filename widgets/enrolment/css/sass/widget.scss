@@ -58,6 +58,7 @@
         }
     }
     .program {
+        padding: 0.3rem 0.3rem 0.3rem 0;
         > svg.elisprogress {
             width: 15%;
             height: 0.5rem;
@@ -69,9 +70,8 @@
             }
         }
         > .header {
-            padding: 0.5rem 0 0.5rem 1.1rem;
-            margin: 0;
-            line-height: 1.2rem;
+            font-weight: bold;
+            padding: 0 0 0 1rem;
             position: relative;
             &:hover {
                 background-color: rgba(0, 0, 0, 0.05);
@@ -85,6 +85,11 @@
                 position: absolute;
                 left: 0;
                 top: 0.55rem;
+            }
+            > h5 {
+                margin: 0 16px;
+                font-size: 0.9rem;
+                line-height: 1rem;
             }
         }
         &.expanded {
@@ -108,7 +113,28 @@
             }
         }
     }
-    .course, .courseset {
+    .course, .courseset, .program {
+        > .details {
+            display: none;
+            vertical-align: top;
+            padding: 0.5rem 0.5rem 0rem 0.8rem;
+            .item {
+                margin-bottom: 0.3rem;
+                font-size: 0.7rem;
+                display: block;
+                line-height: 0.9rem;
+                > .key {
+                    font-weight: bold;
+                    margin-right: 0.3rem;
+                }
+            }
+            .morelesslink {
+                display: block;
+            }
+            > .item:last-child {
+                margin-bottom: 0;
+            }
+        }
         > .header {
             margin: 0;
             padding: 0.4rem 0;
@@ -177,6 +203,9 @@
                 }
             }
             > .childrenlist {
+                display: block;
+            }
+            > .details {
                 display: block;
             }
         }
@@ -257,10 +286,6 @@
             }
         }
         .program {
-            > h5 {
-                font-size: 0.9rem;
-                line-height: 1rem;
-            }
             > .childrenlist {
                 padding: 0;
             }
@@ -284,7 +309,7 @@
                 }
             }
         }
-        .pmclass {
+        .pmclass, .program {
             .details {
                 .item {
                     line-height: 0.8rem;
