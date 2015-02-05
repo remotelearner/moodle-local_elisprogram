@@ -27,7 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Programs Widget';
-$string['name'] = 'Programs';
+$string['name'] = 'ELIS Enrolment Widget';
 $string['description'] = 'A widget allowing students to view their learning plans, manage their enrolments, and view their progress.';
 
 $string['action_enrol'] = 'Enrol';
@@ -51,6 +51,12 @@ $string['less'] = '...less';
 $string['more'] = 'more...';
 $string['nonefound'] = 'None found';
 $string['nonprogramcourses'] = 'Non-program courses';
+$string['programs'] = 'Programs';
+$string['program_description'] = 'Description';
+$string['program_header'] = '{$a->element_idnumber}: {$a->element_name}';
+$string['program_idnumber'] = 'ID Number';
+$string['program_name'] = 'Name';
+$string['program_reqcredits'] = 'Required Credits';
 $string['setting_progressbar_heading'] = 'Progress Bar';
 $string['setting_progressbar_heading_description'] = 'If a program has required credits set, a progress bar can be shown for students to help them track their progress. The following settings deal with the progress bar.';
 $string['setting_progressbar_enabled'] = 'Enabled';

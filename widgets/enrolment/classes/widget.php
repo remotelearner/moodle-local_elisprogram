@@ -32,90 +32,6 @@ namespace eliswidget_enrolment;
 class widget extends \local_elisprogram\lib\widgetbase {
 
     /**
-     * Generate an SVG progress bar.
-     *
-     * @param int $percentcomplete The percent complete the progress bar is.
-     * @return string SVG code for the progress bar.
-     */
-    public function generateprogressbar($percentcomplete) {
-        $decile = floor($percentcomplete/10);
-        $progressrectattrs = [
-            'x' => '0',
-            'y' => '0',
-            'height' => '100%',
-            'width' => $percentcomplete.'%',
-            'class' => 'decile'.$decile,
-        ];
-        if ($decile >= 8) {
-            $colorcode = 3;
-        } else if ($decile >= 5) {
-            $colorcode = 2;
-        } else {
-            $colorcode = 1;
-        }
-        $progressrectattrs['class'] .= ' colorcode'.$colorcode;
-
-        $progressrect = \html_writer::tag('rect', '', $progressrectattrs);
-
-        $progressbarattrs = ['class' => 'elisprogress'];
-        $progressbar = \html_writer::tag('svg', $progressrect, $progressbarattrs);
-        return $progressbar;
-    }
-
-    /**
-     * Get program data to display.
-     *
-     * @param int $userid The ELIS user id of the user we're getting program data for.
-     * @param bool $displayarchived Whether we're displaying archived programs as well.
-     * @param int $programid A program ID if displaying only one program.
-     * @return \moodle_recordset A recordset of programs.
-     */
-    public function get_program_data($userid, $displayarchived = false, $programid = null) {
-        global $DB;
-
-        require_once(\elispm::lib('data/curriculum.class.php'));
-        require_once(\elispm::lib('data/curriculumstudent.class.php'));
-        require_once(\elispm::lib('data/curriculumcourse.class.php'));
-        require_once(\elispm::lib('data/course.class.php'));
-        require_once(\elispm::lib('data/programcrsset.class.php'));
-
-        $joins = [];
-        $restrictions = ['pgmstu.userid = :userid'];
-        $params = ['userid' => $userid];
-
-        // Add in joins and restrictions if we're hiding archived programs.
-        if ($displayarchived !== true) {
-            $joins[] = 'JOIN {context} ctx ON ctx.instanceid = pgm.id AND ctx.contextlevel = :pgmctxlvl';
-            $joins[] = 'LEFT JOIN {local_eliscore_fld_data_int} flddata ON flddata.contextid = ctx.id';
-            $joins[] = 'LEFT JOIN {local_eliscore_field} field ON field.id = flddata.fieldid';
-            $restrictions[] = '((field.shortname = :archiveshortname AND flddata.data = 0) OR flddata.id IS NULL)';
-            $params['pgmctxlvl'] = \local_eliscore\context\helper::get_level_from_name('curriculum');
-            $params['archiveshortname'] = '_elis_program_archive';
-        }
-
-        if (!empty($programid) && is_int($programid)) {
-            $restrictions[] = 'pgm.id = :pgmid';
-            $params['pgmid'] = $programid;
-        }
-
-        $restrictions = implode(' AND ', $restrictions);
-        $sql = 'SELECT pgmstu.id as pgmstuid,
-                       pgmstu.curriculumid as pgmid,
-                       pgm.name as pgmname,
-                       pgm.reqcredits as pgmreqcredits,
-                       count(pgmcrsset.id) as numcrssets
-                  FROM {'.\curriculumstudent::TABLE.'} pgmstu
-                  JOIN {'.\curriculum::TABLE.'} pgm ON pgm.id = pgmstu.curriculumid
-             LEFT JOIN {'.\programcrsset::TABLE.'} pgmcrsset ON pgmcrsset.prgid = pgm.id
-                       '.implode(' ', $joins).'
-                 WHERE '.$restrictions.'
-              GROUP BY pgm.id
-              ORDER BY pgm.priority ASC, pgm.name ASC';
-
-        return $DB->get_recordset_sql($sql, $params);
-    }
-
-    /**
      * Get HTML to display the widget.
      *
      * @param bool $fullscreen Whether the widget is being displayed full-screen or not.
@@ -135,49 +51,10 @@ class widget extends \local_elisprogram\lib\widgetbase {
 
         $html = \html_writer::start_tag('div', ['id' => $uniqid]);
 
-        $config = get_config('eliswidget_enrolment');
         $euserid = \user::get_current_userid();
 
-        if (!empty($config->progressbarenabled)) {
-            $html .= '<style>';
-            $html .= '.eliswidget_enrolment svg.elisprogress rect.colorcode1 { fill: '.$config->progressbarcolor1.'; }';
-            $html .= '.eliswidget_enrolment svg.elisprogress rect.colorcode2 { fill: '.$config->progressbarcolor2.'; }';
-            $html .= '.eliswidget_enrolment svg.elisprogress rect.colorcode3 { fill: '.$config->progressbarcolor3.'; }';
-            $html .= '</style>';
-        }
-
-        // Add assigned programs.
-        $programdata = $this->get_program_data($euserid);
-        foreach ($programdata as $program) {
-            $pgmwrapperattrs = [
-                'id' => 'program_'.$program->pgmid,
-                'class' => 'program',
-                'data-id' => $program->pgmid,
-                'data-numcrssets' => $program->numcrssets
-            ];
-            $html .= \html_writer::start_tag('div', $pgmwrapperattrs);
-            if (!empty($program->pgmreqcredits) && $program->pgmreqcredits > 0) {
-                if (!empty($config->progressbarenabled)) {
-                    $pgmstu = new \curriculumstudent(['curriculumid' => $program->pgmid, 'userid' => $euserid]);
-                    $pgmstu->load();
-                    $html .= $this->generateprogressbar($pgmstu->get_percent_complete());
-                }
-            }
-            $html .= \html_writer::tag('h5', $program->pgmname, ['class' => 'header']);
-            $html .= \html_writer::tag('div', '', ['class' => 'childrenlist']);
-            $html .= \html_writer::end_tag('div');
-        }
-
-        // Add non-program courses section.
-        $pgmwrapperattrs = [
-            'id' => 'program_none',
-            'class' => 'program',
-            'data-id' => 'none',
-        ];
-        $html .= \html_writer::start_tag('div', $pgmwrapperattrs);
-        $html .= \html_writer::tag('h5', get_string('nonprogramcourses', $this->get_component()), ['class' => 'header']);
-        $html .= \html_writer::tag('div', '', ['class' => 'childrenlist']);
-        $html .= \html_writer::end_tag('div');
+        $html .= \html_writer::tag('div', \html_writer::tag('div', '', array('id' => 'childrenlist', 'class' => 'childrenlist', 'style' => 'display:inline;')),
+                array('id' => 'program', 'class' => 'program', 'data-id' => 'none'));
 
         $enrolallowed = get_config('enrol_elis', 'enrol_from_course_catalog');
         $enrolallowed = (!empty($enrolallowed) && $enrolallowed == '1') ? '1' : '0';
@@ -220,6 +97,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
                 'idnumber' => get_string('idnumber', 'eliswidget_enrolment'),
                 'startdate' => get_string('startdate', 'eliswidget_enrolment'),
                 'yes' => get_string('yes'),
+                'programs' => get_string('programs', 'eliswidget_enrolment'),
             ],
         ];
         $initjs = "\n(function($) {"."\n";
@@ -240,6 +118,16 @@ class widget extends \local_elisprogram\lib\widgetbase {
      * @return array Array of URLs or \moodle_url objects to require for the widget.
      */
     public function get_css_dependencies($fullscreen = false) {
+        $html = '';
+        $config = get_config('eliswidget_enrolment');
+        if (!empty($config->progressbarenabled)) {
+            $html .= '<style>'."\n";
+            $html .= 'svg.elisprogress rect.colorcode1 { fill: '.$config->progressbarcolor1.'; }'."\n";
+            $html .= 'svg.elisprogress rect.colorcode2 { fill: '.$config->progressbarcolor2.'; }'."\n";
+            $html .= 'svg.elisprogress rect.colorcode3 { fill: '.$config->progressbarcolor3.'; }'."\n";
+            $html .= '</style>'."\n";
+        }
+        echo $html;
         return [new \moodle_url('/local/elisprogram/widgets/enrolment/css/widget.css')];
     }
 

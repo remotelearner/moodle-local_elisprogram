@@ -244,6 +244,19 @@ class ajax {
     }
 
     /**
+     * Get a list of programs for a user.
+     *
+     * @param array $data Array containing "filters" and "page".
+     * @return array Array of response information containing information on filters to render, search results, and other details
+     *               needed by the front-end.
+     */
+    protected function get_programsforuser(array $data) {
+        global $DB;
+        $datatable = new \eliswidget_enrolment\datatable\program($DB, $this->endpoint);
+        return $this->get_listing_response($datatable, $data);
+    }
+
+    /**
      * Respond to a listing request for a given entity type.
      *
      * @param \eliswidget_enrolment\datatable\base $datatable The datatable that handles the list.

@@ -1,6 +1,6 @@
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,9 @@
  * @package    eliswidget_enrolment
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
+ * @author     Brent Boghosian <brent.boghosian@remote-learner.net>
  *
  */
 
@@ -710,6 +711,7 @@
                     $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
                 });
                 details.append(morelesslink);
+
                 header.append(details);
                 return header;
             }
@@ -751,25 +753,34 @@
      * ELIS Enrolment Widget Program Renderer
      *
      * Usage:
-     *     $('[container selector]').eliswidget_enrolment_program(ids, opts);
+     *     $('[container selector]').eliswidget_enrolment_program(data, ids, fieldvisibility, opts, datatable)
      *
      * Required Options:
      *     string endpoint The URL to send ajax requests.
      *     object lang     An object of language strings to use throughout the widget.
      *
-     * @param object ids An object of relevant IDs. This should contain 'widgetid'.
+     * @param object data All received data from the ajax request.
+     * @param object ids An object of relevant IDs. This should contain 'widgetid' and 'programid'.
+     * @param object fieldvisibility An object listing visible and hidden fields for the element.
      * @param object opts Options object (See Options section above for description)
+     * @param object datatable The datatable object
      * @return object jQuery object for each instance.
      */
-    $.fn.eliswidget_enrolment_program = function(ids, opts) {
+    $.fn.eliswidget_enrolment_program = function(data, ids, fieldvisibility, opts, datatable) {
         return this.each(function() {
             var jqthis = $(this);
 
+            /** @var object All received data from the ajax request. */
+            this.data = data;
+
             /** @var int The ID of the program. */
-            this.programid = jqthis.data('id');
+            this.programid = this.data.element_id;
 
             /** @var int The ID of the widget this program belongs to. */
             this.widgetid = ids.widgetid;
+
+            /** @var object The datatable object */
+            this.datatable = datatable;
 
             var main = this;
 
@@ -783,11 +794,97 @@
                 return 'eliswidget_enrolment'+main.widgetid+'_pgm'+main.programid+'_'+name;
             }
 
+            /**
+             * Generate display elements for a piece of element information.
+             *
+             * @param string name The label of the information.
+             * @param string val The value of the information.
+             * @param string id An ID for the information (added to CSS classes)
+             * @return object A jQuery object for the DOM element.
+             */
+            this.generateitem = function(name, val, id) {
+                var itemclass = 'item';
+                if (id != null) {
+                    itemclass += ' '+id;
+                }
+                var item = $('<span class="'+itemclass+'"></span>');
+                item.append('<span class="key">'+name+'</span>');
+                var value = $('<span class="val"></span>').append(val);
+                item.append(value);
+                return item;
+            }
+
+            /**
+             * Generate program progress bar.
+             *
+             * @param string pctcomplete The percent complete.
+             * @return object A jQuery object for the DOM element.
+             */
+            this.generateprogressbar = function(pctcomplete) {
+                if (pctcomplete < 0) {
+                    return '';
+                }
+                var decile = Math.floor(pctcomplete/10.0);
+                var colorcode = 0;
+                if (decile >= 8) {
+                    colorcode = 3;
+                } else if (decile >= 5) {
+                    colorcode = 2;
+                } else {
+                    colorcode = 1;
+                }
+                // We must use string to prevent closing rect tag.
+                return '<svg class="elisprogress"><rect x="0" y="0" height="100%" width="'+pctcomplete+
+                        '%" class="decile'+decile+' colorcode'+colorcode+'"></svg>';
+            }
+
+            /**
+             * Render the header information for this element.
+             *
+             * @return object jQuery object for the DOM element that contains the element header.
+             */
+            this.renderheader = function() {
+                var header = $(this);
+                var progressbar = main.generateprogressbar(main.data.pctcomplete);
+                header.append(progressbar);
+                header.append('<div class="header"><h5 class="header">'+main.data.header+'</h5></div>');
+
+                // Build and add details.
+                var details = $('<div class="details"></div>');
+                for (var fieldalias in fieldvisibility.visible) {
+                    var label = fieldvisibility.visible[fieldalias];
+                    var value = main.data[fieldalias];
+                    details.append(main.generateitem(label, value, fieldalias));
+                }
+                var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
+                for (var fieldalias in fieldvisibility.hidden) {
+                    var label = fieldvisibility.hidden[fieldalias];
+                    var value = main.data[fieldalias];
+                    detailshidden.append(main.generateitem(label, value, fieldalias));
+                }
+                details.append(detailshidden);
+
+                var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
+                morelesslink.click(function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    $(this).siblings('.detailshidden').toggle();
+                    $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
+                });
+                details.append(morelesslink);
+                header.append(details);
+                return header;
+            }
+
+            jqthis.attr({id: 'program_'+this.programid, class: 'program'});
+            jqthis.data('id', this.programid);
+            jqthis.append(this.renderheader());
+            jqthis.append('<div class="childrenlist"></div>');
             jqthis.children('.header').click(function() {
                 var childrenlist = jqthis.children('.childrenlist');
                 jqthis.toggleClass('expanded');
-                if (childrenlist.is(':empty') === true) {
-                    if (main.programid !== 'none' && jqthis.data('numcrssets') > 0) {
+                if (childrenlist.is(':empty')) {
+                    if (main.programid != 'none' && main.data.numcrssets > 0) {
                         var coursesetwrapper = $('<div id="'+main.generateid('coursesetwrapper')+'"></div>');
                         var coursesetheading = $('<div class="childrenlistheader"></div>');
                         coursesetheading.append('<h6>'+opts.lang.coursesets+'</h6>');
@@ -840,6 +937,68 @@
     }
 
     /**
+     * ELIS Enrolment Widget Top Renderer
+     *
+     * Usage:
+     *     $('[container selector]').eliswidget_enrolment_top(ids, opts);
+     *
+     * Required Options:
+     *     string endpoint The URL to send ajax requests.
+     *     object lang     An object of language strings to use throughout the widget.
+     *
+     * @param object ids An object of relevant IDs. This should contain 'widgetid'.
+     * @param object opts Options object (See Options section above for description)
+     * @return object jQuery object for each instance.
+     */
+    $.fn.eliswidget_enrolment_top = function(ids, opts) {
+        return this.each(function() {
+            var jqthis = $(this);
+
+            /** @var int The ID of the widget this program belongs to. */
+            this.widgetid = ids.widgetid;
+
+            var main = this;
+
+            /**
+             * Generate a unique ID for a given string name.
+             *
+             * @param string name A name for the ID.
+             * @return string A unique name that contains the given ID.
+             */
+            this.generateid = function(name) {
+                return 'eliswidget_enrolment'+main.widgetid+'_'+name;
+            }
+
+            var childrenlist = jqthis.children('.childrenlist');
+            if (childrenlist.is(':empty')) {
+                var programwrapper = $('<div id="'+main.generateid('programwrapper')+'"></div>');
+                var programheading = $('<div class="childrenlistheader"></div>');
+                programheading.append('<h6>'+opts.lang.programs+'</h6>');
+                // New line for program filters
+                programheading.append('<span id="'+main.generateid('programfilterbar')+'" class="filterbar"></span>');
+                programwrapper.append(programheading);
+                var programlist = $('<div id="'+main.generateid('programlist')+'"></div>');
+                programwrapper.append(programlist);
+                var programpagination = $('<div id="'+main.generateid('programpagination')+'" class="ds_pagelinks"></div>');
+                programwrapper.append(programpagination);
+                childrenlist.append(programwrapper);
+
+                // Initialize program datatable.
+                main.datatable = programlist.eliswidget_enrolment_datatable({
+                    ids: {widgetid: main.widgetid},
+                    endpoint: opts.endpoint,
+                    requestmode: 'programsforuser',
+                    requestdata: {widgetid: main.widgetid},
+                    childrenderer: 'eliswidget_enrolment_program',
+                    childopts: opts,
+                    lang: opts.lang
+                });
+                main.datatable.doupdatetable();
+            }
+        });
+    }
+
+    /**
      * ELIS Enrolment Widget Initializer
      *
      * Usage:
@@ -856,7 +1015,8 @@
         return this.each(function() {
             var jqthis = $(this);
             var main = this;
-            jqthis.find('div.program').eliswidget_enrolment_program({widgetid: jqthis.data('id')}, options);
+            var programdiv = jqthis.find('div.program');
+            programdiv.eliswidget_enrolment_top({widgetid: jqthis.data('id')}, options);
         });
     }
 })(jQuery);
