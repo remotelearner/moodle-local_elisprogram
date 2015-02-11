@@ -175,7 +175,7 @@ class curriculumcourseform extends coursecurriculumbaseform {
 class prerequisiteform extends cmform {
     public function definition() {
         parent::definition();
-
+        $data = new stdClass;
         $mform =& $this->_form;
 
         //config data setup
@@ -223,7 +223,7 @@ class prerequisiteform extends cmform {
 class corequisiteform extends cmform {
     public function definition() {
         parent::definition();
-
+        $data = new stdClass;
         $mform =& $this->_form;
 
         //config data setup

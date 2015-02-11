@@ -57,7 +57,22 @@ class coursepage extends managementpage {
      */
     protected function _get_page_context() {
         if (($id = $this->optional_param('id', 0, PARAM_INT))) {
-            return \local_elisprogram\context\course::instance($id);
+            $pgid = optional_param('s', 'crs', PARAM_TEXT);
+            if (!strncmp($pgid, 'cur', 3) || !strncmp($pgid, 'prg', 3)) {
+                try {
+                    $context = \local_elisprogram\context\program::instance($id);
+                    return $context;
+                } catch (Exception $e) {
+                    ; // Ignore exception here.
+                }
+            } else {
+                try {
+                    $context = \local_elisprogram\context\course::instance($id);
+                    return $context;
+                } catch (Exception $e) {
+                    ; // Ignore exception here.
+                }
+            }
         }
         return parent::_get_page_context();
     }
