@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    eliswidget_enrolment
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -79,13 +79,15 @@ class programcourse extends course {
         // Select the number of prerequisites not met.
         $selectfields[] = '(SELECT count(prereq.id) FROM {local_elisprogram_crs_prereq} prereq
                               JOIN {local_elisprogram_cls} prereqcls ON prereqcls.courseid = prereq.courseid
-                         LEFT JOIN {local_elisprogram_cls_enrol} prereqstu
-                                   ON prereqstu.classid = prereqcls.id AND prereqstu.userid = '.$euserid.'
+                         LEFT JOIN {local_elisprogram_cls_enrol} prereqstu ON prereqstu.classid = prereqcls.id
+                                   AND prereqstu.userid = '.$euserid.'
                              WHERE prereq.curriculumcourseid = pgmcrs.id
-                                   AND (
-                                       prereqstu.completestatusid IN ('.STUSTATUS_FAILED.','.STUSTATUS_NOTCOMPLETE.')
-                                       OR prereqstu.id IS NULL
-                                   )
+                                   AND (prereqstu.completestatusid IN ('.STUSTATUS_FAILED.','.STUSTATUS_NOTCOMPLETE.') OR prereqstu.id IS NULL)
+                                   AND NOT EXISTS (SELECT \'x\' FROM {local_elisprogram_cls_enrol} stu
+                                                     JOIN {local_elisprogram_cls} cls ON stu.classid = cls.id
+                                                    WHERE cls.courseid = prereq.courseid
+                                                          AND stu.completestatusid = '.STUSTATUS_PASSED.')
+
                            ) AS numnoncompleteprereq';
 
         $selectfields[] = 'count(enrol.id) AS numenrol';
