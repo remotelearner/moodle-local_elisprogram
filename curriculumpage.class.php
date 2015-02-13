@@ -178,8 +178,10 @@ class curriculumpage extends managementpage {
     }
 
     function can_do_default() {
-        $contexts = curriculumpage::get_contexts('local/elisprogram:program_view');
-        return !$contexts->is_empty();
+        require_once elispm::file('usersetpage.class.php');
+        $contexts = static::get_contexts('local/elisprogram:program_view');
+        $uscontexts = usersetpage::get_contexts('local/elisprogram:userset_associateprogram');
+        return !$contexts->is_empty() || !$uscontexts->is_empty();
     }
 
     function display_default() {
@@ -209,9 +211,11 @@ class curriculumpage extends managementpage {
             $columns[$sort]['sortable'] = $dir;
         }
 
-        // Get list of users
-        $items    = curriculum_get_listing($sort, $dir, $page*$perpage, $perpage, $namesearch, $alpha, curriculumpage::get_contexts('local/elisprogram:program_view'));
-        $numitems = curriculum_count_records($namesearch, $alpha, curriculumpage::get_contexts('local/elisprogram:program_view'));
+        // Get list of curricula/programs.
+        $uscontexts = usersetpage::get_contexts('local/elisprogram:userset_associateprogram');
+        $contexts = $uscontexts->is_empty() ? curriculumpage::get_contexts('local/elisprogram:program_view') : null;
+        $items    = curriculum_get_listing($sort, $dir, $page*$perpage, $perpage, $namesearch, $alpha, $contexts);
+        $numitems = curriculum_count_records($namesearch, $alpha, $contexts);
 
         curriculumpage::get_contexts('local/elisprogram:program_edit');
         curriculumpage::get_contexts('local/elisprogram:program_delete');

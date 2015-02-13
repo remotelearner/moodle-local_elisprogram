@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -346,14 +346,8 @@ class usertrack extends elis_data_object {
     public static function can_manage_assoc($userid, $trackid) {
         global $USER, $DB;
 
-        //get the context for the "indirect" capability
-        $context = pm_context_set::for_user_with_capability('cluster', 'local/elisprogram:track_enrol_userset_user', $USER->id);
-
-        $allowed_clusters = array();
-
         // TODO: Ugly, this needs to be overhauled
-        $tpage = new trackpage();
-
+        $tpage = new trackpage(array('id' => $trackid, 'action' => 'view'));
         if (!trackpage::can_enrol_into_track($trackid)) {
             //the users who satisfty this condition are a superset of those who can manage associations
             return false;
@@ -362,8 +356,10 @@ class usertrack extends elis_data_object {
             return true;
         }
 
-        //get the clusters and check the context against them
+        // Get the clusters and check the context against them.
         $clusters = clustertrack::get_clusters($trackid);
+        // Get the context for the "indirect" capability.
+        $context = pm_context_set::for_user_with_capability('cluster', 'local/elisprogram:track_enrol_userset_user', $USER->id);
         $allowedclusters = $context->get_allowed_instances($clusters, 'cluster', 'clusterid');
 
         // Query to get users associated to at least one enabling cluster.

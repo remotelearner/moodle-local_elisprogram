@@ -174,8 +174,10 @@ class trackpage extends managementpage {
     }
 
     function can_do_default() {
-        $contexts = trackpage::get_contexts('local/elisprogram:track_view');
-        return !$contexts->is_empty();
+        require_once elispm::file('usersetpage.class.php');
+        $contexts = static::get_contexts('local/elisprogram:track_view');
+        $uscontexts = usersetpage::get_contexts('local/elisprogram:userset_associatetrack');
+        return !$contexts->is_empty() || !$uscontexts->is_empty();
     }
 
     /**
@@ -243,8 +245,10 @@ class trackpage extends managementpage {
             $sort = 'name';
             $columns[$sort]['sortable'] = $dir;
         }
-        $items   = track_get_listing($sort, $dir, $page*$perpage, $perpage, $namesearch, $alpha, $id, $parent_clusterid, trackpage::get_contexts('local/elisprogram:track_view'));
-        $numitems = track_count_records($namesearch, $alpha, $id, $parent_clusterid, trackpage::get_contexts('local/elisprogram:track_view'));
+        $uscontexts = usersetpage::get_contexts('local/elisprogram:userset_associatetrack');
+        $contexts = $uscontexts->is_empty() ? trackpage::get_contexts('local/elisprogram:track_view') : null;
+        $items   = track_get_listing($sort, $dir, $page*$perpage, $perpage, $namesearch, $alpha, $id, $parent_clusterid, $contexts);
+        $numitems = track_count_records($namesearch, $alpha, $id, $parent_clusterid, $contexts);
 
         trackpage::get_contexts('local/elisprogram:track_edit');
         trackpage::get_contexts('local/elisprogram:track_delete');

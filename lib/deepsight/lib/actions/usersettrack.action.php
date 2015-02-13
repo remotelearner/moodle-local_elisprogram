@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -42,7 +42,15 @@ trait deepsight_action_usersettrack {
         $trackassociateallowed = ($trkassocctx->context_allowed($trackid, 'track') === true) ? true : false;
         $clstassocctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
         $usersetassociateallowed = ($clstassocctx->context_allowed($usersetid, 'cluster') === true) ? true : false;
-        return ($trackassociateallowed === true && $usersetassociateallowed === true) ? true : false;
+        // ELIS-9057.
+        if ($trackassociateallowed !== true || $usersetassociateallowed !== true) {
+            $perm = 'local/elisprogram:userset_associatetrack';
+            $clstassoctrkctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
+            if ($clstassoctrkctx->context_allowed($usersetid, 'cluster') !== true) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 
