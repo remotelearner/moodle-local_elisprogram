@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -167,7 +167,7 @@ class deepsight_datatable_usersettrack_available extends deepsight_datatable_use
     protected function get_join_sql(array $filters=array()) {
         $joinsql = parent::get_join_sql($filters);
         $joinsql[] = 'LEFT JOIN {'.clustertrack::TABLE.'} clsttrk
-                                ON clsttrk.clusterid='.$this->usersetid.' AND clsttrk.trackid = element.id';
+                                ON clsttrk.clusterid = '.$this->usersetid.' AND clsttrk.trackid = element.id';
         return $joinsql;
     }
 
@@ -177,10 +177,16 @@ class deepsight_datatable_usersettrack_available extends deepsight_datatable_use
      */
     protected function get_filter_sql_permissions() {
         global $USER;
-        $ctxlevel = 'track';
-        $perm = 'local/elisprogram:associate';
         $additionalfilters = array();
         $additionalparams = array();
+        // ELIS-9057.
+        $perm = 'local/elisprogram:userset_associatetrack';
+        $usassoctrkctxs = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
+        if ($usassoctrkctxs->context_allowed($this->usersetid, 'cluster')) {
+            return array($additionalfilters, $additionalparams);
+        }
+        $ctxlevel = 'track';
+        $perm = 'local/elisprogram:associate';
         $associatectxs = pm_context_set::for_user_with_capability($ctxlevel, $perm, $USER->id);
         $associatectxsfilerobject = $associatectxs->get_filter('id', $ctxlevel);
         $associatefilter = $associatectxsfilerobject->get_sql(false, 'element', SQL_PARAMS_QM);

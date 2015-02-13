@@ -111,15 +111,20 @@ class clustercurriculumpage extends deepsightpage {
      */
     public function can_do_default() {
         global $USER;
+        $ret = true;
         $id = $this->required_param('id', PARAM_INT);
         $requiredperms = array('local/elisprogram:userset_view', 'local/elisprogram:associate');
         foreach ($requiredperms as $perm) {
             $ctx = pm_context_set::for_user_with_capability('cluster', $perm, $USER->id);
             if ($ctx->context_allowed($id, 'cluster') !== true) {
-                return false;
+                $ret = false;
             }
         }
-        return true;
+        if (!$ret ) {
+            $ctx = pm_context_set::for_user_with_capability('cluster', 'local/elisprogram:userset_associateprogram', $USER->id);
+            $ret = $ctx->context_allowed($id, 'cluster');
+        }
+        return $ret;
     }
 
     /**
@@ -490,15 +495,20 @@ class curriculumclusterpage extends deepsightpage {
      */
     public function can_do_default() {
         global $USER;
+        $ret = true;
         $id = $this->required_param('id', PARAM_INT);
         $requiredperms = array('local/elisprogram:program_view', 'local/elisprogram:associate');
         foreach ($requiredperms as $perm) {
             $ctx = pm_context_set::for_user_with_capability('curriculum', $perm, $USER->id);
             if ($ctx->context_allowed($id, 'curriculum') !== true) {
-                return false;
+                $ret = false;
             }
         }
-        return true;
+        if (!$ret ) {
+            $uscontexts = usersetpage::get_contexts('local/elisprogram:userset_associateprogram');
+            $ret = !$uscontexts->is_empty();
+        }
+        return $ret;
     }
 
     /**
