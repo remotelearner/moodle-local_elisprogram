@@ -1831,7 +1831,7 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
         $elementtype2ctxlevel = array(
             'program' => 'curriculum',
             'track' => 'track',
-            'class' => 'pmclass',
+            'class' => 'class',
             'userset' => 'cluster'
         );
 
@@ -1902,7 +1902,7 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
         $elementtype2ctxlevel = array(
             'program' => 'curriculum',
             'track' => 'track',
-            'class' => 'pmclass',
+            'class' => 'class',
             'userset' => 'cluster'
         );
 
