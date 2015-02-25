@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -579,46 +579,47 @@ class curriculumcustomfields_testcase extends elis_database_test {
         foreach ($contextlevels as $ctxname => $ctxlvl) {
             $category = $this->create_field_category($ctxlvl);
             $field = $this->create_field($category, $ctxlvl);
+            $dataobj = null;
             switch($ctxname) {
                 case 'curriculum':
                     // Create a curriculum.
-                    $cur = $this->create_curriculum($field);
+                    $dataobj = $cur = $this->create_curriculum($field);
                     // Set up a dummy custom field with a default value.
                     $testvalue = array('id' => $cur->id, 'field_'.$field->shortname => '');
                     break;
                 case 'track':
                     // Create a track.
-                    $trk = $this->create_track($cur, $field);
+                    $dataobj = $trk = $this->create_track($cur, $field);
                     // Set up a dummy custom field with a default value.
                     $testvalue = array('id' => $trk->id, 'field_'.$field->shortname => '');
                     break;
                 case 'course':
                     // Create a course.
-                    $crs = $this->create_course($field);
+                    $dataobj = $crs = $this->create_course($field);
                     // Set up a dummy custom field with a default value.
                     $testvalue = array('id' => $crs->id, 'field_'.$field->shortname => '');
                     break;
                 case 'courseset':
                     // Create a courseset.
-                    $crsset = $this->create_courseset($field);
+                    $dataobj = $crsset = $this->create_courseset($field);
                     // Set up a dummy custom field with a default value.
                     $testvalue = array('id' => $crsset->id, 'field_'.$field->shortname => '');
                     break;
                 case 'class':
                     // Create a class.
-                    $cls = $this->create_class($crs, $field);
+                    $dataobj = $cls = $this->create_class($crs, $field);
                     // Set up a dummy custom field with a default value.
                     $testvalue = array('id' => $cls->id, 'field_'.$field->shortname => '');
                     break;
                 case 'user':
                     // Create a user.
-                    $user = $this->create_user($field);
+                    $dataobj = $user = $this->create_user($field);
                     // Set up a dummy custom field with a default value.
                     $testvalue = array('id' => $user->id, 'field_'.$field->shortname => '');
                     break;
                 case 'cluster':
                     // Create a userset.
-                    $userset = $this->create_userset($field);
+                    $dataobj = $userset = $this->create_userset($field);
                     // Set up a dummy custom field with a default value.
                     $testvalue = array('id' => $userset->id, 'field_'.$field->shortname => '');
                     break;
@@ -626,6 +627,13 @@ class curriculumcustomfields_testcase extends elis_database_test {
 
             $return = $frm->validate_custom_fields($testvalue, $ctxname);
             $this->assertEmpty($return);
+
+            if ($dataobj) {
+                // For ELIS-9072: to exercise custom field saved code block.
+                $fieldvar = 'field_'.$field->shortname;
+                unset($dataobj->$fieldvar);
+                $dataobj->save();
+            }
         }
     }
 
