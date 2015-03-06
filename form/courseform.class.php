@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -33,16 +33,26 @@ class cmCourseForm extends cmform {
 
         $locationlabel = '';
 
+        $id = 0;
+        $template = new stdClass;
         if (isset($this->_customdata['obj']->id)) {
             $id = $this->_customdata['obj']->id;
 
             // TO-DO: this should probably be moved to a different location
-            $template = coursetemplate::find(new field_filter('courseid', $id));
-            if ($template->valid()) {
-                $template = $template->current();
-                $course = $DB->get_record('course', array('id'=>$template->location));
-                if (!empty($course)) {
-                    $locationlabel = $course->fullname . ' ' . $course->shortname;
+            $templaters = coursetemplate::find(new field_filter('courseid', $id));
+            if ($templaters && $templaters->valid()) {
+                foreach ($templaters as $template) {
+                    if (!empty($template->location)) {
+                        break;
+                    }
+                }
+                if (empty($template->location)) {
+                    $locationlabel = '('.get_string('deleted').')';
+                } else {
+                    $course = $DB->get_record('course', array('id' => $template->location));
+                    if (!empty($course)) {
+                        $locationlabel = $course->fullname.' '.$course->shortname;
+                    }
                 }
             } else {
                 // use a blank template
@@ -114,7 +124,7 @@ class cmCourseForm extends cmform {
         $mform->addElement('html', '<br />');
         $mform->addElement('hidden', 'templateclass', 'moodlecourseurl', array('id' => 'id_templateclass'));
         $mform->setType('templateclass', PARAM_TEXT);
-        if (empty($locationlabel) || optional_param('action', '', PARAM_CLEAN) != 'view') {
+        if (empty($locationlabel) || empty($template->lcoation) || optional_param('action', '', PARAM_CLEAN) != 'view') {
             $mform->addElement('text', 'locationlabel', get_string('coursetemplate', 'local_elisprogram'), array('readonly' => 'readonly', 'value' => $locationlabel));
             $mform->setType('locationlabel', PARAM_TEXT);
             $mform->addHelpButton('locationlabel', 'courseform:coursetemplate', 'local_elisprogram');
@@ -239,7 +249,11 @@ class completionform extends cmform {
             'nocoursestring' => get_string('selecttemplate', 'local_elisprogram'),
         );
         if ($course->coursetemplate->valid()) {
-            $template = $course->coursetemplate->current();
+            foreach ($course->coursetemplate as $template) {
+               if (!empty($template->location)) {
+                   break;
+               }
+            }
             $options['courseid'] = $template->location;
         }
         $mform->addElement(elis_gradebook_idnumber_selector::NAME, 'idnumber', get_string('course_idnumber', 'local_elisprogram') . ':', $options);

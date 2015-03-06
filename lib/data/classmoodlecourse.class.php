@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -373,7 +373,10 @@ function moodle_attach_class($clsid, $mdlid, $siteconfig = '', $enrolinstructor 
     $moodlecourseid = $mdlid;
 
     /// Look for an existing link for this class.
-    if (!$clsmdl = $DB->get_record(classmoodlecourse::TABLE, array('classid'=>$clsid))) {
+    if (!($clsmdl = $DB->get_record_select(classmoodlecourse::TABLE, 'classid = ? AND moodlecourseid > 0', array($clsid)))) {
+        // ELIS-9067: TBD - delete any invalid classmoodlecourse recs for class.
+        classmoodlecourse::delete_records(new field_filter('classid', $clsid));
+
         /// Make sure the specified Moodle site config file exists.
         if (!empty($siteconfig) && !file_exists($siteconfig)) {
             return false;
@@ -382,15 +385,20 @@ function moodle_attach_class($clsid, $mdlid, $siteconfig = '', $enrolinstructor 
         if ($autocreate) {
             // auto create is checked, create connect to moodle course
             $cls        = new pmclass($clsid);
-            //attempt to obtain the course template
-            $template = coursetemplate::find(new field_filter('courseid', $cls->courseid));
-            if ($template->valid()) {
-                $template = $template->current();
+            // Attempt to obtain the course template.
+            $template = new stdClass;
+            $templaters = coursetemplate::find(new field_filter('courseid', $cls->courseid));
+            if ($templaters && $templaters->valid()) {
+                foreach ($templaters as $template) {
+                    if (!empty($template->location)) {
+                        break;
+                    }
+                }
             }
 
-            // no template defined, so do nothing
+            // No template defined, so do nothing
             if (empty($template->id) || empty($template->location)) {
-                print_error('notemplate', 'local_elisprogram');
+                return false; // TBD: ELIS-9067 - WAS print_error('notemplate', 'local_elisprogram');
             }
             $classname  = $template->templateclass;
 

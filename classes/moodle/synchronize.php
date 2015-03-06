@@ -237,6 +237,7 @@ class synchronize {
 
         $sql = 'SELECT moodlecourseid, count(moodlecourseid) as numentries
                   FROM {'.\classmoodlecourse::TABLE.'}
+                 WHERE moodlecourseid > 0
               GROUP BY moodlecourseid';
         $recs = $DB->get_recordset_sql($sql);
         $doenrol = array();
@@ -310,6 +311,7 @@ class synchronize {
                   FROM {'.\coursecompletion::TABLE.'} cmp
                   JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = cmp.courseid
                   JOIN {'.\classmoodlecourse::TABLE.'} cmc ON cmc.classid = cls.id
+                       AND cmc.moodlecourseid > 0
              LEFT JOIN {course_modules} crsmod ON crsmod.idnumber = cmp.idnumber
              LEFT JOIN {grade_items} gi
                            ON gi.courseid = cmc.moodlecourseid
@@ -533,7 +535,7 @@ class synchronize {
         }
 
         // Get moodle course ids.
-        $moodlecourseidsorig = $DB->get_recordset(\classmoodlecourse::TABLE);
+        $moodlecourseidsorig = $DB->get_recordset_select(\classmoodlecourse::TABLE, 'moodlecourseid > 0'); // TBD: RLI-9067.
         $moodlecourseids = array();
         foreach ($moodlecourseidsorig as $i => $rec) {
             $moodlecourseids[] = $rec->moodlecourseid;

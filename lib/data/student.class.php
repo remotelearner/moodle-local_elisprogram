@@ -484,7 +484,7 @@ class student extends elis_data_object {
                     get_string('notifyclasscompletedmessagedef', self::LANG_FILE) : elis::$config->local_elisprogram->notify_classcompleted_message;
             $search = array('%%userenrolname%%', '%%classname%%');
 
-            if (($clsmdl = $this->_db->get_record(classmoodlecourse::TABLE, array('classid' => $this->classid))) &&
+            if (($clsmdl = $this->_db->get_record_select(classmoodlecourse::TABLE, 'classid = ? AND moodlecourseid > 0', array($this->classid))) &&
                     ($course = $this->_db->get_record('course', array('id' => $clsmdl->moodlecourseid)))) {
                 // If its a Moodle class...
                 $replace = array($enroluser->moodle_fullname(), $course->fullname);

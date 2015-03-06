@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -167,19 +167,19 @@ class track extends data_object_with_custom_fields {
                 $autoenrol = true;
             }
 
-            //attempte to obtain the course template
-            $cortemplate = coursetemplate::find(new field_filter('courseid', $curcourec->courseid));
-            if ($cortemplate->valid()) {
-                $cortemplate = $cortemplate->current();
-            }
-
-            // Course is using a Moodle template
-            if (!empty($cortemplate->location)) {
-                // Parse the course id from the template location
-                $classname = $cortemplate->templateclass;
-                $templateobj = new $classname();
-                $templatecorid = $cortemplate->location;
-                $usetemplate = true;
+            // Attempte to obtain the course template.
+            $cortemplaters = coursetemplate::find(new field_filter('courseid', $curcourec->courseid));
+            if ($cortemplaters->valid()) {
+                foreach ($cortemplaters as $cortemplate) {
+                    if (!empty($cortemplate->location)) {
+                        // Parse the course id from the template location
+                        // $classname = $cortemplate->templateclass;
+                        // $templateobj = new $classname();
+                        // $templatecorid = $cortemplate->location;
+                        $usetemplate = true;
+                        break;
+                    }
+                }
             }
 
             // Create class
@@ -254,18 +254,19 @@ class track extends data_object_with_custom_fields {
                         array('courseid' => $course->id, 'idnumber' => $idnumber));
 
                 // Attempt to obtain the course template
-                $cortemplate = coursetemplate::find(new field_filter('courseid', $course->id));
-                if ($cortemplate->valid()) {
-                    $cortemplate = $cortemplate->current();
-                }
-
-                // Course is using a Moodle template
-                if (!empty($cortemplate->location)) {
-                    // Parse the course id from the template location
-                    $classname = $cortemplate->templateclass;
-                    $templateobj = new $classname();
-                    $templatecorid = $cortemplate->location;
-                    $usetemplate = true;
+                $usetemplate = false;
+                $cortemplaters = coursetemplate::find(new field_filter('courseid', $course->id));
+                if ($cortemplaters->valid()) {
+                    foreach ($cortemplaters as $cortemplate) {
+                        if (!empty($cortemplate->location)) {
+                            // Parse the course id from the template location
+                            // $classname = $cortemplate->templateclass;
+                            // $templateobj = new $classname();
+                            // $templatecorid = $cortemplate->location;
+                            $usetemplate = true;
+                            break;
+                        }
+                    }
                 }
 
                 // Create class
@@ -304,7 +305,6 @@ class track extends data_object_with_custom_fields {
                     // Assign class to default system track
                     $trackclassobj->save();
                 }
-                $usetemplate = false;
                 $createdcourseids[$course->id] = true;
             }
         }

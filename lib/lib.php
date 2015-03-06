@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -2200,6 +2200,34 @@ function pm_issue_user_certificate($certsettingid, $users, $dataclass) {
         unset($dataclass->id);
     }
 
+    return true;
+}
+
+/**
+ * Remove/flag Moodle Course refs in ELIS tables when Moodle course deleted.
+ * @param object $eventdata Moodle course_deleted event data.
+ * @return bool true
+ */
+function moodle_course_deleted_handler($eventdata) {
+    global $DB;
+
+    $crsid = method_exists($eventdata, 'trigger') ? $eventdata->objectid : $eventdata->id;
+
+    // ELIS-9067: Remove deleted Moodle Course refs in ELIS tables.
+    $tablefields = array(
+        'local_elisprogram_cls_mdl' => 'moodlecourseid',
+        'local_elisprogram_crs_tpl' => 'location'
+    );
+    foreach ($tablefields as $tablename => $fieldname) {
+        $recs = $DB->get_recordset($tablename, array($fieldname => $crsid));
+        if ($recs && $recs->valid()) {
+            foreach ($recs as $rec) {
+                $rec->{$fieldname} = 0;
+                $DB->update_record($tablename, $rec);
+            }
+            $recs->close();
+        }
+    }
     return true;
 }
 
