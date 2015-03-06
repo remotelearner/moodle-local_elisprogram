@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,9 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2013 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
+ * @author     Brent Boghosian <brent.boghosian@remote-learner.net>
  *
  */
 
@@ -78,11 +79,11 @@ class deepsight_action_unenrol extends deepsight_action_confirm {
         $student->load();
         if (empty(elis::$config->local_elisprogram->force_unenrol_in_moodle)) {
             // Check whether the user is enrolled in the Moodle course via any plugin other than the elis plugin.
-            $mcourse = $student->pmclass->classmoodle;
+            $mcourse = $student->pmclass->classmoodle; // TBD: ELIS-9067.
             $muser = $student->users->get_moodleuser();
             if ($mcourse->valid() && $muser) {
                 $mcourse = $mcourse->current()->moodlecourseid;
-                if ($mcourse) {
+                if (!empty($mcourse)) {
                     $ctx = context_course::instance($mcourse);
                     if ($DB->record_exists_select('role_assignments', "userid = ? AND contextid = ? AND component != 'enrol_elis'",
                                                   array($muser->id, $ctx->id))) {

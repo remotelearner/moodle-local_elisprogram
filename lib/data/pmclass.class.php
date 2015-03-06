@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -121,10 +121,14 @@ class pmclass extends data_object_with_custom_fields {
         return $endtime;
     }
 
-    function get_moodle_course_id() {
-        $mdlrec = $this->_db->get_record(classmoodlecourse::TABLE, array('classid'=>$this->id));
-        return !empty($mdlrec) ? $mdlrec->moodlecourseid : 0;
-        //$this->moodlesiteid = !empty($mdlrec->siteid) ? $mdlrec->siteid : 0;
+    /**
+     * Method to return Moodle Course id
+     * @return int|bool The Moodle Course id, 0 => deleted, false if not found.
+     */
+    public function get_moodle_course_id() {
+        $mdlrec = $this->_db->get_record(classmoodlecourse::TABLE, array('classid' => $this->id));
+        return !empty($mdlrec) ? $mdlrec->moodlecourseid : false;
+        // $this->moodlesiteid = !empty($mdlrec->siteid) ? $mdlrec->siteid : 0;
     }
 
     public static function delete_for_course($id) {
@@ -280,7 +284,7 @@ class pmclass extends data_object_with_custom_fields {
         $obj = parent::to_object($jsonsafe);
 
         $mdlcrsid = $this->get_moodle_course_id();
-        if ($mdlcrsid != 0) {
+        if (!empty($mdlcrsid)) {
             $obj->moodlecourseid = $mdlcrsid;
         }
 
@@ -484,9 +488,10 @@ class pmclass extends data_object_with_custom_fields {
 
         //local_elisprogram_cls_mdl moodlecourseid
         $sql = 'SELECT cm.id
-                FROM {'.classmoodlecourse::TABLE.'} cm
-                LEFT JOIN {course} c ON cm.moodlecourseid = c.id
-                WHERE c.id IS NULL';
+                  FROM {'.classmoodlecourse::TABLE.'} cm
+             LEFT JOIN {course} c ON cm.moodlecourseid = c.id
+                 WHERE cm.moodlecourseid > 0
+                       AND c.id IS NULL';
         $params = array();
         if ($pmuserid) {
             $sql .= ' AND EXISTS (SELECT id FROM {'. student::TABLE .'} stu
@@ -879,7 +884,7 @@ class pmclass extends data_object_with_custom_fields {
      * which is an array of any errors encountered when duplicating the
      * object.
      */
-    function duplicate(array $options=array()) {
+    public function duplicate(array $options=array()) {
         //needed by the rollover lib
         global $CFG;
         require_once(elis::lib('rollover/lib.php'));
@@ -917,7 +922,7 @@ class pmclass extends data_object_with_custom_fields {
         $objs['classes'] = array($this->id => $clone->id);
 
         $cmc = $this->_db->get_record(classmoodlecourse::TABLE, array('classid'=>$this->id));
-        if ($cmc) {
+        if ($cmc && !empty($cmc->moodlecourseid)) {
             if ($cmc->autocreated == -1) {
                 $cmc->autocreated = elis::$config->local_elisprogram->autocreated_unknown_is_yes;
             }

@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -175,7 +175,7 @@ class pmclassform extends cmform {
 
         // Course selector
         if (empty($this->_customdata['obj']->moodlecourseid)) {
-            $this->add_moodle_course_select();
+            $this->add_moodle_course_select(isset($this->_customdata['obj']->moodlecourseid) && $this->_customdata['obj']->moodlecourseid === '0');
         } else {
             $PAGE->requires->js('/local/elisprogram/js/classform.js');
             $courseSelected = array();
@@ -294,13 +294,10 @@ class pmclassform extends cmform {
      * adds a moodle course selection box to the form
      *
      * @uses $CFG
-     * @param $formid string A suffix to put on all 'id' and index for all 'name' attributes.
-     *                       This should be unique if being used more than once in a form.
-     * @param $extraclass string Any extra class information to add to the output.
-     *
-     * @return string The form HTML, without the form.
+     * @uses $DB
+     * @param bool $deleted True if the linked moodle course was deleted, false otherwise.
      */
-    function add_moodle_course_select() {
+    function add_moodle_course_select($deleted = false) {
         global $CFG, $DB;
 
         $mform =& $this->_form;
@@ -343,7 +340,7 @@ class pmclassform extends cmform {
 
         $select = 'id != \'' . SITEID . '\' AND fullname NOT LIKE \'.%\'';
 
-        $cselect = array(get_string('none', 'local_elisprogram'));
+        $cselect = array(get_string('none', 'local_elisprogram').($deleted ? ' ('.get_string('deleted').')' : ''));
         $crss = $DB->get_recordset_select('course', $select, null, 'fullname',
                                           'id, fullname');
         if (!empty($crss) && $crss->valid()) {
@@ -355,7 +352,12 @@ class pmclassform extends cmform {
 
         $moodleCourses = array();
         if (count($cselect) > 1) {
-            $moodleCourses[] = $mform->createElement('select', 'moodlecourseid', get_string('moodlecourse', 'local_elisprogram'), $cselect);
+            if (($action = optional_param('action', 'view', PARAM_CLEAN)) == 'view') {
+                $idx = isset($this->_customdata['obj']->moodlecourseid) ? $this->_customdata['obj']->moodlecourseid : 0;
+                $moodleCourses[] = $mform->createElement('static', 'moodlecourseid', get_string('moodlecourse', 'local_elisprogram'), $cselect[$idx]);
+            } else {
+                $moodleCourses[] = $mform->createElement('select', 'moodlecourseid', get_string('moodlecourse', 'local_elisprogram'), $cselect);
+            }
         } else {
             $mform->addElement('static', 'no_moodle_courses', get_string('moodlecourse', 'local_elisprogram') . ':', get_string('no_moodlecourse', 'local_elisprogram'));
             $mform->addHelpButton('no_moodle_courses', 'pmclassform:moodlecourse', 'local_elisprogram');
@@ -369,9 +371,14 @@ class pmclassform extends cmform {
         }
 
         //attempt to retrieve the course template
-        $template = coursetemplate::find(new field_filter('courseid', $courseid));
-        if ($template->valid()) {
-            $template = $template->current();
+        $templaters = coursetemplate::find(new field_filter('courseid', $courseid));
+        $template = new stdClass;
+        if ($templaters && $templaters->valid()) {
+            foreach ($templaters as $template) {
+                if (!empty($template->location)) {
+                    break;
+                }
+            }
         }
 
         if (empty($courseid) || !empty($template->location)) {

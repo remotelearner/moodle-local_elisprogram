@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -53,6 +53,30 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
         \local_eliscore\context\helper::init_levels();
 
         upgrade_plugin_savepoint($result, '2014082500', 'local', 'elisprogram');
+    }
+
+    if ($result && $oldversion < 2014082503) {
+        // ELIS-9067: Remove deleted Moodle Course refs in ELIS tables.
+        $tablefields = array(
+            'local_elisprogram_cls_mdl' => 'moodlecourseid',
+            'local_elisprogram_crs_tpl' => 'location'
+        );
+        foreach ($tablefields as $tablename => $fieldname) {
+            $table = new xmldb_table($tablename);
+            if ($dbman->table_exists($table) && $dbman->field_exists($table, $fieldname)) {
+                $where = "NOT EXISTS (SELECT 'x'
+                                        FROM mdl_course WHERE id = {{$tablename}}.{$fieldname})";
+                $recs = $DB->get_recordset_select($tablename, $where);
+                if ($recs && $recs->valid()) {
+                    foreach ($recs as $rec) {
+                        $rec->{$fieldname} = 0;
+                        $DB->update_record($tablename, $rec);
+                    }
+                    $recs->close();
+                }
+            }
+        }
+        upgrade_plugin_savepoint($result, '2014082503', 'local', 'elisprogram');
     }
 
     return $result;

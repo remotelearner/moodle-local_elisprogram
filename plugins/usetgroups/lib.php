@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    elisprogram_usetgroups
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -457,34 +457,21 @@ function userset_groups_update_groups($attributes = array()) {
                 }
             }
 
-            $sql = "SELECT DISTINCT crs.id AS courseid,
-                                    clst.name AS clustername,
-                                    mdlusr.muserid AS userid,
-                                    clst.id AS clusterid,
-                                    trk.id AS trackid
-                    FROM {".pmclass::TABLE."} cls
-                    JOIN {".classmoodlecourse::TABLE."} clsmdl
-                    ON cls.id = clsmdl.classid
-                    JOIN {course} crs
-                    ON clsmdl.moodlecourseid = crs.id
-                    JOIN {".course::TABLE."} cmcrs
-                    ON cmcrs.id = cls.courseid
-                    JOIN {". trackassignment::TABLE. "} trkcls
-                       ON trkcls.classid = cls.id AND trkcls.autoenrol = 1
-                    JOIN {". track::TABLE. "} trk
-                       ON trk.id = trkcls.trackid
-                    JOIN {". usertrack::TABLE. "} usrtrk
-                       ON usrtrk.trackid = trk.id
-                    JOIN {".clustertrack::TABLE."} clsttrk
-                    ON clsttrk.trackid = trk.id
-                    JOIN {".userset::TABLE."} clst
-                    ON clsttrk.clusterid = clst.id
-                    JOIN {".clusterassignment::TABLE."} usrclst
-                    ON clst.id = usrclst.clusterid
-                    JOIN {". usermoodle::TABLE ."} mdlusr
-                    ON usrclst.userid = mdlusr.cuserid
-                    {$condition}
-                    ORDER BY clst.id";
+            $sql = "SELECT DISTINCT crs.id AS courseid, clst.name AS clustername, mdlusr.muserid AS userid, clst.id AS clusterid, trk.id AS trackid
+                      FROM {".pmclass::TABLE."} cls
+                      JOIN {".classmoodlecourse::TABLE."} clsmdl ON cls.id = clsmdl.classid
+                           AND clsmdl.moodlecourseid > 0
+                      JOIN {course} crs ON clsmdl.moodlecourseid = crs.id
+                      JOIN {".course::TABLE."} cmcrs ON cmcrs.id = cls.courseid
+                      JOIN {".trackassignment::TABLE."} trkcls ON trkcls.classid = cls.id AND trkcls.autoenrol = 1
+                      JOIN {".track::TABLE."} trk ON trk.id = trkcls.trackid
+                      JOIN {".usertrack::TABLE."} usrtrk ON usrtrk.trackid = trk.id
+                      JOIN {".clustertrack::TABLE."} clsttrk ON clsttrk.trackid = trk.id
+                      JOIN {".userset::TABLE."} clst ON clsttrk.clusterid = clst.id
+                      JOIN {".clusterassignment::TABLE."} usrclst ON clst.id = usrclst.clusterid
+                      JOIN {".usermoodle::TABLE."} mdlusr ON usrclst.userid = mdlusr.cuserid
+                     {$condition}
+                  ORDER BY clst.id";
 
             //error_log("userset_groups_update_groups()");
             $records = $DB->get_recordset_sql($sql, $params);

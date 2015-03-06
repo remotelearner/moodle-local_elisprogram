@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -165,9 +165,13 @@ class course extends data_object_with_custom_fields {
         }
 
         if (!empty($this->id)) {
-            $template = $this->coursetemplate->current();
-            $course = $this->_db->get_record('course', array('id'=>$template->location));
-
+            $course = null;
+            foreach ($this->coursetemplate as $template) {
+                if (!empty($template->location)) {
+                    $course = $this->_db->get_record('course', array('id' => $template->location));
+                    break;
+                }
+            }
             if (!empty($course)) {
                 $this->locationlabel = $course->fullname . ' ' . $course->shortname;
             }
@@ -194,7 +198,11 @@ class course extends data_object_with_custom_fields {
         $output = '';
 
         if (!empty($this->id)) {
-            $template = $this->coursetemplate->current();
+            foreach ($this->coursetemplate as $template) {
+                if (!empty($template->location)) {
+                    break;
+                }
+            }
             $output .= $this->add_js_function($template->location);
         } else {
             $output .= $this->add_js_function();
@@ -674,7 +682,7 @@ class course extends data_object_with_custom_fields {
             $this->curriculum = $data->curriculum;
         }
 
-        if (isset($data->location)) {
+        if (!empty($data->location)) {
             $this->location = $data->location;
             $this->templateclass = $data->templateclass;
         }
@@ -700,19 +708,22 @@ class course extends data_object_with_custom_fields {
         return validate_is_unique($this, array('idnumber'));
     }
 
+    /**
+     * save method.
+     */
     public function save() {
         parent::save();
 
-        if(isset($this->curriculum)) {
+        if (isset($this->curriculum)) {
             $this->add_course_to_curricula($this->curriculum);
         }
 
         // Add moodle course template
-        if (isset($this->location)) {
+        if (!empty($this->location)) {
             $template = $this->coursetemplate->current();
-            $template->location           = $this->location;
-            $template->templateclass      = $this->templateclass;
-            $template->courseid           = $this->id;
+            $template->location      = $this->location;
+            $template->templateclass = $this->templateclass;
+            $template->courseid      = $this->id;
 
             $template->save();
         } else {
@@ -812,12 +823,17 @@ class course extends data_object_with_custom_fields {
         unset($compelems);
 
 
-        // copy template
-        $template = $this->_db->get_record(coursetemplate::TABLE, array('courseid'=>$this->id));
-        $template = new coursetemplate($template);
-        unset($template->id);
-        $template->courseid = $clone->id;
-        $template->save();
+        // Copy non-empty templates.
+        $newtemplate = null;
+        foreach ($this->coursetemplate as $template) {
+            if (!empty($template->location)) {
+                // TBD: do we need a blank one?
+                $newtemplate = new coursetemplate($template);
+                unset($newtemplate->id);
+                $newtemplate->courseid = $clone->id;
+                $newtemplate->save();
+            }
+        }
 
         // copy the classes
         if (!empty($options['classes'])) {

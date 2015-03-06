@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -658,10 +658,19 @@ class management_page_table extends display_table {
         return html_writer::tag('span', htmlspecialchars($item->envname), array('title' => $item->envdescription));
     }
 
+    /**
+     * Method to return Moodle Course link for Class Instance.
+     * @param string $column the column field name.
+     * @param object $item the table row data.
+     * @return string the Moodle Course link, N/A, or (Deleted).
+     */
     function get_item_display_moodlecourse($column, $item) {
         global $CFG, $DB;
-        $coursename = $DB->get_field('course', 'fullname', array('id' => $item->moodlecourseid));
-        return ($item->moodlecourseid == '') ? 'n/a' : html_writer::link(new moodle_url('/course/view.php', array('id' => $item->moodlecourseid)), htmlspecialchars($coursename));
+        if (!empty($item->moodlecourseid) && ($coursename = $DB->get_field('course', 'fullname', array('id' => $item->moodlecourseid)))) {
+            return html_writer::link(new moodle_url('/course/view.php', array('id' => $item->moodlecourseid)), htmlspecialchars($coursename));
+        } else {
+            return ($item->moodlecourseid === '0') ? '('.get_string('deleted').')' : get_string('dashboard_na', 'local_elisprogram');
+        }
     }
 
     function get_item_display_startdate($column, $item) {
