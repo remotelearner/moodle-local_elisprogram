@@ -55,11 +55,6 @@ class nonprogramcourse extends course {
         $newsql = [
                 'JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = element.id',
                 'JOIN {'.\student::TABLE.'} stu ON stu.classid = cls.id',
-                'LEFT JOIN {'.\curriculumcourse::TABLE.'} pgmcrs ON pgmcrs.courseid = element.id',
-                'LEFT JOIN {'.\curriculumstudent::TABLE.'} pgmstu ON pgmstu.userid = stu.userid AND pgmstu.curriculumid = pgmcrs.curriculumid',
-                'LEFT JOIN {'.\crssetcourse::TABLE.'} crssetcrs ON crssetcrs.courseid = element.id',
-                'LEFT JOIN {'.\programcrsset::TABLE.'} pgmcrsset ON pgmcrsset.crssetid = crssetcrs.crssetid',
-                'LEFT JOIN {'.\curriculumstudent::TABLE.'} pgmstu2 ON pgmstu2.userid = stu.userid AND pgmstu2.curriculumid = pgmcrsset.prgid',
         ];
         $newparams = [];
         return [array_merge($sql, $newsql), array_merge($params, $newparams)];
@@ -73,8 +68,15 @@ class nonprogramcourse extends course {
      */
     protected function get_filter_sql(array $filters = array()) {
         $filters[] = ['sql' => 'stu.userid = ?', 'params' => [$this->userid]];
-        $filters[] = ['sql' => '(pgmcrs.id IS NULL AND pgmstu.id IS NULL)'];
-        $filters[] = ['sql' => '(pgmstu2.id IS NULL AND (crssetcrs.id IS NULL OR pgmcrsset.id IS NULL))'];
+        $filters[] = ['sql' => 'NOT EXISTS (SELECT \'x\' FROM {'.\curriculumcourse::TABLE.'} pgmcrs
+                                              JOIN {'.\curriculumstudent::TABLE.'} pgmstu ON pgmstu.curriculumid = pgmcrs.curriculumid
+                                             WHERE pgmstu.userid = stu.userid
+                                                   AND pgmcrs.courseid = element.id)'];
+        $filters[] = ['sql' => 'NOT EXISTS (SELECT \'x\' FROM {'.\crssetcourse::TABLE.'} crssetcrs
+                                              JOIN {'.\programcrsset::TABLE.'} pgmcrsset ON crssetcrs.crssetid = pgmcrsset.crssetid
+                                              JOIN {'.\curriculumstudent::TABLE.'} pgmstu2 ON pgmstu2.curriculumid = pgmcrsset.prgid
+                                             WHERE pgmstu2.userid = stu.userid
+                                                   AND crssetcrs.courseid = element.id)'];
         return parent::get_filter_sql($filters);
     }
 
