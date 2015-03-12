@@ -305,6 +305,7 @@ class ajax {
 
         switch($data['action']) {
             case 'enrol':
+            case 'enterwaitlist':
                 $enrolallowed = get_config('enrol_elis', 'enrol_from_course_catalog');
                 if (empty($enrolallowed) || $enrolallowed != '1') {
                     throw new \Exception('Self-enrolments from dashboard not allowed.');
