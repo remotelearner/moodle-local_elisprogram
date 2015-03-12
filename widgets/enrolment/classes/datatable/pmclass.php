@@ -91,6 +91,7 @@ class pmclass extends base {
     public function get_fixed_select_fields() {
         return [
             'element.idnumber' => '',
+            'element.maxstudents' => '',
             'enrol.id' => '',
             'enrol.completestatusid' => '',
             'enrol.grade' => '',
@@ -204,6 +205,18 @@ class pmclass extends base {
     }
 
     /**
+     * Get an array of fields to select in the get_search_results method.
+     *
+     * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
+     * @return array Array of fields to select.
+     */
+    protected function get_select_fields(array $filters = array()) {
+        $selectfields = parent::get_select_fields($filters);
+        $selectfields[] = 'element.maxstudents AS maxstudents';
+        return $selectfields;
+    }
+
+    /**
      * Get courses assigned to a program.
      *
      * @param int $programid The ID of the program to get courses for.
@@ -240,6 +253,12 @@ class pmclass extends base {
                 $pageresultsar[$id]->meta = new \stdClass;
             }
             $pageresultsar[$id]->meta->enrolallowed = $enrolallowed;
+            $pageresultsar[$id]->meta->limit = $result->maxstudents;
+            $classfilter = new \field_filter('classid', $result->id);
+            $pageresultsar[$id]->meta->total = \student::count($classfilter);
+            $pageresultsar[$id]->meta->waiting = \waitlist::count($classfilter);
+            $pageresultsar[$id]->meta->waitpos = !empty($result->waitlist_id) ? $DB->count_records_select(\waitlist::TABLE, 'classid = ? AND id <= ?',
+                    array($result->id, $result->waitlist_id)) : false;
             if (isset($pageresultsar[$id]->element_startdate)) {
                 if ($pageresultsar[$id]->element_startdate > 0) {
                     $pageresultsar[$id]->element_startdate = userdate($pageresultsar[$id]->element_startdate, $dateformat);

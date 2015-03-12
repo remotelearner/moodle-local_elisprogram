@@ -292,19 +292,43 @@
                     failed: '',
                     waitlist: 'leavewaitlist',
                     available: 'enrol',
+                    full: 'enterwaitlist',
                     unavailable: ''
                 };
                 var action = status2action[status];
                 if (action == 'enrol' && opts.enrolallowed != '1') {
                     action = '';
                 }
+                if (action == 'enterwaitlist' && opts.enrolallowed != '1') {
+                    action = '';
+                }
                 if (action == 'unenrol' && opts.unenrolallowed != '1') {
                     action = '';
                 }
                 var statusele = $('<span id="'+main.generateid('status')+'" class="pmclassstatus"></span>');
-                statusele.append('<span>'+opts.lang['status_'+status]+'</span>');
+                var enrolinfo = '';
+                var waitinfo = '';
                 if (action != '') {
-                    statusele.append('<a href="javascript:;">'+opts.lang['action_'+action]+'</a>');
+                    if (status != 'enroled' && this.data.meta.limit > 0) {
+                        enrolinfo = ' (';
+                        enrolinfo += this.data.meta.total+' '+opts.lang.enrolled+'/'+this.data.meta.limit+' '+opts.lang.max;
+                        enrolinfo += ')';
+                    }
+                }
+                if (status == 'full' || status == 'waitlist') {
+                    waitinfo = ' (';
+                    if (this.data.meta.waitpos) {
+                        waitinfo += this.data.meta.waitpos+' '+opts.lang.of+' ';
+                        enrolinfo = '';
+                    }
+                    waitinfo += this.data.meta.waiting+' '+opts.lang.waiting;
+                    waitinfo += ')';
+                }
+                statusele.append('<span>'+opts.lang['status_'+status]+enrolinfo+'</span>');
+                if (action != '') {
+                    statusele.append('<a href="javascript:;">'+opts.lang['action_'+action]+'</a>'+waitinfo);
+                } else if (waitinfo != '') {
+                    statusele.append(waitinfo);
                 }
                 statusele.find('a').click(function(e) {
                     main.changestatus(e, action);
@@ -358,6 +382,16 @@
                                         type: 'POST',
                                         success: function(data, textStatus, jqXHR) {
                                             main.datatable.doupdatetable();
+                                            var coursedt = jqthis.closest('.program, .courseset');
+                                            if (coursedt) {
+                                                // Update the parent table so Course shows updated enrolment status.
+                                                // console.debug(coursedt);
+                                                if (typeof(coursedt[0].coursedatatable) !== 'undefined') {
+                                                    coursedt[0].coursedatatable.doupdatetable();
+                                                } else {
+                                                    coursedt[0].datatable.doupdatetable();
+                                                }
+                                            }
                                         }
                                     });
                             }
@@ -389,7 +423,7 @@
                 } else if (this.data.waitlist_id != null) {
                     status = 'waitlist';
                 } else if (this.data.meta.enrolallowed) {
-                    status = 'available';
+                    status = (this.data.meta.limit > 0 && this.data.meta.total >= this.data.meta.limit) ? 'full' : 'available';
                 }
 
                 var details = $('<div class="details"></div>');
