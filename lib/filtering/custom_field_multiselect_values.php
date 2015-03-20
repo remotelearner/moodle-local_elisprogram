@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2015 Remote Learner.net Inc http://www.remote-learner.net
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage curriculummanagement
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -46,6 +45,10 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
 
     var $_block_instance;
 
+
+    /** @var string $ctxname the context name to get custom fields for. */
+    protected $ctxname = 'course';
+
     /**
      * List of custom field shortnames to exclude from selection
      */
@@ -69,6 +72,9 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
         $this->_block_instance = $options['block_instance'];
         $this->_field_exceptions = !empty($options['field_exceptions'])
                                    ? $options['field_exceptions'] : array();
+        if (!empty($options['ctxname'])) {
+            $this->ctxname = $options['ctxname'];
+        }
         $this->_fieldidlist = $fieldidlist;
         $this->_reportname = (isset($options['reportname'])) ? $options['reportname'] : '';
 
@@ -85,7 +91,7 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
      */
     function setupForm(&$mform) {
         // Check permissions and don't display filter if there are no course fields to display for this user
-        if (!$this->check_for_custom_fields('course')) {
+        if (!$this->check_for_custom_fields($this->ctxname)) {
             return false;
         }
 
@@ -101,7 +107,7 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
         }
 
         $options = array(
-            'contextlevel' => CONTEXT_ELIS_COURSE,
+            'contextlevel' => \local_eliscore\context\helper::get_level_from_name($this->ctxname),
             'fieldfilter' => array(&$this, 'field_accessible')
         );
         $mform->addElement(elis_custom_field_multiselect::NAME, $this->_uniqueid, $this->_label, $options);
@@ -145,8 +151,8 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
             $a->value    = ': none selected';
         } else {
             $selectedfields = explode(',', $data['value']);
-            $fields = field::get_for_context_level(CONTEXT_ELIS_COURSE)->to_array();
-            $a->value = ': ' . implode(', ', array_map(function($id) use ($fields) { return $fields[$id]->name;}, $selectedfields));
+            $fields = field::get_for_context_level(\local_eliscore\context\helper::get_level_from_name($this->ctxname))->to_array();
+            $a->value = ': '.implode(', ', array_map(function($id) use ($fields) { return $fields[$id]->name;}, $selectedfields));
         }
         $a->operator = '';
 
@@ -200,7 +206,6 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
      *                                                    on failure
      */
     public static function field_capability($owners, $default_view_capability = 'local/elisprogram:course_view') {
-
         if (isset($owners['manual'])) {
             //the manual owner contains the permissions info
             $manual_owner = $owners['manual'];
@@ -226,23 +231,19 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
      * Specifies whether a course-level custom field is accessible to the
      * current user in at least once course context
      *
-     * @param   array    $owners  shortname-indexed collection of all field owners
-     *
-     * @return  boolean           true if accessible, otherwise false
+     * @param object $field the field object.
+     * @return boolean true if accessible, otherwise false
      */
     public function field_accessible($field) {
         global $CFG, $USER;
+        require_once($CFG->dirroot.'/local/elisprogram/lib/contexts.php');
         $owners = $field->owners;
-
-        require_once($CFG->dirroot .'/local/elisprogram/lib/contexts.php');
-
-        if (!in_array($field->shortname, $this->_field_exceptions) &&
-            ($view_capability = self::field_capability($owners))) {
-            //make sure the user has the view capability in some course
-            $contexts = get_contexts_by_capability_for_user('course', $view_capability, $USER->id);
+        $viewcap = "local/elisprogram:{$this->ctxname}_view";
+        if (!in_array($field->shortname, $this->_field_exceptions) && ($viewcapability = self::field_capability($owners, $viewcap))) {
+            // Make sure the user has the view capability in the specified context.
+            $contexts = get_contexts_by_capability_for_user($this->ctxname, $viewcapability, $USER->id);
             return !$contexts->is_empty();
         } else {
-            //data error
             return false;
         }
     }
@@ -256,6 +257,6 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
     }
 
     function reset_js() {
-        return $this->check_for_custom_fields('course') ? 'cf_reset();' : '';
+        return $this->check_for_custom_fields($this->ctxname) ? 'cf_reset();' : '';
     }
 }
