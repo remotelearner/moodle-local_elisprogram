@@ -1216,6 +1216,7 @@ $string['score'] = 'Score';
 $string['search'] = 'Search';
 $string['selectaclass'] = 'Select a class';
 $string['selectacourse'] = 'Select a course';
+$string['selectacrsset'] = 'Select a Course Set';
 $string['selectallonpage'] = 'Select All On This Page';
 $string['selectallonallpages'] = 'Select All On All Pages';
 $string['selected'] = 'Selected';
