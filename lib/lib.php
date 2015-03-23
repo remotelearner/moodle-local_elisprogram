@@ -419,8 +419,8 @@ function pm_moodle_user_to_pm($mu, $ineventhandler = false) {
     require_once($CFG->dirroot . '/user/profile/lib.php');
     require_once(elis::lib('lib.php'));
 
-    if (method_exists($mu, 'trigger')) { // from user_created event
-        $uid = $mu->objectid;
+    if (method_exists($mu, 'trigger')) { // From user_xxxx events.
+        $uid = isset($mu->objectid) ? $mu->objectid : $mu->relateduserid;
     } else if (isset($mu->id)) { // called directly
         $uid = $mu->id;
     } else {
