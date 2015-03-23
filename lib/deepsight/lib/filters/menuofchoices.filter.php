@@ -122,7 +122,7 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
                 $sql .= 'OR ('.$field.' IS NULL AND '.substr($field, 0, -5).'_default.data IN ('.implode(',', array_fill(0, count($data), '?')).'))';
                 $params = array_merge($params, $params);
             }
-            return array($sql, $params);
+            return array('('.$sql.')', $params);
         }
     }
 

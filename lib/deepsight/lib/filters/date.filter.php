@@ -106,7 +106,7 @@ class deepsight_filter_date extends deepsight_filter_standard {
                 $fielddefault = substr($field, 0, -5).'_default.data';
                 $sql .= ' OR ('.$field.' IS NULL AND '.$fielddefault.' >= '.$starttimestamp.' AND '.$fielddefault.' <= '.$endtimestamp.')';
             }
-            return array($sql, array());
+            return array('('.$sql.')', array());
         } else {
             return array('', array());
         }
