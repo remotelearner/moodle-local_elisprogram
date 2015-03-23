@@ -280,12 +280,10 @@ function cm_certificate_get_seals() {
 function cm_certificate_check_data_path($imagetype) {
     global $CFG;
 
-    $path_array = array('local', 'elisprogram', 'pix', 'certificate', $imagetype);
-    $full_path = $CFG->dataroot;
-    foreach ($path_array as $path) {
-        $full_path .= '/' . $path;
-        if (!file_exists($full_path)) {
-            mkdir($full_path);
+    if (file_exists($CFG->dataroot.'/local/elisprogram')) {
+        $fullpath = $CFG->dataroot.'/local/elisprogram/pix/certificate/'.$imagetype;
+        if (!file_exists($fullpath)) {
+            mkdir($fullpath, 0777, true);
         }
     }
 }

@@ -54,5 +54,21 @@ function xmldb_local_elisprogram_upgrade($oldversion = 0) {
         upgrade_plugin_savepoint($result, 2014030704, 'local', 'elisprogram');
     }
 
+    if ($result && $oldversion < 2014030707) {
+        // ELIS-9081: Migrate any dataroot /elis/program files to /local/elisprogram
+        $olddatadir = $CFG->dataroot.'/elis/program';
+        $newdatadir = $CFG->dataroot.'/local/elisprogram';
+        if (file_exists($olddatadir) && !file_exists($newdatadir)) {
+            $parentdir = dirname($newdatadir);
+            if (!file_exists($parentdir)) {
+                @mkdir($parentdir, 0777, true);
+            }
+            @rename($olddatadir, $newdatadir);
+        } else if (!file_exists($newdatadir)) {
+            @mkdir($newdatadir, 0777, true);
+        }
+        upgrade_plugin_savepoint($result, '2014030707', 'local', 'elisprogram');
+    }
+
     return $result;
 }
