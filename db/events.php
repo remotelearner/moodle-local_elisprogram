@@ -131,6 +131,12 @@ $observers = array(
             'internal'    => false
         ),
         array (
+            'eventname'   => '\core\event\user_password_updated',
+            'includefile' => '/local/elisprogram/lib/lib.php',
+            'callback'    => 'pm_moodle_user_to_pm_event',
+            'internal'    => false
+        ),
+        array (
             'eventname'   => '\core\event\user_deleted',
             'includefile' => '/local/elisprogram/lib/data/user.class.php',
             'callback'    => 'user::user_deleted_handler',

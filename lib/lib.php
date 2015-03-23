@@ -420,7 +420,7 @@ function pm_moodle_user_to_pm($mu, $ineventhandler = false) {
     require_once(elis::lib('lib.php'));
 
     if (method_exists($mu, 'trigger')) { // from user_created event
-        $uid = $mu->objectid;
+        $uid = isset($mu->objectid) ? $mu->objectid : $mu->relateduserid;
     } else if (isset($mu->id)) { // called directly
         $uid = $mu->id;
     } else {
