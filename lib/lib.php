@@ -1577,38 +1577,6 @@ function pm_fix_duplicate_usertrack_records($usertracktable = null) {
 }
 
 /**
- * Migrates certificate border & seal image files from ELIS 1.9x to 2.x
- * @return boolean true on success, otherwise false
- */
-function pm_migrate_certificate_files() {
-    global $CFG;
-    $result = true;
-    // Migrate directories: olddir => newdir
-    $dirs = array(
-        '1/curriculum/pix/certificate/borders'  => 'local/elisprogram/pix/certificate/borders',
-        '1/curriculum/pix/certificate/seals'    => 'local/elisprogram/pix/certificate/seals',
-        'curriculum/pix/certificates/templates' => 'local/elisprogram/pix/certificates/templates'
-    );
-    foreach ($dirs as $olddir => $newdir) {
-        $oldpath = $CFG->dataroot .'/'. $olddir;
-        $newpath = $CFG->dataroot .'/'. $newdir;
-        if (is_dir($oldpath) && ($dh = opendir($oldpath))) {
-            while (($file = readdir($dh)) !== false) {
-                if (is_file($oldpath .'/'. $file)) {
-                    if (!is_dir($newpath) && !mkdir($newpath, 0777, true)) {
-                        install_msg("\n pm_migrate_certificate_files(): Failed creating certificate directory: {$newpath}");
-                    } else if (!copy($oldpath .'/'. $file, $newpath .'/'. $file)) {
-                        install_msg("\n pm_migrate_certificate_files(): Failed copying certificate file: {$oldpath}/{$file} to {$newpath}/{$file}");
-                    }
-                }
-            }
-            closedir($dh);
-        }
-    }
-    return $result;
-}
-
-/**
  * As of Moodle 2.2 optional_param() calls optional_param_array() if the input data is an array but that new function
  * can only handle single-dimensional arrays, not 2-dimensional arrays like the ones used for data submission on the
  * ELIS PM class student enrolment / instructor assignment pages.

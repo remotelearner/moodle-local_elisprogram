@@ -147,6 +147,7 @@ class elis26 extends \local_eliscore\install\migration\migrator {
      * Perform all migrations.
      */
     public function migrate() {
+        global $CFG;
         if (!empty($this->upgradestepfuncname)) {
             $this->run_old_upgrade_steps_if_necessary();
         }
@@ -159,6 +160,18 @@ class elis26 extends \local_eliscore\install\migration\migrator {
         $this->migrate_context_levels();
         $this->migrate_capabilities();
         $this->migrate_language_strings();
+        // ELIS-9081: Migrate any dataroot /elis/program files to /local/elisprogram
+        $olddatadir = $CFG->dataroot.'/elis/program';
+        $newdatadir = $CFG->dataroot.'/local/elisprogram';
+        if (file_exists($olddatadir) && !file_exists($newdatadir)) {
+            $parentdir = dirname($newdatadir);
+            if (!file_exists($parentdir)) {
+                @mkdir($parentdir, 0777, true);
+            }
+            @rename($olddatadir, $newdatadir);
+        } else if (!file_exists($newdatadir)) {
+            @mkdir($newdatadir, 0777, true);
+        }
         $this->uninstall_old_plugin();
     }
 }
