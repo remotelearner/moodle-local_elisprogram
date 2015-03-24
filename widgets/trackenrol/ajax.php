@@ -16,19 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    local_elisprogram
+ * @package    eliswidget_enrolment
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @author     Brent Boghosian <brent.boghosian@remote-learner.net>
  *
  */
 
-defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__.'/../../../../config.php');
+require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 
-$plugin->version = 2015010404;
-$plugin->release = '2.8.5.1 (Build: 20150402)';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->dependencies = array(
-    'enrol_elis' => 2015010400,
-    'local_eliscore' => 2015010400
-);
+$requestmethod = $_SERVER['REQUEST_METHOD'];
+$mode = required_param('m', PARAM_TEXT);
+$data = optional_param_array('data', [], PARAM_TEXT);
+$ajax = new \eliswidget_trackenrol\ajax($CFG->wwwroot.'/local/elisprogram/widgets/trackenrol/ajax.php');
+echo $ajax->respond($requestmethod, $mode, $data);
