@@ -16,19 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    local_elisprogram
+ * @package    eliswidget_trackenrol
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @author     Brent Boghosian <brent.boghosian@remote-learner.net>
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2014082506;
-$plugin->release = '2.7.7.1 (Build: 20150402)';
-$plugin->maturity = MATURITY_STABLE;
+$plugin->version = 2014082500;
+$plugin->release = '2.7.7.1 (Build: 20150324)';
 $plugin->dependencies = array(
-    'enrol_elis' => 2014082501,
-    'local_eliscore' => 2014082501
+    'eliswidget_enrolment' => 2014082500
 );

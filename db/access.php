@@ -839,5 +839,12 @@ $capabilities = array(
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
+     ),
+     'local/elisprogram:self_associatetrack' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        )
      )
 );

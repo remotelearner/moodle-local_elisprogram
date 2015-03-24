@@ -1,0 +1,307 @@
+@-webkit-keyframes spin {
+  from {
+    -webkit-transform: rotate(0deg); }
+  to {
+    -webkit-transform: rotate(360deg); } }
+@-moz-keyframes spin {
+  from {
+    -moz-transform: rotate(0deg); }
+  to {
+    -moz-transform: rotate(360deg); } }
+@keyframes spin {
+  from {
+    transform: rotate(0deg); }
+  to {
+    transform: rotate(360deg); } }
+.elisenrolicon-info {
+  background-image: url('data:image/svg+xml;utf8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32" height="32" viewBox="0 0 32 32">\a<g>\a     <line stroke-width="1" x1="" y1="" x2="" y2="" stroke="#449FDB" opacity=""></line>\a</g>\a     <path d="M16 0c-8.837 0-16 7.163-16 16s7.163 16 16 16 16-7.163 16-16-7.163-16-16-16zM14 6h4v4h-4v-4zM20 26h-8v-2h2v-8h-2v-2h6v10h2v2z" fill="#000000"></path>\a</svg>');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain; }
+
+.eliswidget_trackenrol .elisloader {
+  display: block;
+  text-align: center; }
+  .eliswidget_trackenrol .elisloader:before {
+    display: inline-block;
+    speak: none;
+    font-family: 'icomoon';
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -webkit-animation-name: spin;
+    -moz-animation-name: spin;
+    -ms-animation-name: spin;
+    -webkit-animation-duration: 1500ms;
+    -moz-animation-duration: 1500ms;
+    -ms-animation-duration: 1500ms;
+    -webkit-animation-iteration-count: infinite;
+    -moz-animation-iteration-count: infinite;
+    -ms-animation-iteration-count: infinite;
+    -webkit-animation-timing-function: linear;
+    -moz-animation-timing-function: linear;
+    -ms-animation-timing-function: linear;
+    content: "\e01f";
+    display: inline-block;
+    color: rgba(0, 0, 0, 0.2);
+    padding: 0;
+    margin: 0; }
+.eliswidget_trackenrol .childrenlist .loading {
+  position: relative;
+  overflow: hidden;
+  min-height: 5rem; }
+  .eliswidget_trackenrol .childrenlist .loading:before {
+    display: inline-block;
+    speak: none;
+    font-family: 'icomoon';
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -webkit-animation-name: spin;
+    -moz-animation-name: spin;
+    -ms-animation-name: spin;
+    -webkit-animation-duration: 1500ms;
+    -moz-animation-duration: 1500ms;
+    -ms-animation-duration: 1500ms;
+    -webkit-animation-iteration-count: infinite;
+    -moz-animation-iteration-count: infinite;
+    -ms-animation-iteration-count: infinite;
+    -webkit-animation-timing-function: linear;
+    -moz-animation-timing-function: linear;
+    -ms-animation-timing-function: linear;
+    content: "\e01f";
+    display: inline-block;
+    color: rgba(0, 0, 0, 0.2);
+    padding: 0;
+    margin: 0;
+    font-size: 5rem;
+    position: absolute;
+    top: calc(50% - 2.5rem);
+    left: calc(50% - 2.5rem); }
+  .eliswidget_trackenrol .childrenlist .loading > * {
+    opacity: 0.2;
+    transition: all 100ms linear; }
+.eliswidget_trackenrol .childrenlist .childrenlistheader {
+  display: inline-block;
+  width: 100%;
+  margin: 0.2rem 0; }
+  .eliswidget_trackenrol .childrenlist .childrenlistheader > h6 {
+    display: inline-block;
+    margin: 0.25rem 0.5rem 0.25rem 0; }
+.eliswidget_trackenrol .track {
+  padding: 0.3rem 0.3rem 0.3rem 0; }
+  .eliswidget_trackenrol .track > svg.elisprogress {
+    width: 15%;
+    height: 0.5rem;
+    float: right;
+    margin-top: 0.8rem;
+    margin-right: 0.4rem;
+    margin-left: 0.4rem; }
+  .eliswidget_trackenrol .track > .header {
+    font-weight: bold;
+    padding: 0 0 0 1rem;
+    position: relative; }
+    .eliswidget_trackenrol .track > .header:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      cursor: pointer; }
+    .eliswidget_trackenrol .track > .header:before {
+      margin-right: 0.1rem;
+      content: "\e020";
+      color: rgba(0, 0, 0, 0.2);
+      display: inline-block;
+      speak: none;
+      font-family: 'icomoon';
+      font-style: normal;
+      font-weight: normal;
+      font-variant: normal;
+      text-transform: none;
+      line-height: 1;
+      -webkit-font-smoothing: antialiased;
+      position: absolute;
+      left: 0;
+      top: 0.55rem; }
+  .eliswidget_trackenrol .track.expanded > .header {
+    border-bottom: 1px dotted rgba(0, 0, 0, 0.2); }
+    .eliswidget_trackenrol .track.expanded > .header:before {
+      color: rgba(0, 0, 0, 0.4);
+      content: "\e021"; }
+  .eliswidget_trackenrol .track.expanded > .childrenlist {
+    display: block;
+    margin-bottom: 1rem; }
+  .eliswidget_trackenrol .track > .childrenlist {
+    display: none;
+    padding: 0 0.5rem; }
+    .eliswidget_trackenrol .track > .childrenlist .elisloader {
+      font-size: 5rem; }
+.eliswidget_trackenrol .track > .details {
+  display: inline-block;
+  vertical-align: top;
+  padding: 0.5rem 0.5rem 0rem 0.8rem; }
+  .eliswidget_trackenrol .track > .details > h5 {
+    margin: 0 0.1px;
+    font-size: 0.9rem;
+    line-height: 1rem; }
+  .eliswidget_trackenrol .track > .details .item {
+    margin-bottom: 0.3rem;
+    font-size: 0.7rem;
+    display: block;
+    line-height: 0.9rem; }
+    .eliswidget_trackenrol .track > .details .item > .key {
+      font-weight: bold;
+      margin-right: 0.3rem; }
+  .eliswidget_trackenrol .track > .details .morelesslink {
+    display: block; }
+  .eliswidget_trackenrol .track > .details > .item:last-child {
+    margin-bottom: 0; }
+.eliswidget_trackenrol .track > .header {
+  margin: 0;
+  padding: 0.4rem 0;
+  display: block;
+  cursor: pointer;
+  line-height: 1rem; }
+  .eliswidget_trackenrol .track > .header > .title {
+    display: block;
+    vertical-align: top;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0 0 0 0.8rem;
+    position: relative;
+    line-height: 1rem; }
+    .eliswidget_trackenrol .track > .header > .title:before {
+      content: "\e020";
+      color: rgba(0, 0, 0, 0.2);
+      display: inline-block;
+      speak: none;
+      font-family: 'icomoon';
+      font-style: normal;
+      font-weight: normal;
+      font-variant: normal;
+      text-transform: none;
+      line-height: 1;
+      -webkit-font-smoothing: antialiased;
+      position: absolute;
+      left: 0;
+      top: 0.15rem; }
+  .eliswidget_trackenrol .track > .header > small {
+    padding: 0 0 0 0.8rem; }
+  .eliswidget_trackenrol .track > .header > .details {
+    display: inline-block;
+    vertical-align: top;
+    padding: 0.5rem 0.5rem 0rem 0.8rem; }
+    .eliswidget_trackenrol .track > .header > .details .item {
+      margin-bottom: 0.3rem;
+      font-size: 0.7rem;
+      display: block;
+      line-height: 0.9rem; }
+      .eliswidget_trackenrol .track > .header > .details .item > .key {
+        font-weight: bold;
+        margin-right: 0.3rem; }
+    .eliswidget_trackenrol .track > .header > .details .morelesslink {
+      display: block; }
+    .eliswidget_trackenrol .track > .header > .details > .item:last-child {
+      margin-bottom: 0; }
+  .eliswidget_trackenrol .track > .header:hover {
+    background-color: rgba(0, 0, 0, 0.05); }
+.eliswidget_trackenrol .track.expanded {
+  outline: 1px solid rgba(0, 0, 0, 0.3);
+  margin-bottom: 1rem; }
+  .eliswidget_trackenrol .track.expanded > .header {
+    padding-bottom: 0.2rem;
+    border-bottom: 1px dotted rgba(0, 0, 0, 0.1); }
+    .eliswidget_trackenrol .track.expanded > .header > .title:before {
+      color: rgba(0, 0, 0, 0.4);
+      content: "\e021"; }
+    .eliswidget_trackenrol .track.expanded > .header > .details {
+      display: block; }
+  .eliswidget_trackenrol .track.expanded > .childrenlist {
+    display: block; }
+  .eliswidget_trackenrol .track.expanded > .details {
+    display: block; }
+.eliswidget_trackenrol .track > .childrenlist {
+  display: none;
+  margin-left: 0.8rem; }
+  .eliswidget_trackenrol .track > .childrenlist > .elisloader {
+    font-size: 1.5rem; }
+  .eliswidget_trackenrol .track > .childrenlist .childrenlistheader {
+    margin-bottom: 0.5rem; }
+.eliswidget_trackenrol .track {
+  padding: 0.3rem 0.3rem 0.3rem 0; }
+  .eliswidget_trackenrol .track > .details .item {
+    display: block;
+    font-size: 80%;
+    line-height: 0.9rem;
+    margin-bottom: 0.2rem; }
+    .eliswidget_trackenrol .track > .details .item .key {
+      font-weight: bold;
+      display: inline-block;
+      margin-right: 0.25rem; }
+    .eliswidget_trackenrol .track > .details .item .pmclassstatus a {
+      display: inline-block;
+      margin-left: 0.25rem; }
+  .eliswidget_trackenrol .track > .details .item.instructors .val span:not(:last-child):after {
+    content: ', '; }
+  .eliswidget_trackenrol .track .smloader {
+    display: inline-block;
+    text-align: center;
+    margin-left: 0.3rem; }
+    .eliswidget_trackenrol .track .smloader:after {
+      display: inline-block;
+      speak: none;
+      font-family: 'icomoon';
+      font-style: normal;
+      font-weight: normal;
+      font-variant: normal;
+      text-transform: none;
+      line-height: 1;
+      -webkit-font-smoothing: antialiased;
+      -webkit-animation-name: spin;
+      -moz-animation-name: spin;
+      -ms-animation-name: spin;
+      -webkit-animation-duration: 1500ms;
+      -moz-animation-duration: 1500ms;
+      -ms-animation-duration: 1500ms;
+      -webkit-animation-iteration-count: infinite;
+      -moz-animation-iteration-count: infinite;
+      -ms-animation-iteration-count: infinite;
+      -webkit-animation-timing-function: linear;
+      -moz-animation-timing-function: linear;
+      -ms-animation-timing-function: linear;
+      content: "\e01f";
+      display: inline-block;
+      color: #000;
+      padding: 0;
+      margin: 0 0 0 0.2rem; }
+
+#block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch, #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch {
+  min-width: 6.5rem; }
+  #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui, #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui {
+    max-width: calc(100% - 1.8rem); }
+    #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui input[type="text"], #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui input[type="text"] {
+      max-width: calc(100% - 2.4rem);
+      width: 100%; }
+    #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui .selection, #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui .selection {
+      max-width: calc(100% - 2.3rem);
+      overflow: hidden;
+      word-wrap: break-word;
+      white-space: nowrap; }
+  #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch button.deepsight_filter-remove, #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch button.deepsight_filter-remove {
+    width: 1.5rem; }
+#block-region-side-pre .eliswidget_trackenrol .track > .childrenlist, #block-region-side-post .eliswidget_trackenrol .track > .childrenlist {
+  padding: 0; }
+#block-region-side-pre .eliswidget_trackenrol .track .details > h5, #block-region-side-post .eliswidget_trackenrol .track .details > h5 {
+  margin: 0 0.1px;
+  font-size: 0.9rem;
+  line-height: 1rem; }
+#block-region-side-pre .eliswidget_trackenrol .track .details .item, #block-region-side-post .eliswidget_trackenrol .track .details .item {
+  line-height: 0.8rem;
+  margin-bottom: 0.2rem; }
+  #block-region-side-pre .eliswidget_trackenrol .track .details .item .key, #block-region-side-post .eliswidget_trackenrol .track .details .item .key {
+    display: block; }
+
+/*# sourceMappingURL=widget.css.map */

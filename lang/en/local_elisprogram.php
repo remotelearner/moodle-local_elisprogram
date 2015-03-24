@@ -579,6 +579,7 @@ $string['elisprogram:program_edit'] = 'Edit program';
 $string['elisprogram:program_enrol'] = 'Manage program enrolments';
 $string['elisprogram:program_enrol_userset_user'] = 'Manage User Set\'s users\' program enrolments';
 $string['elisprogram:program_view'] = 'View program';
+$string['elisprogram:self_associatetrack'] = 'For use by ELIS Track Enrolment widget configuration, unused otherwise.';
 $string['elisprogram:track_create'] = 'Create track';
 $string['elisprogram:track_delete'] = 'Delete track';
 $string['elisprogram:track_edit'] = 'Edit track';
