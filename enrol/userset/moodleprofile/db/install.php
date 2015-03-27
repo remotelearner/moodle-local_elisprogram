@@ -38,6 +38,9 @@ function xmldb_usetenrol_moodleprofile_install() {
     $migrator = new \local_eliscore\install\migration\migrator($oldcmp, $newcmp, $upgradestepfuncname);
     if ($migrator->old_component_installed() === true) {
         $migrator->migrate();
+        require_once(dirname(__FILE__).'/upgrade.php');
+        set_config('version', 2014082500, 'usetenrol_moodleprofile');
+        xmldb_usetenrol_moodleprofile_upgrade(2014082500);
     }
 }
 

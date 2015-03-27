@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,13 +19,13 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
 function xmldb_local_elisprogram_install() {
     global $CFG, $DB;
-
+    $oldinstalled = false;
     $elisadminblockinstalled = file_exists($CFG->dirroot.'/local/elisprogram/lib/setup.php') && $DB->record_exists('block', array('name' => 'elisadmin'));
     if ($elisadminblockinstalled) {
         require_once($CFG->dirroot.'/blocks/elisadmin/lib.php');
@@ -44,6 +44,7 @@ function xmldb_local_elisprogram_install() {
     // Migrate component.
     $migrator = new \local_elisprogram\install\migration\elis26();
     if ($migrator->old_component_installed() === true) {
+        $oldinstalled = true;
         $migrator->migrate();
     }
 
@@ -74,4 +75,10 @@ function xmldb_local_elisprogram_install() {
     // Remove some lingering subplugins that were renamed
     unset_all_config_for_plugin('usersetenrol_manual');
     unset_all_config_for_plugin('usersetenrol_moodle_profile');
+
+    if ($oldinstalled) {
+        require_once(dirname(__FILE__).'/upgrade.php');
+        set_config('version', 2014082500, 'local_elisprogram');
+        xmldb_local_elisprogram_upgrade(2014082500);
+    }
 }

@@ -29,7 +29,7 @@ function xmldb_usetenrol_moodleprofile_upgrade($oldversion = 0) {
     global $CFG, $DB;
     $result = true;
 
-    if ($oldversion < 2014082501) {
+    if ($oldversion < 2014082503) {
         require_once($CFG->dirroot.'/local/elisprogram/lib/data/clusterassignment.class.php');
         // Fix plugin name.
         $sql = "UPDATE {".clusterassignment::TABLE."} SET plugin = 'moodleprofile'
@@ -46,7 +46,7 @@ function xmldb_usetenrol_moodleprofile_upgrade($oldversion = 0) {
         $DB->execute($sql);
 
         // Userset enrol savepoint reached.
-        upgrade_plugin_savepoint(true, 2014082501, 'usetenrol', 'moodleprofile');
+        upgrade_plugin_savepoint(true, 2014082503, 'usetenrol', 'moodleprofile');
     }
 
     return $result;

@@ -40,8 +40,11 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
     if ($result && $oldversion < 2014082500) {
         $file = $CFG->dirroot.'/local/elisprogram/db/install.xml';
         $tables = array('local_elisprogram_crsset', 'local_elisprogram_crssetcrs', 'local_elisprogram_prgcrsset');
-        foreach ($tables as $table) {
-            $dbman->install_one_table_from_xmldb_file($file, $table);
+        foreach ($tables as $tablename) {
+            $table = new xmldb_table($tablename);
+            if (!$dbman->table_exists($table)) {
+                $dbman->install_one_table_from_xmldb_file($file, $tablename);
+            }
         }
 
         // Update custom context levels.
@@ -55,7 +58,7 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
         upgrade_plugin_savepoint($result, '2014082500', 'local', 'elisprogram');
     }
 
-    if ($result && $oldversion < 2014082503) {
+    if ($result && $oldversion < 2014082504) {
         // ELIS-9067: Remove deleted Moodle Course refs in ELIS tables.
         $tablefields = array(
             'local_elisprogram_cls_mdl' => 'moodlecourseid',
@@ -76,7 +79,7 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
                 }
             }
         }
-        upgrade_plugin_savepoint($result, '2014082503', 'local', 'elisprogram');
+        upgrade_plugin_savepoint($result, '2014082504', 'local', 'elisprogram');
     }
 
     return $result;
