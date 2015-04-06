@@ -29,7 +29,6 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Track Enrolment Widget';
 $string['name'] = 'Track Enrolment Widget';
 $string['description'] = 'A widget allowing students to manage enrolment in Tracks.';
-
 $string['action_enrol'] = 'Enrol';
 $string['action_unenrol'] = 'Unenrol';
 $string['allowall'] = 'Allow all';

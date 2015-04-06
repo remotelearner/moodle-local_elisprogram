@@ -70,7 +70,7 @@ if ($ADMIN->fulltree) {
     }
 
     // Criterial to view widget
-    // Multi-select list of required capabilities, '' => 'allowall'. 
+    // Multi-select list of required capabilities, '' => 'allowall'.
     $allowall = get_string('allowall', 'eliswidget_trackenrol');
     $any = get_string('any', 'eliswidget_trackenrol');
     $caps = ['' => $allowall];

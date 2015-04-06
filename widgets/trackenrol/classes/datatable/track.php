@@ -33,7 +33,9 @@ class track extends \eliswidget_enrolment\datatable\base {
     /** @var string The main table results are pulled from. This forms that FROM clause. */
     protected $maintable = 'local_elisprogram_trk';
 
-    /** @var int The number of results displayed per page of the table. */
+    /**
+     * The number of results displayed per page of the table.
+     */
     const RESULTSPERPAGE = 5;
 
     /** @var int The ID of the Track. */
@@ -135,13 +137,13 @@ class track extends \eliswidget_enrolment\datatable\base {
      * @return array Array of field information, first item is visible fields, second is hidden fields.
      */
     public function get_datafields_by_visibility(array $filters = array()) {
-       list($visible, $hidden) = parent::get_datafields_by_visibility($filters);
-       $hidden['element_idnumber'] = get_string('track_idnumber', 'eliswidget_trackenrol');
-       $hidden['element_name'] = get_string('track_name', 'eliswidget_trackenrol');
-       $hidden['element_description'] = get_string('track_description', 'eliswidget_trackenrol');
-       $hidden['element_startdate'] = get_string('startdate', 'eliswidget_trackenrol');
-       $hidden['element_enddate'] = get_string('enddate', 'eliswidget_trackenrol');
-       return [$visible, $hidden];
+        list($visible, $hidden) = parent::get_datafields_by_visibility($filters);
+        $hidden['element_idnumber'] = get_string('track_idnumber', 'eliswidget_trackenrol');
+        $hidden['element_name'] = get_string('track_name', 'eliswidget_trackenrol');
+        $hidden['element_description'] = get_string('track_description', 'eliswidget_trackenrol');
+        $hidden['element_startdate'] = get_string('startdate', 'eliswidget_trackenrol');
+        $hidden['element_enddate'] = get_string('enddate', 'eliswidget_trackenrol');
+        return [$visible, $hidden];
     }
 
     /**
