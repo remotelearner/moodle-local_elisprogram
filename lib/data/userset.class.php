@@ -799,22 +799,45 @@ function cluster_count_records($namesearch = '', $alpha = '', $extrafilters = ar
 /**
  * Specifies a mapping of userset ids to names for display purposes
  *
- * @param  string  $orderby  Sort order and direction, if sorting is desired
+ * @param string $orderby Sort order and direction, if sorting is desired.
+ * @param bool $filtered Whether menu should be filtered by view capability.
+ * @return object the userset listing for menu.
  */
-function userset_get_menu($orderby = 'name ASC') {
+function userset_get_menu($orderby = 'name ASC', $filtered = false) {
     global $DB;
+    $params = array();
+    $sqlcondition = 'TRUE';
+    if ($filtered) {
+        // ELIS-9099: Must be filtered by viewable usersets.
+        $sqlcondition = 'FALSE';
+        if (userset::all_clusters_viewable()) {
+            // User has capability at system level so allow access to any cluster.
+            $sqlcondition = 'TRUE';
+        } else {
+            // User does not have capability at system level, so filter.
+            $viewableclusters = userset::get_viewable_clusters();
 
-    $select = 'SELECT c.id, c.name ';
-    $from   = 'FROM {'.userset::TABLE.'} ';
-    $join   = '';
-    $where  = '';
-    if (!empty($orderby)) {
-        $order = 'ORDER BY '.$orderby.' ';
-    } else {
-        $order = '';
+            if (empty($viewableclusters)) {
+                // User has no access to any clusters, so do not allow additional access.
+                $sqlcondition = 'FALSE';
+            } else {
+                // User has additional access to some set of clusters, so "enable" this access.
+                // Use the context path to find parent clusters.
+                $path = $DB->sql_concat('parent_context.path', "'/%'");
+                list($inorequal, $params) = $DB->get_in_or_equal($viewableclusters);
+
+                $sqlcondition = "(id {$inorequal} OR
+                                  id IN (SELECT parent_context.instanceid
+                                           FROM {context} parent_context
+                                           JOIN {context} child_context ON child_context.path LIKE {$path}
+                                                AND parent_context.contextlevel = ".CONTEXT_ELIS_USERSET."
+                                                AND child_context.contextlevel = ".CONTEXT_ELIS_USERSET."
+                                                AND child_context.instanceid {$inorequal})
+                                 )";
+            }
+        }
     }
-
-    return $DB->get_records_menu(userset::TABLE, null, $orderby, 'id, name');
+    return $DB->get_records_select_menu(userset::TABLE, $sqlcondition, array_merge($params, $params), $orderby, 'id, name');
 }
 
 function cluster_get_user_clusters($userid) {
