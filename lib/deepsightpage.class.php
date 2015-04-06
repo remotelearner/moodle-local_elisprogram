@@ -313,6 +313,7 @@ abstract class deepsightpage extends pm_page {
         // HTML.
         echo $table->get_html();
         echo $bulkactionpanel->get_html();
+        $PAGE->requires->js('/local/eliscore/js/verify_jqueryui.js');
 
         // JS.
         $jsdeps = $table->get_js_dependencies();

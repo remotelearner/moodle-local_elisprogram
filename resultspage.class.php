@@ -259,12 +259,13 @@ abstract class enginepage extends pm_page {
      * Display the edit page
      */
     function display_edit() {
+        global $PAGE;
         if (!isset($this->_form)) {
             throw new ErrorException('Display called before Do');
         }
 
         $type = $this->get_action_type();
-
+        $PAGE->requires->js('/local/eliscore/js/verify_jqueryui.js');
         echo '
         <script type="text/javascript">
             $(function(){
