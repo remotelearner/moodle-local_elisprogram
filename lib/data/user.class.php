@@ -1120,7 +1120,7 @@ class pm_user_filtering extends user_filtering {
             return new user_filter_select('language', get_string('preferredlanguage'), $advanced, 'language', get_string_manager()->get_list_of_translations(true));
 
         case 'clusterid':
-            $clusters = userset_get_menu();
+            $clusters = userset_get_menu('name ASC', true);
             //need to reference the user table directly to allow use of filters in DB calls that do not
             //require the full SQL query with table aliases
             return new pm_user_userset_filter('clusterid', get_string('usercluster', 'local_elisprogram'), $advanced, '{'.user::TABLE.'}.id', $clusters);
