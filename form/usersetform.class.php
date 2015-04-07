@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -38,7 +38,7 @@ class usersetform extends cmform {
      * items in the form
      */
     public function definition() {
-        global $CURMAN, $CFG;
+        global $CFG;
 
         parent::definition();
 
@@ -64,8 +64,21 @@ class usersetform extends cmform {
         $non_child_clusters = cluster_get_non_child_clusters($current_cluster_id, $contexts);
 
         //parent dropdown
-        $mform->addElement('select', 'parent', get_string('userset_parent', 'local_elisprogram'), $non_child_clusters);
-        $mform->addHelpButton('parent', 'userset_parent', 'local_elisprogram');
+        if (!empty($non_child_clusters)) {
+            $mform->addElement('select', 'parent', get_string('userset_parent', 'local_elisprogram'), $non_child_clusters);
+            $mform->addHelpButton('parent', 'userset_parent', 'local_elisprogram');
+        } else {
+            global $DB;
+            $parentid = 0;
+            $parentname = get_string('userset_top_level','local_elisprogram');
+            if (!empty($current_cluster_id) && !empty($this->_customdata['obj']->parent)) {
+                $parentid = $this->_customdata['obj']->parent;
+                $parentname = $DB->get_field(userset::TABLE, 'name', array('id' => $parentid));
+            }
+            $mform->addElement('static', 'staticparent', get_string('userset_parent', 'local_elisprogram'), $parentname);
+            $mform->addElement('hidden', 'parent', $parentid);
+        }
+        $mform->setType('parent', PARAM_INT);
 
         // allow plugins to add their own fields
 
@@ -102,7 +115,7 @@ class usersetform extends cmform {
  */
 class usersetdeleteform extends cmform {
     public function definition() {
-        global $CURMAN, $CFG;
+        global $CFG;
 
         parent::definition();
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -910,7 +910,6 @@ function cluster_deassign_all_user($userid) {
  */
 function cluster_get_non_child_clusters($target_cluster_id, $contexts = null) {
     global $DB;
-    $return = array(0=>get_string('userset_top_level','local_elisprogram'));
 
     if (!empty($target_cluster_id)) {
         $cluster_context_instance = \local_elisprogram\context\userset::instance($target_cluster_id);
@@ -943,7 +942,9 @@ function cluster_get_non_child_clusters($target_cluster_id, $contexts = null) {
     }
 
     $clusters = $DB->get_records_sql_menu($sql, $params);
-    $clusters = array(0=>get_string('userset_top_level','local_elisprogram')) + $clusters;
+    if (has_capability('local/elisprogram:userset_create', context_system::instance())) {
+        $clusters = array(0 => get_string('userset_top_level', 'local_elisprogram')) + $clusters;
+    }
 
     return $clusters;
 }
