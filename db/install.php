@@ -25,7 +25,7 @@
 
 function xmldb_local_elisprogram_install() {
     global $CFG, $DB;
-
+    $oldinstalled = false;
     $elisadminblockinstalled = file_exists($CFG->dirroot.'/local/elisprogram/lib/setup.php') && $DB->record_exists('block', array('name' => 'elisadmin'));
     if ($elisadminblockinstalled) {
         require_once($CFG->dirroot.'/blocks/elisadmin/lib.php');
@@ -44,6 +44,7 @@ function xmldb_local_elisprogram_install() {
     // Migrate component.
     $migrator = new \local_elisprogram\install\migration\elis26();
     if ($migrator->old_component_installed() === true) {
+        $oldinstalled = true;
         $migrator->migrate();
     }
 
@@ -71,4 +72,10 @@ function xmldb_local_elisprogram_install() {
     // Remove some lingering subplugins that were renamed
     unset_all_config_for_plugin('usersetenrol_manual');
     unset_all_config_for_plugin('usersetenrol_moodle_profile');
+
+    if ($oldinstalled) {
+        require_once(dirname(__FILE__).'/upgrade.php');
+        set_config('version', 2014030700, 'local_elisprogram');
+        xmldb_local_elisprogram_upgrade(2014030700);
+    }
 }
