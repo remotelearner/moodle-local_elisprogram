@@ -129,8 +129,6 @@ class coursesetpage extends managementpage {
      * @param array $params optional params to init page class.
      */
     public function __construct(array $params = null) {
-        parent::__construct($params);
-
         $this->tabs = array(
         array('tab_id' => 'view', 'page' => get_class($this), 'params' => array('action' => 'view'), 'name' => get_string('detail', 'local_elisprogram'), 'showtab' => true),
         array('tab_id' => 'edit', 'page' => get_class($this), 'params' => array('action' => 'edit'), 'name' => get_string('edit', 'local_elisprogram'),
@@ -143,6 +141,8 @@ class coursesetpage extends managementpage {
         array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete', 'local_elisprogram'),
             'showbutton' => true, 'image' => 'delete'),
         );
+
+        parent::__construct($params); // ELIS-9087: Must define tabs first.
     }
 
     /**

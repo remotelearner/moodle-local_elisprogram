@@ -74,6 +74,7 @@ abstract class selectionpage extends pm_page { // TBD
     }
 
     function print_tabs() {
+        global $CFG;
         $id = $this->required_param('id', PARAM_INT);
 
         $page = $this; // TBD: $this->get_tab_page();
@@ -89,7 +90,10 @@ abstract class selectionpage extends pm_page { // TBD
         // main row of tabs
         foreach($page->tabs as $tab) {
             $tab = $page->add_defaults_to_tab($tab);
-            if($tab['showtab'] === true) {
+            if ($tab['showtab'] === true) {
+                if (!empty($tab['file']) && file_exists($CFG->dirroot.$tab['file'])) {
+                    require_once($CFG->dirroot.$tab['file']);
+                }
                 $target = new $tab['page'](array_merge($tab['params'], $params));
                 $row[] = new tabobject($tab['tab_id'], $target->url, $tab['name']);
             }

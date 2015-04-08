@@ -454,7 +454,7 @@ abstract class managementpage extends pm_page {
      * @return string Button HTML
      */
     public function get_buttons($params) {
-        global $OUTPUT;
+        global $CFG, $OUTPUT;
 
         $buttons = array();
 
@@ -478,28 +478,32 @@ abstract class managementpage extends pm_page {
         foreach ($this->tabs as $tab) {
             $tab = $this->add_defaults_to_tab($tab);
             if ($tab['showbutton'] === true) {
+                if (!empty($tab['file']) && file_exists($CFG->dirroot.$tab['file'])) {
+                    require_once($CFG->dirroot.$tab['file']);
+                }
                 $target = new $tab['page'](array_merge($tab['params'], $params));
                 if (!$target->can_do()) {
                     continue;
                 }
-
-                if (isset($iconmap[$tab['image']])) {
+                if (!empty($tab['plugin']) || !isset($iconmap[$tab['image']])) {
+                    if (!empty($tab['image'])) {
+                        $plugin = !empty($tab['plugin']) ? $tab['plugin'] : 'local_elisprogram';
+                        $iconattrs = array(
+                            'title' => $tab['name'],
+                            'alt' => $tab['name'],
+                            'src' => $OUTPUT->pix_url($tab['image'], $plugin)
+                        );
+                        $icon = html_writer::empty_tag('img', $iconattrs);
+                        $buttons[] = html_writer::link($target->url, $icon, array('class' => 'managementicon'));
+                    }
+                } else {
                     $iconattrs = array(
                         'title' => $tab['name'],
                         'alt' => $tab['name'],
                         'class' => $iconmap[$tab['image']].' managementicon elisicon'
                     );
                     $buttons[] = html_writer::link($target->url, '', $iconattrs);
-                } else {
-                    $iconattrs = array(
-                        'title' => $tab['name'],
-                        'alt' => $tab['name'],
-                        'src' => $OUTPUT->pix_url($tab['image'], 'local_elisprogram')
-                    );
-                    $icon = html_writer::empty_tag('img', $iconattrs);
-                    $buttons[] = html_writer::link($target->url, $icon, array('class' => 'managementicon'));
                 }
-
             }
         }
         return implode('', $buttons);
@@ -592,10 +596,14 @@ abstract class managementpage extends pm_page {
      * @param $params extra parameters to insert into the tab links, such as an id
      */
     function print_tabs($selected, $params=array()) {
+        global $CFG;
         $row = array();
         foreach($this->tabs as $tab) {
             $tab = $this->add_defaults_to_tab($tab);
             if($tab['showtab'] === true) {
+                if (!empty($tab['file']) && file_exists($CFG->dirroot.$tab['file'])) {
+                    require_once($CFG->dirroot.$tab['file']);
+                }
                 $target = new $tab['page'](array_merge($tab['params'], $params));
                 if (!$target->can_do()) {
                     continue;

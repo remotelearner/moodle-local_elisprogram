@@ -121,8 +121,6 @@ class trackpage extends managementpage {
     }
 
     public function __construct(array $params=null) {
-
-        parent::__construct($params);
         $curid = $this->optional_param('parent', 0, PARAM_INT); // TBD: get_cm_id(empty($action));
         $curid_param = $curid ? array('parent' => $curid) : array();
         $this->tabs = array(
@@ -135,6 +133,7 @@ class trackpage extends managementpage {
         array('tab_id' => 'delete', 'page' => 'trackpage', 'params' => array('action' => 'delete') + $curid_param, 'name' => get_string('delete','local_elisprogram'), 'showbutton' => true, 'image' => 'delete'),
         );
 
+        parent::__construct($params); // ELIS-9087: Must define tabs first.
     }
 
     function can_do_view() {

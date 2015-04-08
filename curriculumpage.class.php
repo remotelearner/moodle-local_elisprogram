@@ -137,8 +137,6 @@ class curriculumpage extends managementpage {
     }
 
     function __construct(array $params=null) {
-        parent::__construct($params);
-
         $id = $this->optional_param('id', 0, PARAM_INT);
         $track_params = ($id) ? array('parent' => $id) : array();
         $this->tabs = array(
@@ -154,6 +152,7 @@ class curriculumpage extends managementpage {
         array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete', 'local_elisprogram'), 'showbutton' => true, 'image' => 'delete'),
         );
 
+        parent::__construct($params); // ELIS-9087: Must define tabs first.
     }
 
     function can_do_view() {
