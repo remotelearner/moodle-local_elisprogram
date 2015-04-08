@@ -2213,3 +2213,58 @@ function cm_error($message) {
     }
     return $OUTPUT->notification($message, 'notifyproblem');
 }
+
+/**
+ * Update elisprogram external tab definitions for specific plugin.
+ *
+ * @param string $plugin The plugin's frankenstyle name.
+ * @param bool $uninstall true to remove all tab defintions for plugin, defaults false.
+ * @return bool true on success, false on error.
+ */
+function local_elisprogram_update_tab_defs($plugin, $uninstall = false) {
+    $matches = array();
+    preg_match('/([^_]*)_(.*)/', $plugin, $matches);
+    $plugindir = core_component::get_plugin_directory($matches[1], $matches[2]);
+    $tabdefs = $plugindir.'/db/elistabs.php';
+    // error_log("local_elisprogram_update_tab_defs({$plugin}, {$uninstall}): Checking for {$tabdefs}");
+    if (file_exists($tabdefs)) {
+        global $CFG, $DB;
+        require_once($CFG->dirroot.'/lib/ddllib.php');
+        $tablename = 'local_elisprogram_tab_defs';
+        $table = new xmldb_table($tablename);
+        // Since we don't know if a plugin using this feature will install before local_elisprogram,
+        // we'll create table now if it doesn't exist, so we don't miss any tab definitions.
+        if (!$DB->get_manager()->table_exists($table)) {
+            $DB->get_manager()->install_one_table_from_xmldb_file($CFG->dirroot.'/local/elisprogram/db/install.xml', $tablename);
+        } else {
+            // We're updating all tab definitions for plugin, so delete any existing ones.
+            $DB->delete_records($tablename, array('plugin' => $plugin));
+        }
+        if ($uninstall) {
+            return true;
+        }
+        require($tabdefs);
+        if (!isset($elistabs) || !is_array($elistabs)) {
+            error_log("local_elisprogram::local_elisprogram_update_tab_defs({$plugin}): Error parsing {$tabdefs} (1)");
+            return false;
+        }
+        foreach ($elistabs as $entityname => $entity) {
+            if (!is_array($entity)) {
+                error_log("local_elisprogram::local_elisprogram_update_tab_defs({$plugin}): Error parsing {$tabdefs} (2)");
+                return false;
+            }
+            foreach ($entity as $tabdef) {
+                if (!is_array($tabdef)) {
+                    error_log("local_elisprogram::local_elisprogram_update_tab_defs({$plugin}): Error parsing {$tabdefs} (3)");
+                    return false;
+                }
+                $tabrec = new stdClass;
+                $tabrec->plugin = $plugin;
+                $tabrec->parent = $entityname;
+                $tabrec->tabdata = serialize($tabdef);
+                $DB->insert_record($tablename, $tabrec);
+            }
+        }
+    }
+    return true;
+}

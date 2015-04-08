@@ -154,20 +154,30 @@ class pmclasspage extends managementpage {
         }
 
         $this->tabs = array(
-        array('tab_id' => 'view', 'page' => get_class($this), 'params' => array('action' => 'view'), 'name' => get_string('detail', 'local_elisprogram'), 'showtab' => true),
-        array('tab_id' => 'edit', 'page' => get_class($this), 'params' => array('action' => 'edit'), 'name' => get_string('edit', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
-        array('tab_id' => 'studentpage', 'page' => 'studentpage', 'name' => get_string('enrolments', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'user'),
-        array('tab_id' => 'waitlistpage', 'page' => 'waitlistpage', 'name' => get_string('waiting', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'waiting'),
-        array('tab_id' => 'instructorpage', 'page' => 'instructorpage', 'name' => get_string('instructors', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'instructor'),
-        array('tab_id' => 'class_rolepage', 'page' => 'class_rolepage', 'name' => get_string('roles', 'role'), 'showtab' => true, 'showbutton' => false, 'image' => 'tag'),
-        array('tab_id' => 'class_enginepage', 'page' => 'class_enginepage', 'name' => get_string('results_engine', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'calculator'),
-        array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'), 'name' => get_string('delete_label', 'local_elisprogram'), 'showbutton' => true, 'image' => 'delete')
+                array('tab_id' => 'view', 'page' => get_class($this), 'params' => array('action' => 'view'),
+                    'name' => get_string('detail', 'local_elisprogram'), 'showtab' => true),
+                array('tab_id' => 'edit', 'page' => get_class($this), 'params' => array('action' => 'edit'),
+                    'name' => get_string('edit', 'local_elisprogram'), 'showtab' => true, 'showbutton' => true, 'image' => 'edit'),
+                array('tab_id' => 'studentpage', 'page' => 'studentpage', 'name' => get_string('enrolments', 'local_elisprogram'),
+                    'showtab' => true, 'showbutton' => true, 'image' => 'user'),
+                array('tab_id' => 'waitlistpage', 'page' => 'waitlistpage', 'name' => get_string('waiting', 'local_elisprogram'),
+                    'showtab' => true, 'showbutton' => true, 'image' => 'waiting'),
+                array('tab_id' => 'instructorpage', 'page' => 'instructorpage', 'name' => get_string('instructors', 'local_elisprogram'),
+                    'showtab' => true, 'showbutton' => true, 'image' => 'instructor'),
+                array('tab_id' => 'class_rolepage', 'page' => 'class_rolepage', 'name' => get_string('roles', 'role'),
+                    'showtab' => true, 'showbutton' => false, 'image' => 'tag'),
+                array('tab_id' => 'class_enginepage', 'page' => 'class_enginepage', 'name' => get_string('results_engine', 'local_elisprogram'),
+                    'showtab' => true, 'showbutton' => true, 'image' => 'calculator')
         );
 
         if ($reports_installed) {
             $this->tabs[] = array('tab_id' => 'class_reportlinkspage', 'page' => 'class_reportlinkspage', '', 'name' => get_string('classreportlinks', 'local_elisprogram'),
                                   'showtab' => true, 'showbutton' => true, 'image' => 'report');
         }
+
+        // ELIS-9087: make 'delete' tab always last.
+        $this->tabs[] = array('tab_id' => 'delete', 'page' => get_class($this), 'params' => array('action' => 'delete'),
+            'name' => get_string('delete_label', 'local_elisprogram'), 'showbutton' => true, 'image' => 'delete');
 
         parent::__construct($params);
     }

@@ -100,11 +100,14 @@ class associationpage extends pm_page {
      * @param $params extra parameters to insert into the tab links, such as an id
      */
     function print_tabs($selected, $params=array()) {
+        global $CFG;
         $row = array();
-
         foreach($this->tabs as $tab) {
             $tab = $this->add_defaults_to_tab($tab);
-            if($tab['showtab'] === true) {
+            if ($tab['showtab'] === true) {
+                if (!empty($tab['file']) && file_exists($CFG->dirroot.$tab['file'])) {
+                    require_once($CFG->dirroot.$tab['file']);
+                }
                 $target = new $tab['page'](array_merge($tab['params'], $params));
                 if (!$target->can_do()) {
                     continue;
@@ -588,20 +591,23 @@ class associationpage extends pm_page {
      * @uses $OUTPUT
      */
     function get_buttons($params) {
-        global $OUTPUT;
+        global $CFG, $OUTPUT;
 
         $buttons = array();
-
-        foreach($this->tabs as $tab) {
+        foreach ($this->tabs as $tab) {
             $tab = $this->add_defaults_to_tab($tab);
-            if($tab['showbutton'] === true) {
+            if ($tab['showbutton'] === true) {
+                if (!empty($tab['file']) && file_exists($CFG->dirroot.$tab['file'])) {
+                    require_once($CFG->dirroot.$tab['file']);
+                }
                 $target = new $tab['page'](array_merge($tab['params'], $params));
-                if ($target->can_do()) {
-                    $buttons[] = html_writer::link($target->url, html_writer::empty_tag('img', array('title' => $tab['name'], 'alt' => $tab['name'], 'src' => $OUTPUT->pix_url($tab['image'], 'local_elisprogram'))));
+                if ($target->can_do() && !empty($tab['image'])) {
+                    $plugin = !empty($tab['plugin']) ? $tab['plugin'] : 'local_elisprogram';
+                    $buttons[] = html_writer::link($target->url, html_writer::empty_tag('img',
+                            array('title' => $tab['name'], 'alt' => $tab['name'], 'src' => $OUTPUT->pix_url($tab['image'], $plugin))));
                 }
             }
         }
-
         return implode('', $buttons);
     }
 

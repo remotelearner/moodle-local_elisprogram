@@ -650,7 +650,7 @@
         <INDEX NAME="crssetcrs_ix" UNIQUE="true" FIELDS="crssetid,courseid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="local_elisprogram_prgcrsset" COMMENT="CourseSet courses." PREVIOUS="local_elisprogram_crssetcrs">
+    <TABLE NAME="local_elisprogram_prgcrsset" COMMENT="CourseSet courses." PREVIOUS="local_elisprogram_crssetcrs" NEXT="local_elisprogram_tab_defs">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="crssetid"/>
         <FIELD NAME="crssetid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="prgid"/>
@@ -668,6 +668,21 @@
         <INDEX NAME="crssetid_ix" UNIQUE="false" FIELDS="crssetid"/>
         <INDEX NAME="prgid_ix" UNIQUE="false" FIELDS="prgid"/>
         <INDEX NAME="crssetprg_ix" UNIQUE="true" FIELDS="crssetid,prgid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_elisprogram_tab_defs" COMMENT="ELIS tab definitions." PREVIOUS="local_elisprogram_prgcrsset">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="plugin"/>
+        <FIELD NAME="plugin" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="parent"/>
+        <FIELD NAME="parent" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" PREVIOUS="plugin" NEXT="tabdata"/>
+        <FIELD NAME="tabdata" TYPE="text" LENGTH="medium" NOTNULL="true" SEQUENCE="false" PREVIOUS="parent"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="plugin_ix" UNIQUE="false" FIELDS="plugin"/>
+        <INDEX NAME="parent_ix" UNIQUE="false" FIELDS="parent"/>
       </INDEXES>
     </TABLE>
   </TABLES>

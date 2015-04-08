@@ -52,6 +52,7 @@ abstract class associationpage2 extends selectionpage {
     }
 
     function print_tabs() {
+        global $CFG;
         $id = $this->required_param('id', PARAM_INT);
 
         $page = $this->get_tab_page();
@@ -63,6 +64,9 @@ abstract class associationpage2 extends selectionpage {
         foreach($page->tabs as $tab) {
             $tab = $page->add_defaults_to_tab($tab);
             if($tab['showtab'] === true) {
+                if (!empty($tab['file']) && file_exists($CFG->dirroot.$tab['file'])) {
+                    require_once($CFG->dirroot.$tab['file']);
+                }
                 $target = new $tab['page'](array_merge($tab['params'], $params));
                 if (!$target->can_do()) {
                     //insufficient permissions according to tab's page, so don't add it

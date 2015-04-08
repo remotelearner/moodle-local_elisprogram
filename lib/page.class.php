@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -32,6 +32,81 @@ abstract class pm_page extends elis_page {
      * The page's short name
      */
     var $pagename;
+
+    /**
+     * Constructor.
+     *
+     * @param array $params array of URL parameters.  If  $params is not
+     * specified, the constructor for each subclass should load the parameters
+     * from the current HTTP request.
+     */
+    public function __construct(array $params = null) {
+        // Load any component elistabs defined by plugins.
+        global $CFG, $DB;
+        require_once($CFG->dirroot.'/lib/ddllib.php');
+        $table = new xmldb_table('local_elisprogram_tab_defs');
+        if ($DB->get_manager()->table_exists($table)) {
+            $externaltabdefs = $DB->get_recordset('local_elisprogram_tab_defs', array('parent' => get_class($this)));
+            if ($externaltabdefs && $externaltabdefs->valid()) {
+                // Ensure delete tab remains last.
+                $deletetab = null;
+                if (!empty($this->tabs) && is_array($this->tabs) && $this->tabs[count($this->tabs) - 1]['tab_id'] == 'delete') {
+                    $deletetab = array_pop($this->tabs);
+                }
+                foreach ($externaltabdefs as $externaltabdef) {
+                    $tabdef = @unserialize($externaltabdef->tabdata);
+                    if (empty($tabdef['tab_id']) || empty($tabdef['page'])) {
+                        error_log("local_elisprogram_tab_defs: plugin = {$externaltabdef->plugin}; parent = {$externaltabdef->parent}; missing 'tab_id' and/or 'page' spec.");
+                        continue;
+                    }
+                    if (!empty($tabdef['file']) && file_exists($CFG->dirroot.$tabdef['file'])) {
+                        require_once($CFG->dirroot.$tabdef['file']);
+                        $newtab = array();
+                        $hasreqs = true;
+                        foreach (array('params', 'name', 'showtab', 'showbutton') as $callableprop) {
+                            if (!isset($tabdef[$callableprop])) {
+                                $hasreqs = false;
+                                break;
+                            }
+                            $callfcn = $tabdef[$callableprop];
+                            if (is_array($callfcn)) {
+                                switch ($callfcn[0]) {
+                                    case 'this':
+                                    case 'self':
+                                        $callfcn[0] = new $tabdef['page'](($callableprop == 'params') ? array() : $newtab['params']);
+                                        break;
+                                }
+                            }
+                            if (!@is_callable($callfcn)) {
+                                $hasreqs = false;
+                                break;
+                            }
+                            $newtab[$callableprop] = call_user_func($callfcn, $externaltabdef->plugin, $externaltabdef->parent, $tabdef);
+                        }
+                        if (!$hasreqs) {
+                            error_log("local_elisprogram_tab_defs: plugin = {$externaltabdef->plugin}; parent = {$externaltabdef->parent}; callable spec. error.");
+                            continue;
+                        }
+                        $newtab['plugin'] = $externaltabdef->plugin;
+                        $newtab['file'] = $tabdef['file'];
+                        $newtab['tab_id'] = $tabdef['tab_id'];
+                        $newtab['page'] = $tabdef['page'];
+                        $newtab['image'] = !empty($tabdef['image']) ? $tabdef['image'] : false;
+                        if (!is_array($this->tabs)) {
+                            $this->tabs = array();
+                        }
+                        $this->tabs[] = $newtab;
+                    } else {
+                        error_log("local_elisprogram_tab_defs: plugin = {$externaltabdef->plugin}; parent = {$externaltabdef->parent}; 'file' = {$tabdef['file']} not found.");
+                    }
+                }
+                if ($deletetab) {
+                    $this->tabs[] = $deletetab;
+                }
+            }
+        }
+        parent::__construct($params);
+    }
 
     protected function _get_page_url() {
         global $CFG;
