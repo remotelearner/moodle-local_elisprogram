@@ -40,6 +40,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
     public function get_html($fullscreen = false) {
         global $CFG, $USER;
         static $init = false;
+        require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
         require_once(\elispm::lib('data/user.class.php'));
         require_once(\elispm::lib('lib.php'));
         if (!$init && isloggedin() && !empty($USER->id) && !isguestuser($USER->id)) {
