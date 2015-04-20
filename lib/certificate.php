@@ -352,9 +352,10 @@ function cm_certificate_generate_code($append = 0) {
  *
  * @uses $CDG
  * @uses $DB
+ * @uses $USER
  */
 function cm_certificate_email_random_number_fail($tableobj = null) {
-    global $CFG, $DB;
+    global $CFG, $DB, $USER;
 
     if (empty($tableobj)) {
         return false;
@@ -382,21 +383,26 @@ function cm_certificate_email_random_number_fail($tableobj = null) {
         }
     }
 
-    //email to specified address
-    $user_obj = new stdClass;
-    $user_obj->email      = 'development@remote-learner.net';
-    $user_obj->mailformat = FORMAT_HTML;
+    // Email to specified address
+    // A valid $user->id & all other fields now required by Moodle 2.6+ email_to_user() API which also calls fullname($user)
+    $userobj = new stdClass;
+    $allfields = get_all_user_name_fields();
+    foreach ($allfields as $field) {
+        $userobj->$field = null;
+    }
+    $userobj->id         = $USER->id; // let's just use this user as default (TBD)
+    $userobj->email      = 'development@remote-learner.net'; // TBD!?!
+    $userobj->mailformat = FORMAT_HTML;
 
-    email_to_user($user_obj, get_admin(), get_string('certificate_code_fail', 'elis_proram', $a), $message_text, $message_html);
+    email_to_user($userobj, get_admin(), get_string('certificate_code_fail', 'elis_proram', $a), $message_text, $message_html);
 
-    //output to screen if possible
-    if (!empty($output_to_screen)) {
+    // Output to screen if possible
+    if (!empty($output_to_screen)) { // TBD???
         echo $message_html;
     }
 
     return true;
 }
-
 
 /**
  * Make multiple attempts to get a unique certificate code.
