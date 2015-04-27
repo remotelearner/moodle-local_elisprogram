@@ -77,15 +77,13 @@ class programcourse extends course {
         $selectfields = parent::get_select_fields($filters);
 
         // Select the number of prerequisites not met.
-        $selectfields[] = '(SELECT count(prereq.id) FROM {local_elisprogram_crs_prereq} prereq
-                              JOIN {local_elisprogram_cls} prereqcls ON prereqcls.courseid = prereq.courseid
-                         LEFT JOIN {local_elisprogram_cls_enrol} prereqstu ON prereqstu.classid = prereqcls.id
-                                   AND prereqstu.userid = '.$euserid.'
+        $selectfields[] = '(SELECT count(prereq.id)
+                              FROM {local_elisprogram_crs_prereq} prereq
                              WHERE prereq.curriculumcourseid = pgmcrs.id
-                                   AND (prereqstu.completestatusid IN ('.STUSTATUS_FAILED.','.STUSTATUS_NOTCOMPLETE.') OR prereqstu.id IS NULL)
                                    AND NOT EXISTS (SELECT \'x\' FROM {local_elisprogram_cls_enrol} stu
                                                      JOIN {local_elisprogram_cls} cls ON stu.classid = cls.id
                                                     WHERE cls.courseid = prereq.courseid
+                                                          AND stu.userid = '.$euserid.'
                                                           AND stu.completestatusid = '.STUSTATUS_PASSED.')
 
                            ) AS numnoncompleteprereq';
