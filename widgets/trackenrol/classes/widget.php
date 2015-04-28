@@ -181,7 +181,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
                 }
                 $usidarray = @unserialize($usids);
                 if (!empty($usidarray) && is_array($usidarray)) {
-                    $usassign = \clusterassignment::find([new field_filter('clusterid', $usidarray[0]), new field_filter('userid', $pmuserid)]);
+                    $usassign = \clusterassignment::find([new \field_filter('clusterid', $usidarray[0]), new \field_filter('userid', $pmuserid)]);
                     if ($usassign && $usassign->valid()) {
                         return true;
                     }
