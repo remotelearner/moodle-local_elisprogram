@@ -232,6 +232,10 @@ class widget extends \local_elisprogram\lib\widgetbase {
             }
             return false;
         }
-        return true;
+        if (empty($allowedusersets) && empty($requiredcaps)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
