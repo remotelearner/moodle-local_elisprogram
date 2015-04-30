@@ -191,7 +191,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
         $requiredcaps = $this->get_required_capabilities();
         if (!empty($requiredcaps)) {
             $viewcontexts = get_config('eliswidget_trackenrol', 'viewcontexts');
-            $viewcontexts = preg_split('/,/', $viewcontexts);
+            $viewcontexts = explode(',', $viewcontexts);
             if (empty($viewcontexts) || in_array(CONTEXT_SYSTEM, $viewcontexts)) {
                 $syscontext = \context_system::instance();
                 foreach ($requiredcaps as $requiredcap) {
@@ -200,38 +200,27 @@ class widget extends \local_elisprogram\lib\widgetbase {
                     }
                 }
             }
-            if (empty($viewcontexts) || array_search('', $viewcontexts) !== false) {
-                // Any context permitted ...
-                $sql = 'SELECT c.id, c.instanceid, c.contextlevel
-                          FROM {role_assignments} ra
-                          JOIN {context} c ON ra.contextid = c.id
-                         WHERE ra.userid = '.$userid;
-                $possiblecontexts = $DB->get_recordset_sql($sql);
-                foreach ($possiblecontexts as $c) {
-                    $ctxclass = \context_helper::get_class_for_level($c->contextlevel);
-                    $context = $ctxclass::instance($c->instanceid);
-                    foreach ($requiredcaps as $requiredcap) {
-                        if (has_capability($requiredcap, $context, $userid)) {
-                            return true;
-                        }
-                    }
-                }
-            } else {
+            $contextsql = '';
+            $params = [$userid];
+            // Any context permitted?
+            if (!empty($viewcontexts) && !in_array('', $viewcontexts)) {
                 $contextlevels = $DB->get_in_or_equal($viewcontexts);
-                $sql = 'SELECT c.id, c.instanceid, c.contextlevel
-                          FROM {role_assignments} ra
-                          JOIN {context} c ON ra.contextid = c.id
-                         WHERE ra.userid = ?
-                               AND c.contextlevel '.$contextlevels[0];
-                array_unshift($contextlevels[1], $userid);
-                $possiblecontexts = $DB->get_recordset_sql($sql, $contextlevels[1]);
-                foreach ($possiblecontexts as $c) {
-                    $ctxclass = \context_helper::get_class_for_level($c->contextlevel);
-                    $context = $ctxclass::instance($c->instanceid);
-                    foreach ($requiredcaps as $requiredcap) {
-                        if (has_capability($requiredcap, $context, $userid)) {
-                            return true;
-                        }
+                if (!empty($contextlevels[0])) {
+                    $contextsql = ' AND c.contextlevel '.$contextlevels[0];
+                    $params = array_merge($params, $contextlevels[1]);
+                }
+            }
+            $sql = 'SELECT c.id, c.instanceid, c.contextlevel
+                      FROM {role_assignments} ra
+                      JOIN {context} c ON ra.contextid = c.id
+                     WHERE ra.userid = ? '.$contextsql;
+            $possiblecontexts = $DB->get_recordset_sql($sql, $params);
+            foreach ($possiblecontexts as $c) {
+                $ctxclass = \context_helper::get_class_for_level($c->contextlevel);
+                $context = $ctxclass::instance($c->instanceid);
+                foreach ($requiredcaps as $requiredcap) {
+                    if (has_capability($requiredcap, $context, $userid)) {
+                        return true;
                     }
                 }
             }
