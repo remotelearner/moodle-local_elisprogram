@@ -142,10 +142,10 @@ class widget extends \local_elisprogram\lib\widgetbase {
      */
     public function get_required_capabilities() {
         global $DB;
-        $viewcaps = get_config('eliswidget_trackenrol', 'viewcaps');
+        $viewcap = get_config('eliswidget_trackenrol', 'viewcap');
         $reqcaps = [];
-        if (!empty($viewcaps)) {
-            foreach (explode(',', $viewcaps) as $capid) {
+        if (!empty($viewcap)) {
+            foreach (explode(',', $viewcap) as $capid) {
                 if (empty($capid)) {
                     return [];
                 }
@@ -155,7 +155,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
                 }
             }
         }
-        $reqcaps;
+        return $reqcaps;
     }
 
     /**
@@ -164,7 +164,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
      * @return bool Whether the user has the required capabilities to add this widget.
      */
     public function has_required_capabilities() {
-        global $CFG;
+        global $CFG, $DB;
         require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
         require_once(\elispm::lib('data/clusterassignment.class.php'));
         require_once(\elispm::lib('lib.php'));
@@ -191,26 +191,22 @@ class widget extends \local_elisprogram\lib\widgetbase {
         $requiredcaps = $this->get_required_capabilities();
         if (!empty($requiredcaps)) {
             $viewcontexts = get_config('eliswidget_trackenrol', 'viewcontexts');
-            $spos = false;
-            if (empty($viewcontexts) || ($spos = strpos($viewcontexts, CONTEXT_SYSTEM.',')) === 0 || ($spos = strpos($viewcontexts, ','.CONTEXT_SYSTEM.',')) !== false) {
+            $viewcontexts = preg_split('/,/', $viewcontexts);
+            if (empty($viewcontexts) || in_array(CONTEXT_SYSTEM, $viewcontexts)) {
                 $syscontext = \context_system::instance();
                 foreach ($requiredcaps as $requiredcap) {
                     if (has_capability($requiredcap, $syscontext, $userid)) {
                         return true;
                     }
                 }
-                if ($spos !== false) {
-                    $viewcontexts = $spos ? str_replace(','.CONTEXT_SYSTEM.',', ',', $viewcontexts) : substr($viewcontexts, 2);
-                }
             }
-            $viewctxarray = empty($viewcontexts) ? false : explode(',', $viewcontexts);
-            if (empty($viewctxarray) || array_search('', $viewctxarray) !== false) {
+            if (empty($viewcontexts) || array_search('', $viewcontexts) !== false) {
                 // Any context permitted ...
                 $sql = 'SELECT c.id, c.instanceid, c.contextlevel
                           FROM {role_assignments} ra
                           JOIN {context} c ON ra.contextid = c.id
                          WHERE ra.userid = '.$userid;
-                $possiblecontexts = get_recordset_sql($sql);
+                $possiblecontexts = $DB->get_recordset_sql($sql);
                 foreach ($possiblecontexts as $c) {
                     $ctxclass = \context_helper::get_class_for_level($c->contextlevel);
                     $context = $ctxclass::instance($c->instanceid);
@@ -221,10 +217,19 @@ class widget extends \local_elisprogram\lib\widgetbase {
                     }
                 }
             } else {
-                foreach ($viewctxarray as $ctxlevel) {
+                $contextlevels = $DB->get_in_or_equal($viewcontexts);
+                $sql = 'SELECT c.id, c.instanceid, c.contextlevel
+                          FROM {role_assignments} ra
+                          JOIN {context} c ON ra.contextid = c.id
+                         WHERE ra.userid = ?
+                               AND c.contextlevel '.$contextlevels[0];
+                array_unshift($contextlevels[1], $userid);
+                $possiblecontexts = $DB->get_recordset_sql($sql, $contextlevels[1]);
+                foreach ($possiblecontexts as $c) {
+                    $ctxclass = \context_helper::get_class_for_level($c->contextlevel);
+                    $context = $ctxclass::instance($c->instanceid);
                     foreach ($requiredcaps as $requiredcap) {
-                        $contextset = \pm_context_set::for_user_with_capability($ctxlevel, $requiredcap, $userid);
-                        if (!$contextset->is_empty()) {
+                        if (has_capability($requiredcap, $context, $userid)) {
                             return true;
                         }
                     }
