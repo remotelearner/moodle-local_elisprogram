@@ -37,7 +37,7 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
         elis_tasks_update_definition('local_elisprogram');
     }
 
-    if ($result && $oldversion < 2014082500) {
+    if ($result && $oldversion < 2015051100) {
         $file = $CFG->dirroot.'/local/elisprogram/db/install.xml';
         $tables = array('local_elisprogram_crsset', 'local_elisprogram_crssetcrs', 'local_elisprogram_prgcrsset');
         foreach ($tables as $tablename) {
@@ -55,10 +55,10 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
         \local_eliscore\context\helper::reset_levels();
         \local_eliscore\context\helper::init_levels();
 
-        upgrade_plugin_savepoint($result, '2014082500', 'local', 'elisprogram');
+        upgrade_plugin_savepoint($result, '2015051100', 'local', 'elisprogram');
     }
 
-    if ($result && $oldversion < 2015010402) {
+    if ($result && $oldversion < 2015051101) {
         // ELIS-9067: Remove deleted Moodle Course refs in ELIS tables.
         $tablefields = array(
             'local_elisprogram_cls_mdl' => 'moodlecourseid',
@@ -68,7 +68,7 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
             $table = new xmldb_table($tablename);
             if ($dbman->table_exists($table) && $dbman->field_exists($table, $fieldname)) {
                 $where = "NOT EXISTS (SELECT 'x'
-                                        FROM mdl_course WHERE id = {{$tablename}}.{$fieldname})";
+                                        FROM {course} WHERE id = {{$tablename}}.{$fieldname})";
                 $recs = $DB->get_recordset_select($tablename, $where);
                 if ($recs && $recs->valid()) {
                     foreach ($recs as $rec) {
@@ -79,10 +79,10 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
                 }
             }
         }
-        upgrade_plugin_savepoint($result, '2015010402', 'local', 'elisprogram');
+        upgrade_plugin_savepoint($result, '2015051101', 'local', 'elisprogram');
     }
 
-    if ($result && $oldversion < 2015010403) {
+    if ($result && $oldversion < 2015051102) {
         // ELIS-9081: Migrate any dataroot /elis/program files to /local/elisprogram
         $olddatadir = $CFG->dataroot.'/elis/program';
         $newdatadir = $CFG->dataroot.'/local/elisprogram';
@@ -95,17 +95,17 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
         } else if (!file_exists($newdatadir)) {
             @mkdir($newdatadir, 0777, true);
         }
-        upgrade_plugin_savepoint($result, '2015010403', 'local', 'elisprogram');
+        upgrade_plugin_savepoint($result, '2015051102', 'local', 'elisprogram');
     }
 
-    if ($result && $oldversion < 2015010404) {
+    if ($result && $oldversion < 2015051103) {
         $file = $CFG->dirroot.'/local/elisprogram/db/install.xml';
         $tablename = 'local_elisprogram_tab_defs';
         $table = new xmldb_table($tablename);
         if (!$dbman->table_exists($table)) {
             $dbman->install_one_table_from_xmldb_file($file, $tablename);
         }
-        upgrade_plugin_savepoint($result, '2015010404', 'local', 'elisprogram');
+        upgrade_plugin_savepoint($result, '2015051103', 'local', 'elisprogram');
     }
 
     return $result;

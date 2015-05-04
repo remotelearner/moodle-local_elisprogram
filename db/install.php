@@ -75,7 +75,7 @@ function xmldb_local_elisprogram_install() {
 
     if ($oldinstalled) {
         require_once(dirname(__FILE__).'/upgrade.php');
-        set_config('version', 2015010400, 'local_elisprogram');
-        xmldb_local_elisprogram_upgrade(2015010400);
+        set_config('version', 2015051100, 'local_elisprogram');
+        xmldb_local_elisprogram_upgrade(2015051100);
     }
 }

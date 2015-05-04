@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    usetenrol_moodleprofile
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -39,8 +39,8 @@ function xmldb_usetenrol_moodleprofile_install() {
     if ($migrator->old_component_installed() === true) {
         $migrator->migrate();
         require_once(dirname(__FILE__).'/upgrade.php');
-        set_config('version', 2015010400, 'usetenrol_moodleprofile');
-        xmldb_usetenrol_moodleprofile_upgrade(2015010400);
+        set_config('version', 2015051100, 'usetenrol_moodleprofile');
+        xmldb_usetenrol_moodleprofile_upgrade(2015051100);
     }
 }
 
@@ -56,14 +56,11 @@ function usetenrol_moodleprofile_pre26upgradesteps($oldversion) {
     $dbman = $DB->get_manager();
     $result = true;
 
-    if ($result && $oldversion < 2011120800) {
+    if ($result && $oldversion < 2015051100) {
         // Fix plugin name.
         $sql = "UPDATE {".clusterassignment::TABLE."} SET plugin = 'moodleprofile' WHERE plugin = 'moodle_profile'";
 
         $DB->execute($sql);
-
-        // Userset enrol savepoint reached.
-        upgrade_plugin_savepoint(true, 2011120800, 'usetenrol', 'moodleprofile');
     }
 
     return $result;
