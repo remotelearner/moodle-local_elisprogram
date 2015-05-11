@@ -230,6 +230,6 @@ class track extends \eliswidget_enrolment\datatable\base {
             }
         }
 
-        return [array_values($pageresultsar), count($pageresultsar)];
+        return [array_values($pageresultsar), $totalresultsamt];
     }
 }
