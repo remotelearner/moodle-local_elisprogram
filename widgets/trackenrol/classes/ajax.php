@@ -232,13 +232,8 @@ class ajax {
                     throw new \Exception('User already enroled.');
                 }
                 try {
-                    $enroldata = [
-                        'trackid' => $data['trackid'],
-                        'userid' => $euserid,
-                        'enrolmenttime' => time(),
-                    ];
-                    $usertrack = new \usertrack($enroldata);
-                    $usertrack->save();
+                    $usertrack = new \usertrack();
+                    $usertrack->enrol($euserid, $data['trackid']);
                 } catch (Exception $e) {
                     // TBD: log error?
                     throw $e;
