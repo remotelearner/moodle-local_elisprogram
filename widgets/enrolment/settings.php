@@ -111,7 +111,8 @@ if ($ADMIN->fulltree) {
         $fields = field::get_for_context_level($ctxlvl);
         if ($fields->valid() === true) {
             foreach ($fields as $field) {
-                $info['fields']['cf_'.$field->shortname] = $field->name;
+                $name = strtolower('cf_'.$field->shortname);
+                $info['fields'][$name] = $field->name;
             }
         }
 
