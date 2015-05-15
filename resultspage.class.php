@@ -272,9 +272,9 @@ abstract class enginepage extends pm_page {
 
                 // Accordion
                 $("#accordion").accordion({ header: "h3", active: '. $type .' });
-                $("#accordion").accordion({ change:
+                $("#accordion").accordion({ activate:
                     function(event, ui) {
-                        document.getElementById("result_type_id").value = (ui.options.active);
+                        document.getElementById("result_type_id").value = $("#accordion").accordion("option", "active");
                     }
                 });
 
