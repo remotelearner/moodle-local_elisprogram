@@ -543,7 +543,20 @@ function pm_assign_student_from_mdl($eventdata) {
             $sturec->grade = 0;
             $sturec->credits = 0;
             $sturec->locked = 0;
-            $sturec->id = $DB->insert_record(student::TABLE, $sturec);
+            // ELIS-9150: Must check class pre-reqs statisfied and enrolment limit not exceeded or waitlist
+            $stuobj = new student($sturec);
+            try {
+                $stuobj->save();
+            } catch (pmclass_enrolment_limit_validation_exception $pme) {
+                require_once elispm::lib('data/waitlist.class.php');
+                $waitlist = new waitlist(array('classid' => $sturec->classid, 'userid' => $pmuserid));
+                $waitlist->save();
+            } catch (Exception $e) { // Other exceptions like pre-reqs not met, ...
+                require_once elispm::lib('lib.php');
+                if (in_cron()) {
+                    mtrace("ELIS class-sync exception in role assign handler for user {$pmuserid} in class {$sturec->classid} - ".$e->getMessage());
+                }
+            }
         }
     }
 }

@@ -31,6 +31,7 @@ require_once(__DIR__.'/../../lib/data/usermoodle.class.php');
 require_once(__DIR__.'/../../lib/data/classmoodlecourse.class.php');
 require_once(__DIR__.'/../../lib/data/pmclass.class.php');
 require_once(__DIR__.'/../../lib/data/student.class.php');
+require_once(__DIR__.'/../../lib/data/waitlist.class.php');
 require_once(__DIR__.'/../../../../lib/grade/grade_category.php');
 require_once(__DIR__.'/../../../../lib/grade/grade_item.php');
 require_once(__DIR__.'/../../../../lib/grade/grade_grade.php');
@@ -289,8 +290,19 @@ class synchronize {
         $sturec->credits = 0;
         $sturec->locked = 0;
         $stuobj = new \student($sturec);
-        $stuobj->save();
-        $sturec->id = $stuobj->id;
+        try {
+            $stuobj->save();
+            $sturec->id = $stuobj->id;
+        } catch (\pmclass_enrolment_limit_validation_exception $pme) {
+            $waitlist = new \waitlist(array('classid' => $pmclassid, 'userid' => $pmuserid));
+            $waitlist->save();
+        } catch (\Exception $e) { // Other exceptions like pre-reqs not met, ...
+            global $CFG;
+            require_once($CFG->dirroot.'/local/elisprogram/lib/lib.php');
+            if (in_cron()) {
+                mtrace("ELIS grade-sync exception enrolling student {$pmuserid} in class {$pmclassid} - ".$e->getMessage());
+            }
+        }
         return $sturec;
     }
 
@@ -385,7 +397,15 @@ class synchronize {
                     $sturec->completetime = $timenow;
                 }
                 $stuobj = new \student($sturec);
-                $stuobj->save();
+                try {
+                    $stuobj->save();
+                } catch (\Exception $e) { // Enrolment rec exists - this shouldn't happen ...
+                    global $CFG;
+                    require_once($CFG->dirroot.'/local/elisprogram/lib/lib.php');
+                    if (in_cron()) {
+                        mtrace("ELIS grade-sync exception saving student {$sturec->userid} grades for class {$sturec->classid} - ".$e->getMessage());
+                    }
+                }
             }
         }
     }
@@ -578,6 +598,10 @@ class synchronize {
                     continue;
                 }
                 $sturec = $this->create_enrolment_record($causer->cmid, $causer->muid, $causer->moodlecourseid, $causer->pmclassid, $timenow);
+                if (empty($sturec->id)) {
+                    // TBD: Error occurred creating student record.
+                    continue;
+                }
                 $sturec = (array)$sturec;
 
                 // Merge the new student record with $causer.
