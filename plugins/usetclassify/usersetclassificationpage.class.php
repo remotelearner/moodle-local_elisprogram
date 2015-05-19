@@ -83,6 +83,27 @@ class usersetclassificationform extends cmform {
 
         $this->add_action_buttons();
     }
+
+
+    /**
+     * Form validation
+     * @param array $data the form data.
+     * @param array $files the form files.
+     * @return array array of errors keyed by data form element.
+     */
+    public function validation($data, $files) {
+        global $DB;
+        $errors = parent::validation($data, $files);
+
+        if ($DB->record_exists_select(usersetclassification::TABLE, 'name = ? AND id <> ?', array($data['name'], $data['id']))) {
+            $errors['name'] = get_string('userset_classification_nameunique', 'local_elisprogram');
+        }
+        if ($DB->record_exists_select(usersetclassification::TABLE, 'shortname = ? AND id <> ?', array($data['shortname'], $data['id']))) {
+            $errors['shortname'] = get_string('userset_classification_shortnameunique', 'local_elisprogram');
+        }
+
+        return $errors;
+    }
 }
 
 class usersetclassificationpage extends managementpage {
