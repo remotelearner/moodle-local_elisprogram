@@ -68,7 +68,7 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
             $table = new xmldb_table($tablename);
             if ($dbman->table_exists($table) && $dbman->field_exists($table, $fieldname)) {
                 $where = "NOT EXISTS (SELECT 'x'
-                                        FROM mdl_course WHERE id = {{$tablename}}.{$fieldname})";
+                                        FROM {course} WHERE id = {{$tablename}}.{$fieldname})";
                 $recs = $DB->get_recordset_select($tablename, $where);
                 if ($recs && $recs->valid()) {
                     foreach ($recs as $rec) {
