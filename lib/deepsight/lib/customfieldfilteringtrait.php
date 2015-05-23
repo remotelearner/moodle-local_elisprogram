@@ -38,7 +38,6 @@ trait customfieldfilteringtrait {
      *
      * Sets the internal $this->customfields array with the returned field information, and returns an array of filters
      * for each custom field found.
-     * NOTE: This will only look for filterable custom fields, which at the moment are "char" or "text" fields.
      *
      * @param int $contextlevel The context level of the fields we want. i.e. CONTEXT_ELIS_USER, CONTEXT_ELIS_CLASS, etc.
      * @param array $menuofchoicesadditionalparams An array of additonal search parameters to set in any menu of choices filters.
@@ -53,8 +52,7 @@ trait customfieldfilteringtrait {
                   FROM {local_eliscore_field} field
                   JOIN {local_eliscore_field_clevels} ctx ON ctx.fieldid = field.id
                   JOIN {local_eliscore_field_owner} owner ON owner.fieldid = field.id AND plugin = "manual"
-                 WHERE field.datatype != "bool"
-                       AND ctx.contextlevel = ?';
+                 WHERE ctx.contextlevel = ?';
         $customfields = $this->DB->get_recordset_sql($sql, array($contextlevel));
         foreach ($customfields as $field) {
             $field->params = @unserialize($field->params);
@@ -68,10 +66,10 @@ trait customfieldfilteringtrait {
 
             $filterfielddata = array($filtername.'.data' => $field->name);
 
-            if (isset($field->params['control']) && $field->params['control'] === 'menu' && !empty($field->params['options'])) {
-                $filtermenu = new \deepsight_filter_menuofchoices($this->DB, $filtername, $field->name, $filterfielddata,
-                                                                 $this->endpoint);
-                $choices = explode("\n", $field->params['options']);
+            if ($field->datatype === 'bool' || (isset($field->params['control']) && $field->params['control'] === 'menu' && !empty($field->params['options']))) {
+                $filterfielddata['datatype'] = $field->datatype;
+                $filtermenu = new \deepsight_filter_menuofchoices($this->DB, $filtername, $field->name, $filterfielddata, $this->endpoint);
+                $choices = ($field->datatype === 'bool') ? array(get_string('no'), get_string('yes')) : explode("\n", $field->params['options']);
                 foreach ($choices as $i => $choice) {
                     $choices[$i] = trim($choice);
                 }
@@ -103,7 +101,7 @@ trait customfieldfilteringtrait {
         if (!empty($fields)) {
             $joinsql[] = 'JOIN {context} ctx ON ctx.instanceid = element.id AND ctx.contextlevel='.$ctxlevel;
             foreach ($fields as $fieldname => $field) {
-                $datatable = ($field->datatype == 'datetime') ? 'int' : $field->datatype;
+                $datatable = ($field->datatype == 'datetime' || $field->datatype == 'bool') ? 'int' : $field->datatype;
                 $customfieldjoin = 'LEFT JOIN {local_eliscore_fld_data_'.$datatable.'} '.$fieldname.' ON ';
                 $customfieldjoin .= $fieldname.'.contextid = ctx.id AND '.$fieldname.'.fieldid = '.$field->id;
                 $customfieldjoin .= '

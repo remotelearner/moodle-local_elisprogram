@@ -104,7 +104,7 @@ class ajax {
      */
     protected function results2array($data) {
         if (is_array($data)) {
-            return $data;
+            return array_values($data);
         } else if ($data instanceof \moodle_recordset) {
             $dataar = [];
             foreach ($data as $id => $record) {

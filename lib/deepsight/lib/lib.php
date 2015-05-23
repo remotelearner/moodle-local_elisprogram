@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1865,6 +1865,8 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
             $elem = $fieldname.'_data';
             if (isset($row[$elem]) && isset($field->params['control']) && $field->params['control'] == 'datetime') {
                 $row[$elem] = ds_process_displaytime($row[$elem]);
+            } else if ($field->datatype == 'bool') {
+                $row[$elem] = !empty($row[$elem]) ? get_string('yes') : get_string('no');
             }
         }
         return $row;

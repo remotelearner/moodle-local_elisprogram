@@ -27,6 +27,7 @@
 namespace eliswidget_enrolment\datatable;
 
 require_once(__DIR__.'/../../../../lib/deepsight/lib/customfieldfilteringtrait.php');
+require_once(__DIR__.'/../../../../lib/deepsight/lib/lib.php');
 
 /**
  * Abstract base class for deepsight datatables used in the widget.
@@ -240,7 +241,7 @@ abstract class base {
      *
      * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
      * @param int $page The page being displayed.
-     * @return \moodle_recordset A recordset of course information.
+     * @return array An array of table information.
      */
     public function get_search_results(array $filters = array(), $page = 1) {
         global $CFG;
@@ -304,6 +305,18 @@ abstract class base {
         $query = implode(' ', $sqlparts);
         $results = $this->DB->get_recordset_sql($query, $params, $limitfrom, $limitnum);
 
-        return [$results, $totalresults];
+        $resultsarray = [];
+        foreach ($results as $id => $result) {
+            $resultsarray[$id] = $result;
+            foreach ($this->customfields as $fieldname => $field) {
+                $elem = $fieldname.'_data';
+                if (isset($resultsarray[$id]->$elem) && isset($field->params['control']) && $field->params['control'] == 'datetime') {
+                    $resultsarray[$id]->$elem = ds_process_displaytime($resultsarray[$id]->$elem);
+                } else if ($field->datatype == 'bool') {
+                    $resultsarray[$id]->$elem = !empty($resultsarray[$id]->$elem) ? get_string('yes') : get_string('no');
+                }
+            }
+        }
+        return [$resultsarray, $totalresults];
     }
 }
