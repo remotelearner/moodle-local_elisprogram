@@ -32,6 +32,9 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
     protected $endpoint = '';
     protected $choices = array();
 
+    /** @var string $datatype */
+    protected $datatype = '';
+
     /** @var array An array of additional parameters that will be included in the search request. */
     protected $additionalsearchparams = [];
 
@@ -51,6 +54,10 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
             throw new Exception("You must specify an endpoint URL for menuofchoices filter '{$name}'");
         }
         $this->endpoint = (strpos($endpoint, '?') !== false) ? $endpoint.'&m=filter' : $endpoint.'?m=filter';
+        if (isset($fielddata['datatype'])) {
+            $this->datatype = $fielddata['datatype'];
+            unset($fielddata['datatype']);
+        }
         parent::__construct($DB, $name, $label, $fielddata);
     }
 
@@ -112,6 +119,9 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
             foreach ($data as $val) {
                 if (!is_numeric($val) && !is_string($val)) {
                     return array('', array());
+                }
+                if ($this->datatype == 'bool') {
+                    $val = ($val == get_string('yes'));
                 }
                 $params[] = $val;
             }
