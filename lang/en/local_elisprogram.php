@@ -314,6 +314,7 @@ $string['course_role_help'] = 'This is the default role to assign to a Program M
 This type of role assignment will not take place for a particular course description if that user is already permitted to edit that course description.
 To disable this functionality, select "N/A" from the list.';
 $string['course_role_setting'] = 'Default Course Description Role';
+$string['course_status'] = 'Status';
 $string['course_syllabus'] = 'Description';
 $string['course_version'] = 'Version';
 $string['courses'] = 'Course Descriptions';
@@ -503,6 +504,7 @@ Are you sure to remove selected Program(s) from the Course Set?';
 $string['ds_bulk_defaultstatus'] = 'To perform bulk actions, drag rows here.';
 $string['ds_bulk_unloadconfirm'] = 'You have pending bulk actions, if you leave your selections will be lost.';
 $string['ds_changes'] = 'Please confirm the following changes before they are applied:';
+$string['ds_completed'] = 'Completed';
 $string['ds_completion_on'] = 'on';
 $string['ds_enrolled'] = 'Enrolled';
 $string['ds_errormessage'] = '<strong>Sorry, we encountered a problem.</strong> Please refresh your browser and try again. If you continue to experience problems, please contact Remote Learner.';
@@ -511,6 +513,7 @@ $string['ds_loading'] = '<strong>Loading List...</strong>';
 $string['ds_assign_as_subset'] = 'Assign as subset(s)';
 $string['ds_nochanges'] = 'No Changes';
 $string['ds_noresults'] = '<strong>We couldn\'t find any results for the selected filters.</strong><span>Note: Elements added to the bulk editor will not be included here.</span>';
+$string['ds_notcompleted'] = 'Not Completed';
 $string['ds_notenrolled'] = 'Not Enrolled';
 $string['ds_prgcrsset_assocdata'] = 'Program/Course-Set Association Data';
 $string['ds_searchresults'] = 'Search Results';
