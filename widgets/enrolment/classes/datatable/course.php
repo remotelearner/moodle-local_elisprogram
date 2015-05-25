@@ -50,6 +50,7 @@ class course extends base {
         }
 
         require_once(\elispm::lib('deepsight/lib/filter.php'));
+        require_once(\elispm::lib('data/user.class.php'));
 
         // Basic fields.
         $langname = get_string('course_name', 'local_elisprogram');
@@ -59,6 +60,11 @@ class course extends base {
         $langcredits = get_string('credits', 'local_elisprogram');
         $langcost = get_string('cost', 'local_elisprogram');
         $langversion = get_string('course_version', 'local_elisprogram');
+        $langcoursestatus = get_string('course_status', 'local_elisprogram');
+        $euserid = \user::get_current_userid();
+        $coursestatusfilter = new \deepsight_filter_coursestatus($this->DB, 'coursestatus', $langcoursestatus, array('userid' => $euserid),
+                $CFG->wwwroot.'/local/elisprogram/widgets/enrolment/ajax.php'); // TBD.
+        $coursestatusfilter->set_default(''); // TBD.
         $filters = [
                 new \deepsight_filter_textsearch($this->DB, 'name', $langname, ['element.name' => $langname]),
                 new \deepsight_filter_textsearch($this->DB, 'code', $langcode, ['element.code' => $langcode]),
@@ -67,6 +73,7 @@ class course extends base {
                 new \deepsight_filter_textsearch($this->DB, 'credits', $langcredits, ['element.credits' => $langcredits]),
                 new \deepsight_filter_textsearch($this->DB, 'cost', $langcost, ['element.cost' => $langcost]),
                 new \deepsight_filter_textsearch($this->DB, 'version', $langversion, ['element.version' => $langversion]),
+                $coursestatusfilter
         ];
 
         // Add custom fields.
@@ -76,6 +83,10 @@ class course extends base {
 
         // Restrict to configured enabled fields.
         $enabledfields = get_config('eliswidget_enrolment', 'courseenabledfields');
+        if (!empty($enabledfields)) {
+            $enabledfields .= ',';
+        }
+        $enabledfields .= 'coursestatus'; // TBD: always add coursestatus filter?
         if (!empty($enabledfields)) {
             $enabledfields = explode(',', $enabledfields);
             foreach ($filters as $i => $filter) {
