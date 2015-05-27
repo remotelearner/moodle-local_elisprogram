@@ -455,9 +455,11 @@
                 // Hidden details.
                 var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
                 for (var fieldalias in fieldvisibility.hidden) {
-                    var label = fieldvisibility.hidden[fieldalias];
-                    var value = main.data[fieldalias];
-                    detailshidden.append(main.generateitem(label, value, fieldalias));
+                    if (typeof main.data[fieldalias] != 'undefined') {
+                        var label = fieldvisibility.hidden[fieldalias];
+                        var value = main.data[fieldalias];
+                        detailshidden.append(main.generateitem(label, value, fieldalias));
+                    }
                 }
                 details.append(detailshidden);
 
@@ -583,9 +585,11 @@
 
                 var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
                 for (var fieldalias in fieldvisibility.hidden) {
-                    var label = fieldvisibility.hidden[fieldalias];
-                    var value = main.data[fieldalias];
-                    detailshidden.append(main.generateitem(label, value, fieldalias));
+                    if (typeof main.data[fieldalias] != 'undefined') {
+                        var label = fieldvisibility.hidden[fieldalias];
+                        var value = main.data[fieldalias];
+                        detailshidden.append(main.generateitem(label, value, fieldalias));
+                    }
                 }
                 details.append(detailshidden);
 
@@ -731,9 +735,11 @@
 
                 var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
                 for (var fieldalias in fieldvisibility.hidden) {
-                    var label = fieldvisibility.hidden[fieldalias];
-                    var value = main.data[fieldalias];
-                    detailshidden.append(main.generateitem(label, value, fieldalias));
+                    if (typeof main.data[fieldalias] != 'undefined') {
+                        var label = fieldvisibility.hidden[fieldalias];
+                        var value = main.data[fieldalias];
+                        detailshidden.append(main.generateitem(label, value, fieldalias));
+                    }
                 }
                 details.append(detailshidden);
 
@@ -886,15 +892,19 @@
                 // Build and add details.
                 var details = $('<div class="details"></div>');
                 for (var fieldalias in fieldvisibility.visible) {
-                    var label = fieldvisibility.visible[fieldalias];
-                    var value = main.data[fieldalias];
-                    details.append(main.generateitem(label, value, fieldalias));
+                    if (typeof main.data[fieldalias] != 'undefined') {
+                        var label = fieldvisibility.visible[fieldalias];
+                        var value = main.data[fieldalias];
+                        details.append(main.generateitem(label, value, fieldalias));
+                    }
                 }
                 var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
                 for (var fieldalias in fieldvisibility.hidden) {
-                    var label = fieldvisibility.hidden[fieldalias];
-                    var value = main.data[fieldalias];
-                    detailshidden.append(main.generateitem(label, value, fieldalias));
+                    if (typeof main.data[fieldalias] != 'undefined') {
+                        var label = fieldvisibility.hidden[fieldalias];
+                        var value = main.data[fieldalias];
+                        detailshidden.append(main.generateitem(label, value, fieldalias));
+                    }
                 }
                 details.append(detailshidden);
 
