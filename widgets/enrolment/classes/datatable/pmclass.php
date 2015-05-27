@@ -43,6 +43,19 @@ class pmclass extends base {
     protected $programid = null;
 
     /**
+     * Constructor.
+     * @param \moodle_database $DB An active database connection.
+     * @param string $ajaxendpoint The ajax endpoint URL.
+     * @param int $courseid
+     * @param int $programid
+     */
+    public function __construct(\moodle_database &$DB, $ajaxendpoint, $courseid = null, $programid = null) {
+        $this->courseid = $courseid;
+        $this->programid = $programid;
+        parent::__construct($DB, $ajaxendpoint);
+    }
+
+    /**
      * Gets an array of available filters.
      *
      * @return array An array of \deepsight_filter objects that will be available.
@@ -53,15 +66,22 @@ class pmclass extends base {
         require_once(\elispm::lib('deepsight/lib/filter.php'));
         require_once(\elispm::lib('deepsight/lib/filters/textsearch.filter.php'));
         require_once(\elispm::lib('deepsight/lib/filters/date.filter.php'));
+        require_once(\elispm::lib('data/user.class.php'));
 
         $langidnumber = get_string('class_idnumber', 'local_elisprogram');
         $langstartdate = get_string('class_startdate', 'local_elisprogram');
         $langenddate = get_string('class_enddate', 'local_elisprogram');
+        $langclassstatus = get_string('class_status', 'local_elisprogram');
+        $euserid = \user::get_current_userid();
+        $classstatusfilter = new \deepsight_filter_classstatus($this->DB, 'classstatus', $langclassstatus, array('userid' => $euserid, 'programid' => $this->programid),
+                $CFG->wwwroot.'/local/elisprogram/widgets/enrolment/ajax.php'); // TBD.
+        $classstatusfilter->set_default(''); // TBD.
 
         $filters = [
                 new \deepsight_filter_textsearch($DB, 'idnumber', $langidnumber, ['element.idnumber' => $langidnumber]),
                 new \deepsight_filter_date($DB, 'startdate', $langstartdate, ['element.startdate' => $langstartdate]),
                 new \deepsight_filter_date($DB, 'enddate', $langenddate, ['element.enddate' => $langenddate]),
+                $classstatusfilter
         ];
 
         // Add custom fields.
@@ -71,6 +91,10 @@ class pmclass extends base {
 
         // Restrict to configured enabled fields.
         $enabledfields = get_config('eliswidget_enrolment', 'classenabledfields');
+        if (!empty($enabledfields)) {
+            $enabledfields .= ',';
+        }
+        $enabledfields .= 'classstatus'; // TBD: always add classstatus filter?
         if (!empty($enabledfields)) {
             $enabledfields = explode(',', $enabledfields);
             foreach ($filters as $i => $filter) {
@@ -213,6 +237,11 @@ class pmclass extends base {
     protected function get_select_fields(array $filters = array()) {
         $selectfields = parent::get_select_fields($filters);
         $selectfields[] = 'element.maxstudents AS maxstudents';
+       /*
+        $selectfields[] = '(SELECT COUNT("id")
+                              FROM {local_elisprogram_cls_enrol} enrol2
+                             WHERE enrol2.classid = element.id) AS totalstudents';
+       */
         return $selectfields;
     }
 
