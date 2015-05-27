@@ -145,7 +145,7 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
         $i = 0;
         foreach ($this->choices as $val => $label) {
             $opts['initialchoices'][] = array('label' => $label, 'id' => $val);
-            if ($i >= 3) {
+            if ($i >= 4) {
                 break;
             }
             $i++;
