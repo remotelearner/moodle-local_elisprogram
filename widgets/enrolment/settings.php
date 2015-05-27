@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    eliswidget_enrolment
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -62,6 +62,16 @@ if ($ADMIN->fulltree) {
     $settings->add(new \admin_setting_heading('enabledfields', $enabledfieldsheader, $enabledfieldsheaderdesc));
 
     $fieldlevels = [
+        'curriculum' => [
+            'displayname' => get_string('curriculum', 'local_elisprogram'),
+            'fields' => [
+                'idnumber' => get_string('curriculum_idnumber', 'local_elisprogram'),
+                'name' => get_string('curriculum_name', 'local_elisprogram'),
+                'description' => get_string('description', 'local_elisprogram'),
+                'reqcredits' => get_string('curriculum_reqcredits', 'local_elisprogram'),
+            ],
+            'defaultfields' => ['idnumber', 'name', 'description'],
+        ],
         'courseset' => [
             'displayname' => get_string('courseset', 'local_elisprogram'),
             'fields' => [

@@ -56,13 +56,13 @@ class program extends base {
 
         $langidnumber = get_string('curriculum_idnumber', 'local_elisprogram');
         $langname = get_string('curriculum_name', 'local_elisprogram');
-        $langdescription = get_string('curriculaform:curriculum_description', 'local_elisprogram');
+        $langdescription = get_string('description', 'local_elisprogram');
         $langreqcredits = get_string('curriculum_reqcredits', 'local_elisprogram');
 
         $filters = [
                 new \deepsight_filter_textsearch($DB, 'idnumber', $langidnumber, ['element.idnumber' => $langidnumber]),
                 new \deepsight_filter_textsearch($DB, 'name', $langname, ['element.name' => $langname]),
-                new \deepsight_filter_textsearch($DB, 'decription', $langdescription, ['element.description' => $langdescription]),
+                new \deepsight_filter_textsearch($DB, 'description', $langdescription, ['element.description' => $langdescription]),
                 new \deepsight_filter_textsearch($DB, 'reqcredits', $langreqcredits, ['element.reqcredits' => $langreqcredits])
         ];
 
@@ -72,7 +72,7 @@ class program extends base {
         $filters = array_merge($filters, $customfieldfilters);
 
         // Restrict to configured enabled fields.
-        $enabledfields = get_config('eliswidget_enrolment', 'programenabledfields');
+        $enabledfields = get_config('eliswidget_enrolment', 'curriculumenabledfields');
         if (!empty($enabledfields)) {
             $enabledfields = explode(',', $enabledfields);
             foreach ($filters as $i => $filter) {
@@ -86,12 +86,18 @@ class program extends base {
     }
 
     /**
-     * Gets an array of fields that will always be selected, regardless of what has been enabled.
+     * Get an array of fields to select in the get_search_results method.
      *
-     * @return array An array of fields that will always be selected.
+     * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
+     * @return array Array of fields to select.
      */
-    public function get_fixed_select_fields() {
-        return [];
+    public function get_select_fields(array $filters = array()) {
+        $selectfields = parent::get_select_fields($filters);
+        $selectfields[] = 'element.reqcredits AS reqcredits';
+        $selectfields[] = 'element.idnumber AS idnumber';
+        $selectfields[] = 'element.name AS name';
+        $selectfields[] = 'element.description AS description';
+        return $selectfields;
     }
 
     /**
@@ -181,7 +187,7 @@ class program extends base {
         foreach ($pageresults as $id => $result) {
             $result->header = get_string('program_header', 'eliswidget_enrolment', $result);
             $result->numcrssets = \programcrsset::count(new \field_filter('prgid', $id), $DB);
-            if ($result->element_reqcredits > 0 && ($pgmstu = new \curriculumstudent(['curriculumid' => $id, 'userid' => $euserid]))) {
+            if ($result->reqcredits > 0 && ($pgmstu = new \curriculumstudent(['curriculumid' => $id, 'userid' => $euserid]))) {
                 $pgmstu->load();
                 $result->pctcomplete = $pgmstu->get_percent_complete();
             } else {
@@ -197,7 +203,8 @@ class program extends base {
                 (isset($filters['name']) && isset($filters['name'][0]) && stripos('non-program', $filters['name'][0]) !== false)) {
             $nonprogram = true;
         }
-        if (!$nonprogram && !isset($filters['idnumber']) && !isset($filters['idnumber'][0]) && !isset($filters['name']) && !isset($filters['name'][0]) && $lastpage) {
+        if (!$nonprogram && ((!isset($filters['idnumber']) && !isset($filters['name'])) || (isset($filters['idnumber']) && empty($filters['idnumber'][0])) ||
+                (isset($filters['name']) && empty($filters['name'][0]))) && $lastpage) {
             $nonprogram = true;
         }
         if ($nonprogram) {
@@ -221,8 +228,7 @@ class program extends base {
                 $nonprogramobj = new \stdClass;
                 $nonprogramobj->id = 'none';
                 $nonprogramobj->element_id = 'none';
-                $nonprogramobj->element_name = '';
-                $nonprogramobj->element_idnumber = get_string('nonprogramcourses', 'eliswidget_enrolment');
+                $nonprogramobj->element_name = get_string('nonprogramcourses', 'eliswidget_enrolment');
                 $nonprogramobj->header = get_string('nonprogramcourses', 'eliswidget_enrolment');
                 $nonprogramobj->numcrssets = 0;
                 $nonprogramobj->pctcomplete = -1; // N/A.
