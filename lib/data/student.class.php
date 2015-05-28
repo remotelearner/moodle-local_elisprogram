@@ -277,6 +277,7 @@ class student extends elis_data_object {
         if ($this->completestatusid != STUSTATUS_NOTCOMPLETE) {
             $this->update();
         } else {
+            $this->completetime = 0; // ELIS-9166: TBD.
             parent::save();
         }
 
