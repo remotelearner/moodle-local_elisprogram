@@ -555,7 +555,7 @@
              */
             this.renderheader = function() {
                 var header = $('<div class="header"></div>');
-                header.append('<h6 class="title">'+main.data.element_idnumber+': '+main.data.element_name+'</h6>');
+                header.append('<h6 class="title">'+main.data.header+'</h6>');
 
                 // Determine status.
                 if (main.data.numenrol > 0) {
@@ -723,7 +723,7 @@
              */
             this.renderheader = function() {
                 var header = $('<div class="header"></div>');
-                header.append('<h6 class="title">'+main.data.element_idnumber+': '+main.data.element_name+'</h6>');
+                header.append('<h6 class="title">'+main.data.header+'</h6>');
 
                 // Build and add details.
                 var details = $('<div class="details"></div>');
