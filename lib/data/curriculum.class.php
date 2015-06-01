@@ -751,7 +751,7 @@ function curriculum_get_listing($sort = 'name', $dir = 'ASC', $startrec = 0,
     $where = array("cur.iscustom = '0'");
     $params = array();
 
-    if ($contexts !== null && !empty($namesearch)) {
+    if (!empty($namesearch)) {
         $namesearch = trim($namesearch);
         $name_like  = $DB->sql_like('name', '?', FALSE);
         $where[]    = "($name_like)";
@@ -868,7 +868,7 @@ function curriculum_get_listing_recordset($sort = 'name', $dir = 'ASC',
 
     $params = array();
     $where = array("cur.iscustom = '0'");
-    if ($contexts !== null && !empty($namesearch)) {
+    if (!empty($namesearch)) {
         $where[] = '('. $DB->sql_like('name', ':like_param', false) . ')';
         $namesearch = trim($namesearch);
         $params['like_param'] = "%{$namesearch}%";
