@@ -574,6 +574,9 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
                 break;
         }
 
+        if (empty($options['choices'])) {
+            $options['choices'][''] = get_string('anyvalue', 'filters');
+        }
         $options['innerfield'] = $this->_innerfield[$group];
         $options['wrapper']   .= $this->_wrapper[$group];
 
