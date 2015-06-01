@@ -219,6 +219,8 @@ When this setting is enabled, completed courses will still be hidden until a stu
 When this setting is disabled, students will be unable to see completed courses.';
 $string['completed_courses_setting'] = 'Allow students to view completed courses on the dashboard';
 $string['completed_label'] = 'Completed';
+$string['completestatusid'] = 'Completion Status';
+$string['completestatusid_help'] = 'Select the Completion Status as: Not Started, In Progress, Passed or Failed.';
 $string['completionform:completion_grade'] = 'Completion grade';
 $string['completionform:completion_grade_help'] = '<p>Minimum grade the learner must received to identify the element as &ldquo;completed&rdquo;.</p>';
 $string['completionform:course_idnumber'] = 'ID Number';
