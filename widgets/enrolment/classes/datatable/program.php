@@ -101,30 +101,21 @@ class program extends base {
     }
 
     /**
+     * Gets an array of fields that will always be selected, regardless of what has been enabled.
+     *
+     * @return array An array of fields that will always be selected.
+     */
+    public function get_fixed_select_fields() {
+        return ['element.idnumber' => '', 'element.name' => ''];
+    }
+
+    /**
      * Get an array of datafields that will always be visible.
      *
      * @return array Array of filter aliases for fields that will always be visible.
      */
     public function get_fixed_visible_datafields() {
-        return [];
-    }
-
-    /**
-     * Get an array containing a list of visible and hidden datafields.
-     *
-     * For fields that are not fixed (see self::get_fixed_visible_datafields), additional fields are displayed when the user
-     * searches on them. For fields that are not being searched on, they can be viewed by clicking a "more" link.
-     *
-     * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
-     * @return array Array of field information, first item is visible fields, second is hidden fields.
-     */
-    public function get_datafields_by_visibility(array $filters = array()) {
-       list($visible, $hidden) = parent::get_datafields_by_visibility($filters);
-       $hidden['element_idnumber'] = get_string('program_idnumber', 'eliswidget_enrolment');
-       $hidden['element_name'] = get_string('program_name', 'eliswidget_enrolment');
-       $hidden['element_description'] = get_string('program_description', 'eliswidget_enrolment');
-       $hidden['element_reqcredits'] = get_string('program_reqcredits', 'eliswidget_enrolment');
-       return [$visible, $hidden];
+        return ['idnumber', 'name', 'description'];
     }
 
     /**
