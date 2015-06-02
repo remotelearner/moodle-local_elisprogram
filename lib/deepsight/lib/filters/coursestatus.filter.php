@@ -133,4 +133,15 @@ class deepsight_filter_coursestatus extends deepsight_filter_menuofchoices {
         $allsql = '('.implode(' OR ', $sql).')';
         return array($allsql, $params);
     }
+
+    /**
+     * Returns options for the javascript object.
+     *
+     * @return array An array of options.
+     */
+    public function get_js_opts() {
+        $opts = parent::get_js_opts();
+        $opts['no_search'] = true;
+        return $opts;
+    }
 }
