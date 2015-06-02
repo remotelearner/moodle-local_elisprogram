@@ -230,4 +230,15 @@ class deepsight_filter_classstatus extends deepsight_filter_menuofchoices {
     public function get_select_fields() {
         return array();
     }
+
+    /**
+     * Returns options for the javascript object.
+     *
+     * @return array An array of options.
+     */
+    public function get_js_opts() {
+        $opts = parent::get_js_opts();
+        $opts['no_search'] = true;
+        return $opts;
+    }
 }
