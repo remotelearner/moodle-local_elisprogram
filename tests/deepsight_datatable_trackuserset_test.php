@@ -270,6 +270,7 @@ class deepsight_datatable_trackuserset_testcase extends deepsight_datatable_sear
         // Set up permissions.
         $USER = $this->setup_permissions_test();
         $this->give_permission_for_context($USER->id, 'local/elisprogram:associate', context_system::instance());
+        $this->give_permission_for_context($USER->id, 'local/elisprogram:userset_associatetrack', context_system::instance());
 
         // Construct test table.
         $table = new deepsight_datatable_trackuserset_available_mock($DB, 'test', 'http://localhost', 'testuniqid');
@@ -373,6 +374,7 @@ class deepsight_datatable_trackuserset_testcase extends deepsight_datatable_sear
         // Set up permissions.
         $USER = $this->setup_permissions_test();
         $this->give_permission_for_context($USER->id, 'local/elisprogram:associate', context_system::instance());
+        $this->give_permission_for_context($USER->id, 'local/elisprogram:userset_associatetrack', context_system::instance());
 
         foreach ($associations as $association) {
             $clustertrack = new clustertrack($association);
@@ -461,6 +463,7 @@ class deepsight_datatable_trackuserset_testcase extends deepsight_datatable_sear
         foreach ($contextstoassign as $contexttype => $ids) {
             if ($contexttype === 'system') {
                 $this->give_permission_for_context($USER->id, 'local/elisprogram:associate', context_system::instance());
+                $this->give_permission_for_context($USER->id, 'local/elisprogram:userset_associatetrack', context_system::instance());
             } else {
                 foreach ($ids as $contextinstanceid) {
                     switch($contexttype) {
@@ -469,6 +472,7 @@ class deepsight_datatable_trackuserset_testcase extends deepsight_datatable_sear
                             break;
                     }
                     $this->give_permission_for_context($USER->id, 'local/elisprogram:associate', $context);
+                    $this->give_permission_for_context($USER->id, 'local/elisprogram:userset_associatetrack', $context);
                 }
             }
         }
