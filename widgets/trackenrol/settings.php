@@ -91,32 +91,9 @@ if ($ADMIN->fulltree) {
     }
     $settings->add(new \admin_setting_configmultiselect('eliswidget_trackenrol/viewcontexts', get_string('setting_viewcontexts', 'eliswidget_trackenrol'),
             get_string('setting_viewcontexts_description', 'eliswidget_trackenrol'), [''], $allowedcontexts));
-    // Multi-select list of User-sets/subsets:
-    // Key using _serialized_ array - cannot contain commas: userset-id, child-id, ...
-    // Page will require javascript to toggle child subsets as parent changed.
-    $usersets = ['' => $allowall];
-    $usersetrs = $DB->get_recordset('local_elisprogram_uset', null, 'depth ASC, name ASC'); // TBD
-    if ($usersetrs && $usersetrs->valid()) {
-        if (isset($PAGE)) {
-            $PAGE->requires->yui_module('moodle-eliswidget_trackenrol-usetselect', 'M.eliswidget_trackenrol.init_usetselect',
-                    array('id_s_eliswidget_trackenrol_viewusersets'), null, true);
-        }
-        $selecteduses = get_config('eliswidget_trackenrol', 'viewusersets');
-        foreach ($usersetrs as $key => $us) {
-            $fullkey = [(int)$key];
-            foreach ($DB->get_recordset('local_elisprogram_uset', array('parent' => $key)) as $childid => $subus) {
-                $fullkey[] = (int)$childid;
-            }
-            $newkey = serialize($fullkey);
-            $usersets[$newkey] = str_repeat('&nbsp;', ($us->depth - 1) * 2).$us->name;
-            // We must update any already selected usersets who's children may have changed!
-            $selecteduses = preg_replace('/a:[0-9]+:{i:0;i:'.$key.';.*}/', $newkey, $selecteduses);
-        }
-        set_config('viewusersets', $selecteduses, 'eliswidget_trackenrol');
-        $usersetrs->close();
-    }
-    $settings->add(new \admin_setting_configmultiselect('eliswidget_trackenrol/viewusersets', get_string('setting_viewusersets', 'eliswidget_trackenrol'),
-            get_string('setting_viewusersets_description', 'eliswidget_trackenrol'), [''], $usersets));
+
+    $settings->add(new \local_elisprogram\admin\setting\usersetselect('eliswidget_trackenrol/viewusersetstree', get_string('setting_viewusersets', 'eliswidget_trackenrol'),
+            get_string('setting_viewusersets_description', 'eliswidget_trackenrol'), '', ['']));
 
     // Criterial to filter tracks
     // Multi-select list of required capabilities, '' => 'allowall'.

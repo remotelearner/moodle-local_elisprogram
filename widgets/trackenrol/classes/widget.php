@@ -172,20 +172,25 @@ class widget extends \local_elisprogram\lib\widgetbase {
         if (!($pmuserid = pm_get_crlmuserid($userid))) {
             return false;
         }
-        $allowedusersets = get_config('eliswidget_trackenrol', 'viewusersets');
-        if (!empty($allowedusersets)) {
+        $viewusersetstree = get_config('eliswidget_trackenrol', 'viewusersetstree');
+        if (!empty($viewusersetstree)) {
             // Is user in an allowed Userset?
-            foreach (explode(',', $allowedusersets) as $usids) {
-                if (empty($usids)) {
-                    return true;
-                }
-                $usidarray = @unserialize($usids);
-                if (!empty($usidarray) && is_array($usidarray)) {
-                    $usassign = \clusterassignment::find([new \field_filter('clusterid', $usidarray[0]), new \field_filter('userid', $pmuserid)]);
-                    if ($usassign && $usassign->valid()) {
+            $clustertreefilter = \local_elisprogram\admin\setting\usersetselect::init_filter('clustass', 'clusterid');
+            if (($filterdata = $clustertreefilter->check_data((object)@unserialize($viewusersetstree)))) {
+                $filtersql = $clustertreefilter->get_sql_filter($filterdata);
+                if (!empty($filtersql[0])) {
+                    $where = ["clustass.userid = {$pmuserid}", '('.$filtersql[0].')'];
+                    $sql = 'SELECT clustass.clusterid
+                              FROM {local_elisprogram_uset_asign} clustass
+                             WHERE '.implode(' AND ', $where);
+                    if ($DB->record_exists_sql($sql, $filtersql[1])) {
                         return true;
                     }
+                } else {
+                    $viewusersetstree = false;
                 }
+            } else {
+                $viewusersetstree = false;
             }
         }
         $requiredcaps = $this->get_required_capabilities();
@@ -226,7 +231,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
             }
             return false;
         }
-        if (empty($allowedusersets) && empty($requiredcaps)) {
+        if (empty($viewusersetstree) && empty($requiredcaps)) {
             return true;
         } else {
             return false;

@@ -52,6 +52,8 @@ $string['adding_completion_element'] = 'Adding Learning Objective';
 $string['address'] = 'Address';
 $string['address2'] = 'Address 2';
 $string['admin_dashboard'] = 'Administrator Dashboard';
+$string['adminsetting_usersettree_description'] = 'To allow for the selection of multiple user sets, use the "Enable Tree" button.';
+$string['adminsetting_usersettree_help'] = 'Select User Sets';
 $string['all_items_assigned'] = 'All available items assigned.';
 $string['all_users_already_enrolled'] = 'All users in track already enrolled.';
 $string['alleliscomponents'] = 'Component Details';
@@ -602,8 +604,18 @@ $string['elisprogram:userset_view'] = 'View User Set';
 $string['elisprogram:viewcoursecatalog'] = 'Can view learning plan';
 $string['elisprogram:viewownreports'] = 'Can view own reports';
 $string['elisprogram:viewusers'] = 'Can view user profiles';
+$string['eliswidget_trackenrol_usersettree'] = 'Select User Set';
+$string['eliswidget_trackenrol_usersettree_help'] = '<p align="center"><b>User Set Selection Tree Help</b></p>
+
+<p>Single User Set selection: Use the drop-down and select a User Set.</p>
+<p>Multiple User Set selection: Click Enable Tree and...</p>
+<p>To add a User Set, check the box beside it.</p>
+<p>If there are any child User Sets, selecting a parent User Set will select all the child User Sets.</p>
+<p>To unselect a child User Set, expand the parent User Set\'s tree and uncheck the child User Set.</p>';
 $string['email'] = 'Email address';
 $string['email2'] = 'Email address 2';
+$string['enable_dropdown'] = 'Enable Dropdown';
+$string['enable_tree'] = 'Enable Tree';
 $string['enrol'] = 'Enrol';
 $string['enrol_all_users_now'] = 'Enrol all users from this track now';
 $string['enrol_confirmation'] = 'You will be placed on a waitlist for this course. Are you sure you would like to enrol in ({$a->coursename}){$a->classid}?';
