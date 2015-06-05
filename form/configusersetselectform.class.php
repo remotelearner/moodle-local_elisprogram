@@ -16,18 +16,41 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    eliswidget_trackenrol
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2015 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     Brent Boghosian <brent.boghosian@remote-learner.net>
  *
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2014082501;
-$plugin->release = '2.7.7.1 (Build: 20150324)';
-$plugin->dependencies = array(
-    'eliswidget_enrolment' => 2014082500
-);
+require_once($CFG->libdir.'/formslib.php');
+
+class configusersetselectform extends moodleform {
+    /** @var array $uniqueids */
+    protected $uniqueids = array(); // TBD?
+
+    /**
+     * Standard form definition
+     */
+    public function definition() {
+        $mform =& $this->_form;
+        if (isset($this->_customdata) && is_array($this->_customdata)) {
+            foreach ($this->_customdata as $key => $val) {
+                $mform->addElement('hidden', $key);
+                $mform->setType($key, is_string($val) ? PARAM_TEXT : PARAM_INT); // TBD?
+                $mform->setDefault($key, $val);
+            }
+        }
+    }
+
+    /**
+     * Expose underlying form object.
+     * @return object the underlying form object.
+     */
+    public function get_form() {
+        return $this->_form;
+    }
+}
