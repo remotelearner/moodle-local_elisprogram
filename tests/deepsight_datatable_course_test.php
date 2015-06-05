@@ -147,7 +147,7 @@ class deepsight_datatable_course_testcase extends deepsight_datatable_standard_i
                 // Test Default.
                 array(
                         array(),
-                        array('element.name' => 'ASC'),
+                        array('element_name' => 'ASC'),
                         0,
                         20,
                         array($results[100], $results[101], $results[102]),
@@ -156,7 +156,7 @@ class deepsight_datatable_course_testcase extends deepsight_datatable_standard_i
                 // Test Sorting.
                 array(
                         array(),
-                        array('element.name' => 'DESC'),
+                        array('element_name' => 'DESC'),
                         0,
                         20,
                         array($results[102], $results[101], $results[100]),
@@ -165,7 +165,7 @@ class deepsight_datatable_course_testcase extends deepsight_datatable_standard_i
                 // Test Basic Searching.
                 array(
                         array('name' => array('Test 100')),
-                        array('element.name' => 'DESC'),
+                        array('element_name' => 'DESC'),
                         0,
                         20,
                         array($results[100]),
@@ -174,7 +174,7 @@ class deepsight_datatable_course_testcase extends deepsight_datatable_standard_i
                 // Test limited page results.
                 array(
                         array(),
-                        array('element.name' => 'ASC'),
+                        array('element_name' => 'ASC'),
                         0,
                         2,
                         array($results[100], $results[101]),
