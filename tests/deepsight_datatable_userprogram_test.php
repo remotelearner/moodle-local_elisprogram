@@ -238,7 +238,7 @@ class deepsight_datatable_userprogram_testcase extends deepsight_datatable_searc
 
         $actualresults = $table->get_search_results(array(), array(), 0, 20);
         foreach ($actualresults[0] as &$result) {
-            unset($result['numcourses'], $result['currass_completed']);
+            unset($result['numcourses'], $result['currass_completed'], $result['currass_credits']);
         }
         $this->assert_search_results($expectedresults, $expectedtotal, $actualresults);
     }
