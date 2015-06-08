@@ -825,13 +825,15 @@ class course extends data_object_with_custom_fields {
 
         // Copy non-empty templates.
         $newtemplate = null;
-        foreach ($this->coursetemplate as $template) {
-            if (!empty($template->location)) {
-                // TBD: do we need a blank one?
-                $newtemplate = new coursetemplate($template);
-                unset($newtemplate->id);
-                $newtemplate->courseid = $clone->id;
-                $newtemplate->save();
+        if (!empty($this->id)) {
+            foreach ($this->coursetemplate as $template) {
+                if (!empty($template->location)) {
+                    // TBD: do we need a blank one?
+                    $newtemplate = new coursetemplate($template);
+                    unset($newtemplate->id);
+                    $newtemplate->courseid = $clone->id;
+                    $newtemplate->save();
+                }
             }
         }
 

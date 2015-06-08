@@ -180,6 +180,8 @@ class duplicate_testcase extends elis_database_test {
         $userset->id = 1;
         $userset->name = 'test';
 
+        // Duplicating an unsaved object.
+        $toduplicateid = '';
         $course = new course(array('idnumber' => 'test', 'name' => 'test', 'syllabus' => 1));
         $options = array();
         $options['targetcluster'] = $userset;
@@ -192,11 +194,37 @@ class duplicate_testcase extends elis_database_test {
         // Make sure that a we get a program returned.
         $this->assertTrue(is_array($return['courses']));
 
-        $id = $return['courses'][''];
+        // The result contains an associated array of the original id and the duplicated id.
+        $id = $return['courses'][$toduplicateid];
         $record = $DB->get_record('local_elisprogram_crs', array('id' => $id));
 
         // We want to validate that the  unique idnumber is "test - test.3".
         $expectedvalue = 'test - test.3';
+        $this->assertEquals($expectedvalue, $record->idnumber);
+        // The name is also to be unique.
+        $this->assertEquals($expectedvalue, $record->name);
+
+        // Test duplicating a previously created course.
+        // Id of course to duplicated.
+        $toduplicateid = 1;
+        $course = new course($toduplicateid);
+        $options = array();
+        $options['targetcluster'] = $userset;
+        $options['targetcurriculum'] = 5;
+        $options['moodlecourses'] = 'copyalways';
+        $options['courses'] = 1;
+
+        $return = $course->duplicate($options);
+
+        // Make sure that a we get a program returned.
+        $this->assertTrue(is_array($return['courses']));
+
+        // The result contains an associated array of the original id and the duplicated id.
+        $id = $return['courses'][$toduplicateid];
+        $record = $DB->get_record('local_elisprogram_crs', array('id' => $id));
+
+        // We want to validate that the  unique idnumber is "test - test.3".
+        $expectedvalue = 'test - test.4';
         $this->assertEquals($expectedvalue, $record->idnumber);
         // The name is also to be unique.
         $this->assertEquals($expectedvalue, $record->name);
