@@ -182,7 +182,6 @@ class deepsight_datatable_testcase extends elis_database_test {
         global $DB, $SESSION;
         $name = 'datatable';
         $endpoint = 'test.php';
-
         $datatable = new deepsight_datatable_mock($DB, $name, $endpoint);
 
         // Test basic response.
@@ -260,7 +259,7 @@ class deepsight_datatable_testcase extends elis_database_test {
 
         // Test bulklist modify - removing.
         $_POST['modify'] = 'remove';
-        $_POST['ids'] = array(2);
+        $_POST['ids'] = array($generatedids[1]);
         ob_start();
         $datatable->respond('bulklist_modify');
         $actual = ob_get_contents();
@@ -268,7 +267,7 @@ class deepsight_datatable_testcase extends elis_database_test {
         $actual = safe_json_decode($actual);
         $expected = array(
             'result' => 'success',
-            'page_results_ids' => array(1),
+            'page_results_ids' => array($generatedids[0]),
             'page_results_values' => array('Test User 0'),
             'total_results' => 1
         );
@@ -276,7 +275,7 @@ class deepsight_datatable_testcase extends elis_database_test {
 
         // Test bulklist modify - adding.
         $_POST['modify'] = 'add';
-        $_POST['ids'] = array(2);
+        $_POST['ids'] = array($generatedids[1]);
         ob_start();
         $datatable->respond('bulklist_modify');
         $actual = ob_get_contents();
@@ -284,7 +283,7 @@ class deepsight_datatable_testcase extends elis_database_test {
         $actual = safe_json_decode($actual);
         $expected = array(
             'result' => 'success',
-            'page_results_ids' => array(2, 1),
+            'page_results_ids' => array($generatedids[1], $generatedids[0]),
             'page_results_values' => array('Test User 1', 'Test User 0'),
             'total_results' => 2
         );
@@ -292,7 +291,7 @@ class deepsight_datatable_testcase extends elis_database_test {
 
         // Test bulklist modify - deduplication.
         $_POST['modify'] = 'add';
-        $_POST['ids'] = array(2);
+        $_POST['ids'] = array($generatedids[0]);
         ob_start();
         $datatable->respond('bulklist_modify');
         $actual = ob_get_contents();
@@ -300,7 +299,7 @@ class deepsight_datatable_testcase extends elis_database_test {
         $actual = safe_json_decode($actual);
         $expected = array(
             'result' => 'success',
-            'page_results_ids' => array(2, 1),
+            'page_results_ids' => array($generatedids[1], $generatedids[0]),
             'page_results_values' => array('Test User 1', 'Test User 0'),
             'total_results' => 2
         );
