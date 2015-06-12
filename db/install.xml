@@ -685,5 +685,23 @@
         <INDEX NAME="parent_ix" UNIQUE="false" FIELDS="parent"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_elisprogram_deepsight" COMMENT="Saved deepsight searches" PREVIOUS="local_elisprogram_prgcrsset">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="contextid"/>
+        <FIELD NAME="contextid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="contextab"/>
+        <FIELD NAME="pagename" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="Tab identifier" PREVIOUS="contextid" NEXT="name"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="Name of search" PREVIOUS="pagename" NEXT="userid" />
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="name" NEXT="isdefault"/>
+        <FIELD NAME="isdefault" TYPE="int" LENGTH="1" NOTNULL="true" SEQUENCE="false" DEFAULT="0" PREVIOUS="userid" NEXT="data"/>
+        <FIELD NAME="data" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" COMMENT="JSON string containing search criteria" PREVIOUS="name" NEXT="fieldsort"/>
+        <FIELD NAME="fieldsort" TYPE="text" LENGTH="small" NOTNULL="false" SEQUENCE="false" COMMENT="JSON string containing field to sort by" PREVIOUS="data" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="context" UNIQUE="false" FIELDS="contextid,pagename"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>
