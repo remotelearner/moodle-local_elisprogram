@@ -68,6 +68,9 @@ var eliswidgetenrolmentexpandedlist = [];
         /** @var object A quere storing timeouts and ajax references for delay ajax requests. */
         this.updatetable_queue = {timeout: null, ajax: null};
 
+        /** @var string Name of widget. */
+        this.name = 'enrolment_'+opts.ids.widgetid;
+
         /** @var object The current filterdata. Object with filter name as key, and array of values to filter on for each value. */
         this.filters = {};
 

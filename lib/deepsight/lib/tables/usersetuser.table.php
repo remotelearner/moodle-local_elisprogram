@@ -111,7 +111,7 @@ class deepsight_datatable_usersetuser_assigned extends deepsight_datatable_users
      */
     protected function get_initial_filters() {
         $initialfilters = parent::get_initial_filters();
-        $initialfilters[] = 'autoass';
+        $initialfilters['autoass'] = [];
         return $initialfilters;
     }
 
