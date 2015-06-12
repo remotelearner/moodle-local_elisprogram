@@ -89,6 +89,9 @@
     font-size: 0.9em;
     display: inline-block;
 }
+.deepsight_searches {
+    margin-bottom: 5px;
+}
 .deepsight_filterbar {
     position: relative;
     margin-bottom: 5px;
@@ -141,6 +144,17 @@
     }
     &:hover {
         background-color: #def;
+    }
+}
+.deepsight_filter_generator_choice_bold {
+    @extend .deepsight_filter_generator_choice;
+    font-weight: bold;
+}
+.deepsight_searches_search {
+    padding: 10px 10px 10px 10px;
+    input[type="text"] {
+        width: 150px;
+        border: 1px solid #ddd;
     }
 }
 

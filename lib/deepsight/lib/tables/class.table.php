@@ -66,7 +66,7 @@ class deepsight_datatable_class extends deepsight_datatable_standard {
      * @return array An array of deepsight_filter $name properties that will be present when the user first loads the page.
      */
     protected function get_initial_filters() {
-        return array('idnumber', 'course_name');
+        return ['idnumber' => [], 'course_name' => []];
     }
 
     /**

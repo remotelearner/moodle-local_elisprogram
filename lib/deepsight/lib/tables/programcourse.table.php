@@ -123,10 +123,10 @@ class deepsight_datatable_programcourse_assigned extends deepsight_datatable_pro
      */
     protected function get_initial_filters() {
         $initialfilters = parent::get_initial_filters();
-        $initialfilters[] = 'required';
-        $initialfilters[] = 'frequency';
-        $initialfilters[] = 'timeperiod';
-        $initialfilters[] = 'position';
+        $initialfilters['required'] = [];
+        $initialfilters['frequency'] = [];
+        $initialfilters['timeperiod'] = [];
+        $initialfilters['position'] = [];
         return $initialfilters;
     }
 

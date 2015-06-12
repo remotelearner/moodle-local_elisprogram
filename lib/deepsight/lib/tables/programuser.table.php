@@ -149,8 +149,8 @@ class deepsight_datatable_programuser_assigned extends deepsight_datatable_progr
      */
     protected function get_initial_filters() {
         $initialfilters = parent::get_initial_filters();
-        $initialfilters[] = 'country';
-        $initialfilters[] = 'timecreated';
+        $initialfilters['country'] = [];
+        $initialfilters['timecreated'] = [];
         return $initialfilters;
     }
 

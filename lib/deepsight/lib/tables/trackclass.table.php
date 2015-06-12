@@ -96,7 +96,7 @@ class deepsight_datatable_trackclass_assigned extends deepsight_datatable_trackc
      */
     protected function get_initial_filters() {
         $initialfilters = parent::get_initial_filters();
-        $initialfilters[] = 'autoenrol';
+        $initialfilters['autoenrol'] = [];
         return $initialfilters;
     }
 

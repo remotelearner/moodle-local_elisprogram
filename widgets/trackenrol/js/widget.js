@@ -67,6 +67,9 @@
         /** @var object The current filterdata. Object with filter name as key, and array of values to filter on for each value. */
         this.filters = {};
 
+        /** @var string Name of widget. */
+        this.name = 'trackenrol_'+opts.ids.widgetid;
+
         /**
          * Does a delayed table update.
          *

@@ -94,8 +94,8 @@ class deepsight_datatable_instructor_assigned extends deepsight_datatable_instru
      */
     protected function get_initial_filters() {
         $initfilt = parent::get_initial_filters();
-        $initfilt[] = 'assigntime';
-        $initfilt[] = 'completetime';
+        $initfilt['assigntime'] = [];
+        $initfilt['completetime'] = [];
         return $initfilt;
     }
 

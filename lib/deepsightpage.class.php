@@ -323,6 +323,8 @@ abstract class deepsightpage extends pm_page {
 
         echo '<script>(function($) {';
         echo '$(function() {';
+        $table->set_context($this->get_context());
+        $table->set_pagename($this->pagename);
         echo $table->get_init_js();
         echo $bulkactionpanel->get_init_js();
         echo '});';
@@ -353,6 +355,8 @@ abstract class deepsightpage extends pm_page {
 
         echo '<script>(function($) {'."\n";
         echo '$(function() {';
+        $table->set_context($this->get_context());
+        $table->set_pagename($this->pagename);
         echo $table->get_init_js();
         if ($this->can_do('bulkedit')) {
             echo $bulkactionpanel->get_init_js();
