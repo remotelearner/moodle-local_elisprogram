@@ -114,7 +114,8 @@ class deepsight_datatable_enrolments extends deepsight_datatable_user {
      */
     protected function get_initial_filters() {
         $initialfilters = parent::get_initial_filters();
-        array_unshift($initialfilters, 'enrolled');
+        // This adds the enrolled option to the first of the associative array.
+        $initialfilters = ['enrolled' => []] + $initialfilters;
         return $initialfilters;
     }
 

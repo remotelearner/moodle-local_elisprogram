@@ -883,6 +883,322 @@ interface deepsight_datatable {
 }
 
 /**
+ * A class to hand saving of Deepsight searches.
+ */
+class deepsight_savedsearch {
+    /**
+     * @var object context Context of search.
+     */
+    protected $context = null;
+    /**
+     * @var string pagename Page name for search.
+     */
+    protected $pagename = null;
+    /**
+     * @var boolean cansavesearches Can save searches.
+     */
+    private $cansavesearches = false;
+    /**
+     * @var boolean canloadsearches Can load searches.
+     */
+    private $canloadsearches = false;
+
+    /**
+     * Constructor.
+     */
+    public function __construct($context, $pagename) {
+        global $USER;
+        $this->set_context($context);
+        $this->pagename = $pagename;
+    }
+
+    /**
+     * Set context and update permissions.
+     *
+     * @param object $context Context object.
+     */
+    public function set_context($context) {
+        global $USER;
+        $this->context = $context;
+        // If the context is not set than saved searches are disabled.
+        if (!empty($context)) {
+            $this->cansavesearches = has_capability('local/elisprogram:searchsave', $this->context, $USER->id);
+            $this->canloadsearches = has_capability('local/elisprogram:searchload', $this->context, $USER->id);
+        } else {
+            $this->cansavesearches = false;
+            $this->canloadsearches = false;
+        }
+    }
+
+    /**
+     * Return if user can load seraches for current context.
+     *
+     * @return boolean True if can load searches.
+     */
+    public function canloadsearches() {
+        return $this->canloadsearches;
+    }
+
+    /**
+     * Return if user can save seraches for current context.
+     *
+     * @return boolean True if can save searches.
+     */
+    public function cansavesearches() {
+        return $this->cansavesearches;
+    }
+
+    /**
+     * Get list of saved searches.
+     *
+     * @return array Array contianing most recently saved starting searches.
+     */
+    public function starting_searches() {
+        global $DB;
+        if (!$this->canloadsearches()) {
+            return array();
+        }
+        // Show most recent saved search if no default exists.
+        $query = 'SELECT *
+                    FROM {local_elisprogram_deepsight}
+                   WHERE contextid = ?
+                     AND pagename = ?
+                ORDER BY isdefault DESC, id DESC';
+        $records = $DB->get_recordset_sql($query, array($this->context->id, $this->pagename), 0, 10);
+        $results = array();
+        foreach ($records as $item) {
+            $results[] = $this->process_search($item);
+        }
+        return $results;
+    }
+
+    /**
+     * Search for saved search.
+     *
+     * @return array Array contianing searches.
+     */
+    public function search($query) {
+        global $DB;
+        if (!$this->canloadsearches()) {
+            return array();
+        }
+        $like = $DB->sql_like('name', '?', false);
+        $sql = 'SELECT * FROM {local_elisprogram_deepsight} WHERE contextid = ? AND pagename = ? AND '.$like;
+        $records = $DB->get_recordset_sql($sql, array($this->context->id, $this->pagename, "%$query%"), 0, 10);
+        $results = array();
+        foreach ($records as $key => $value) {
+            $results[] = $this->process_search($value);
+        }
+        return $results;
+    }
+
+    /**
+     * Save or update search.
+     *
+     * @param object $search Search object containing name and filters.
+     * @return int Id of saved search or false on failure.
+     */
+    public function save($search) {
+        global $DB, $USER;
+        if (!$this->cansavesearches()) {
+            return false;
+        }
+        // Validate required data for search.
+        if (empty($search) || empty($search->name) || empty($search->data) || empty($search->fieldsort)) {
+            return false;
+        }
+        if (!empty($search->contextid) && $search->contextid != $this->context->id) {
+            // Set context to context we want to save to.
+            $this->set_context(context::instance_by_id($search->contextid));
+            if (!$this->cansavesearches()) {
+                return false;
+            }
+        }
+        $search->contextid = $this->context->id;
+        $search->pagename = $this->pagename;
+        $search->data = json_encode($search->data);
+        $search->fieldsort = json_encode($search->fieldsort);
+        $search->userid = $USER->id;
+        if (empty($search->id)) {
+            // Adding.
+            $id = $DB->insert_record('local_elisprogram_deepsight', $search);
+        } else {
+            // Saving.
+            $record = $DB->get_record('local_elisprogram_deepsight', array('id' => $search->id, 'contextid' => $this->context->id));
+            if (!empty($record)) {
+                $DB->update_record('local_elisprogram_deepsight', $search);
+                $id = $search->id;
+            } else {
+                unset($search->id);
+                $search->contextid = $this->context->id;
+                $id = $DB->insert_record('local_elisprogram_deepsight', $search);
+            }
+        }
+        if (!empty($id) && !empty($search->isdefault)) {
+            $sql = 'UPDATE {local_elisprogram_deepsight} SET isdefault = 0 WHERE id != ? AND contextid = ? AND pagename = ?';
+            $DB->execute($sql, array($id, $this->context->id, $this->pagename));
+        }
+        return $id;
+    }
+
+    /**
+     * Delete saved search.
+     *
+     * @param int id Delete saved search
+     */
+    public function delete($id) {
+        global $DB;
+        if (!$this->cansavesearches()) {
+            return;
+        }
+        $DB->delete_records('local_elisprogram_deepsight', array('id' => $id, 'contextid' => $this->context->id, 'pagename' => $this->pagename));
+    }
+
+    /**
+     * Process search, decode filter data and set permissions.
+     *
+     * @param object $item Record id of search.
+     * @return array Processed search record.
+     */
+    public function process_search($item) {
+        $item = (array)$item;
+        $item['data'] = json_decode($item['data']);
+        $item['fieldsort'] = json_decode($item['fieldsort']);
+        $item['cansave'] = true;
+        $item['isdefault'] = $item['isdefault'] ? true : false;
+        return $item;
+    }
+}
+
+/**
+ * A class to handle saving of Deepsight searches for the user set track tab.
+ */
+class deepsight_savedsearch_clsttrk extends deepsight_savedsearch {
+
+    /**
+     * Sort comparsion function based on object name.
+     *
+     * @param array $a First object.
+     * @param array $b Second object.
+     * @return int 0 for equal, -1 for $a < $b and 1 for $a > $b.
+     */
+    public function cmp($a, $b) {
+        if ($a['name'] == $b['name']) {
+            return 0;
+        }
+        return $a['name'] < $b['name'] ? -1 : 1;
+    }
+
+    /**
+     * Get list of saved searches. With the first search being the default search.
+     *
+     * @return array Array contianing most recently saved starting searches.
+     */
+    public function starting_searches() {
+        global $DB;
+        if (!$this->canloadsearches()) {
+            return array();
+        }
+        $results = parent::starting_searches();
+        $parentsearches = $this->get_parent_searches(null, "isdefault DESC, id DESC");
+        $defaultsearch = null;
+        if (count($parentsearches) > 0) {
+            if (count($results) > 0 && !empty($results[0]['isdefault'])) {
+                $defaultsearch = array_shift($results);
+            } else if (count($parentsearches) > 0 && !empty($parentsearches[0]['isdefault'])) {
+                $defaultsearch = array_shift($parentsearches);
+            }
+            $results = array_merge($results, $parentsearches);
+            usort($results, array($this, 'cmp'));
+            if (!empty($defaultsearch)) {
+                array_unshift($results, $defaultsearch);
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * Search for saved search.
+     *
+     * @param string $query Search query string.
+     * @return array Array contianing searches.
+     */
+    public function search($query) {
+        global $DB;
+        if (!$this->canloadsearches()) {
+            return array();
+        }
+        $like = $DB->sql_like('name', '?', false);
+        $sql = 'SELECT * FROM {local_elisprogram_deepsight} WHERE contextid = ? AND pagename = ? AND '.$like;
+        $records = $DB->get_recordset_sql($sql, array($this->context->id, $this->pagename, "%$query%"), 0, 10);
+        $results = array();
+        foreach ($records as $key => $value) {
+            $results[] = $this->process_search($value);
+        }
+        // Get parent userset searches.
+        $parentsearches = $this->get_parent_searches($query);
+        $results = array_merge($results, $parentsearches);
+        usort($results, array($this, 'cmp'));
+        return $results;
+    }
+
+    /**
+     * Search for saved search.
+     *
+     * @param string $query Search query string. If null do not preform sub string search.
+     * @return array Array contianing searches.
+     */
+    public function get_parent_searches($query = null, $orderby = 'name') {
+        global $DB, $USER;
+        $contexts = preg_split("/\//", $this->context->path);
+        $results = array();
+        if (!has_capability('local/elisprogram:searchloadparent', $this->context, $USER->id)) {
+            return array();
+        }
+        if (count($contexts) > 2) {
+            $parentcontext = array_pop($contexts);
+            $founddefault = false;
+            if (!empty($orderby)) {
+                $orderby = "ORDER BY $orderby";
+            }
+            // Crawl though contexts until contextid 1 is reached.
+            while (!empty($parentcontext) && $parentcontext > 1) {
+                $parentcontext = array_pop($contexts);
+                $context = context::instance_by_id($parentcontext);
+                $cansavesearches = has_capability('local/elisprogram:searchsave', $context, $USER->id);
+                if (!empty($parentcontext)) {
+                    // Search for parent saved parent userset searches;
+                    $values = array($parentcontext, $this->pagename);
+                    $extra = '';
+                    if (!empty($query)) {
+                        $extra = 'AND '.$DB->sql_like('name', '?', false).' ';
+                        $values[] = "%$query%";
+                    }
+                    $sql = "SELECT * FROM {local_elisprogram_deepsight} WHERE contextid = ? AND pagename = ? $extra$orderby";
+                    $records = $DB->get_recordset_sql($sql, $values, 0, 10);
+                    foreach ($records as $item) {
+                        $newitem = $this->process_search($item);
+                        $newitem['cansave'] = $cansavesearches;
+                        // First default found is the only one is set as default.
+                        if (!empty($founddefault)) {
+                            $newitem['isdefault'] = false;
+                        } else if ($newitem['isdefault']) {
+                            $founddefault = $newitem;
+                        }
+                        $results[] = $newitem;
+                    }
+                }
+            }
+        }
+        if (!empty($founddefault)) {
+            array_unshift($results, $founddefault);
+        }
+        return $results;
+    }
+
+}
+
+/**
  * A standard base implementation of a DeepSight datatable.
  */
 abstract class deepsight_datatable_standard implements deepsight_datatable {
@@ -898,6 +1214,16 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
      * @var string The name of the table - used in various places to tie together parts for the same table.
      */
     protected $name;
+
+    /**
+     * @var string The name of the page;
+     */
+    protected $pagename;
+
+    /**
+     * @var object Context of page.
+     */
+    protected $context;
 
     /**
      * @var array A list of available deepsight_filter objects for the table, indexed by the filter's $name property.
@@ -1091,6 +1417,10 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
      */
     public function get_html() {
         return '<style type="text/css"> @import url("lib/deepsight/css/base.css");</style>
+                <div class="deepsight_searches">
+                    <div id="'.$this->name.'_searchestitle"></div>
+                    <div id="'.$this->name.'_searchesbar"></div>
+                </div>
                 <div id="'.$this->name.'" class="deepsight_datatable_wrapper">
                     <span class="filterlabel">'.get_string('filters', 'local_elisprogram').': </span>
                     <div id="'.$this->name.'_filterbar" class="deepsight_filterbar"></div>
@@ -1107,6 +1437,9 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
         return array(
             '/local/elisprogram/lib/deepsight/js/deepsight.js',
             '/local/elisprogram/lib/deepsight/js/support.js',
+            '/local/elisprogram/lib/deepsight/js/buttons/deepsight_tools_button.js',
+            '/local/elisprogram/lib/deepsight/js/buttons/deepsight_loadsearch_button.js',
+            '/local/elisprogram/lib/deepsight/js/buttons/deepsight_savesearch_button.js',
             '/local/elisprogram/lib/deepsight/js/filters/deepsight_filter_generator.js',
             '/local/elisprogram/lib/deepsight/js/filters/deepsight_filter_switch.js',
             '/local/elisprogram/lib/deepsight/js/filters/deepsight_filter_date.js',
@@ -1124,16 +1457,52 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
      * @return array An array of options, ready to be passed to $this->get_init_js()
      */
     protected function get_table_js_opts() {
+        global $USER, $DB, $CFG;
+        // Load saved searches.
+        $classname = "deepsight_savedsearch";
+        if (class_exists("deepsight_savedsearch_".$this->pagename)) {
+            // If tab has custom search, load it's class.
+            $classname = "deepsight_savedsearch_".$this->pagename;
+        }
+        $savedsearch = new $classname($this->context, $this->pagename);
+        $startingsearches = $savedsearch->starting_searches();
+
+        // Contains the currently loaded search.
+        $currentsearch = new stdClass();
+
+        // Load first result as initial filter critira.
+        if (empty($startingsearches[0]['data'])) {
+            $initialfilters = $this->initial_filters;
+        } else {
+            $initialfilters = array();
+            foreach ($startingsearches[0]['data'] as $name => $value) {
+                $initialfilters[] = $name;
+            }
+            $currentsearch = $startingsearches[0];
+        }
+        // If the context is not set, saved searches is disabled.
+        $contextid = 0;
+        if (!empty($this->context)) {
+            $contextid = $this->context->id;
+        }
         $opts = array(
             'dataurl' => $this->endpoint,
+            'savesearchurl' => $CFG->wwwroot.'/local/elisprogram/lib/deepsight/deepsight.php',
             'dragdrop' => false,
             'multiselect' => false,
             'sesskey' => sesskey(),
             'uniqid' => $this->uniqid,
             'resultsperpage' => static::RESULTSPERPAGE,
-            'initial_filters' => $this->initial_filters,
+            'initial_filters' => $initialfilters,
             'rowfilter' => null,
             'actions' => array(),
+            'name' => $this->name,
+            'contextid' => $contextid,
+            'pagename' => $this->pagename,
+            'can_save_searches' => $savedsearch->cansavesearches(),
+            'can_load_searches' => $savedsearch->canloadsearches(),
+            'starting_searches' => $startingsearches,
+            'current_search' => $currentsearch,
             'lang_no_results' => get_string('ds_noresults', 'local_elisprogram'),
             'lang_errormessage' => get_string('ds_errormessage', 'local_elisprogram'),
             'lang_error' => get_string('ds_errordetails', 'local_elisprogram'),
@@ -1143,6 +1512,7 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
             'lang_results' => get_string('results', 'local_elisprogram'),
             'lang_showing' => get_string('ds_showing', 'local_elisprogram'),
             'lang_loading' => get_string('ds_loading', 'local_elisprogram'),
+            'lang_search_form_save_error' => get_string('search_form_save_error', 'local_elisprogram')
         );
         foreach ($this->actions as $action) {
             $opts['actions'][] = $action->get_js_opts();
@@ -1171,6 +1541,24 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
     }
 
     /**
+     * Set context of request.
+     *
+     * @param object $context Context of request.
+     */
+    public function set_context($context) {
+        $this->context = $context;
+    }
+
+    /**
+     * Set page name of request.
+     *
+     * @param string $pagename Page name of request.
+     */
+    public function set_pagename($pagename) {
+        $this->pagename = $pagename;
+    }
+
+    /**
      * Gets javascript required to initialize the datatable.
      *
      * @uses deepsight_datatable_standard::get_table_js_opts()
@@ -1188,7 +1576,33 @@ abstract class deepsight_datatable_standard implements deepsight_datatable {
                     datatable: {$this->name}_datatable,
                     filters: {$filterbarfilters},
                     starting_filters: {$filterbarstartingfilters},
-                    lang_add: '".get_string('add', 'local_elisprogram')."'
+                    lang_add: '".get_string('add', 'local_elisprogram')."',
+                    lang_search: '".get_string('search', 'local_elisprogram')."',
+                    lang_search_for: '".get_string('search_for', 'local_elisprogram')."',
+                    lang_search_noresults: '".get_string('search_noresults', 'local_elisprogram')."',
+                    lang_search_form_saving: '".get_string('search_form_saving', 'local_elisprogram')."',
+                    lang_search_form_name: '".get_string('search_form_name', 'local_elisprogram')."',
+                    lang_search_form_default: '".get_string('search_form_default', 'local_elisprogram')."',
+                    lang_search_form_save: '".get_string('search_form_save', 'local_elisprogram')."',
+                    lang_search_form_save_copy: '".get_string('search_form_save_copy', 'local_elisprogram')."',
+                    lang_search_form_saved: '".get_string('search_form_saved', 'local_elisprogram')."',
+                    lang_search_form_save_title: '".get_string('search_form_save_title', 'local_elisprogram')."',
+                    lang_search_load: '".get_string('search_load', 'local_elisprogram')."',
+                    lang_search_save: '".get_string('search_save', 'local_elisprogram')."',
+                    lang_search_tools: '".get_string('search_tools', 'local_elisprogram')."',
+                    lang_search_clearsearch: '".get_string('search_clearsearch', 'local_elisprogram')."',
+                    lang_search_delete: '".get_string('search_delete', 'local_elisprogram')."',
+                    lang_search_setdefault: '".get_string('search_setdefault', 'local_elisprogram')."',
+                    lang_addtitle: '".get_string('search_addtitle', 'local_elisprogram')."',
+                    lang_search_loadtitle: '".get_string('search_load', 'local_elisprogram')."',
+                    lang_search_savetitle: '".get_string('search_save', 'local_elisprogram')."',
+                    lang_search_toolstitle: '".get_string('search_toolstitle', 'local_elisprogram')."',
+                    lang_search_deletetitle: '".get_string('search_delete', 'local_elisprogram')."',
+                    lang_search_setdefault_saved: '".get_string('search_setdefault_saved', 'local_elisprogram')."',
+                    lang_search_deleted: '".get_string('search_deleted', 'local_elisprogram')."',
+                    lang_search_setdefaulttitle: '".get_string('search_setdefault', 'local_elisprogram')."',
+                    lang_search_form_name_error: '".get_string('search_form_name_error', 'local_elisprogram')."',
+                    lang_search_delete_confirm: '".get_string('search_delete_confirm', 'local_elisprogram')."'
                 });";
 
         return $js;

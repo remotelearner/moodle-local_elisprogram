@@ -123,7 +123,7 @@ class deepsight_datatable_enrolled extends deepsight_datatable_user {
      * @return array An array of deepsight_filter $name properties that will be present when the user first loads the page.
      */
     protected function get_initial_filters() {
-        return array('idnumber', 'name', 'enrolmenttime', 'completestatus', 'completetime');
+        return ['idnumber'  => [], 'name'  => [], 'enrolmenttime' => [], 'completestatus' => [], 'completetime' => []];
     }
 
     /**

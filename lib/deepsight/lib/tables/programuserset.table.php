@@ -93,7 +93,7 @@ class deepsight_datatable_programuserset_assigned extends deepsight_datatable_pr
      */
     protected function get_initial_filters() {
         $initialfilters = parent::get_initial_filters();
-        $initialfilters[] = 'autoenrol';
+        $initialfilters['autoenrol'] = [];
         return $initialfilters;
     }
 

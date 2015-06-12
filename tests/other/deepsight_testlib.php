@@ -219,7 +219,7 @@ abstract class deepsight_datatable_standard_implementation_test extends elis_dat
         // Verify.
         $this->assertInternalType('array', $initialfilters);
         if (!empty($initialfilters)) {
-            foreach ($initialfilters as $name) {
+            foreach ($initialfilters as $name => $value) {
                 $this->assertTrue(isset($table->available_filters[$name]));
             }
         }

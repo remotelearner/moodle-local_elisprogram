@@ -137,8 +137,8 @@ class deepsight_datatable_userprogram_assigned extends deepsight_datatable_userp
      */
     protected function get_initial_filters() {
         $initialfilters = parent::get_initial_filters();
-        $initialfilters[] = 'datecompleted';
-        $initialfilters[] = 'creditsrecv';
+        $initialfilters['datecompleted'] = [];
+        $initialfilters['creditsrecv'] = [];
         return $initialfilters;
     }
 

@@ -56,7 +56,7 @@ class deepsight_datatable_userset extends deepsight_datatable_standard {
      * @return array An array of deepsight_filter $name properties that will be present when the user first loads the page.
      */
     protected function get_initial_filters() {
-        return array('name');
+        return ['name' => []];
     }
 
     /**

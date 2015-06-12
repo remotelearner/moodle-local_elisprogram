@@ -846,5 +846,26 @@ $capabilities = array(
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
+     ),
+     'local/elisprogram:searchsave' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        )
+     ),
+     'local/elisprogram:searchload' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        )
+     ),
+     'local/elisprogram:searchloadparent' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        )
      )
 );
