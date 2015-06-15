@@ -36,6 +36,7 @@ $string['any'] = 'Any';
 $string['data_completetime'] = 'Completed: ';
 $string['data_grade'] = 'Grade';
 $string['data_status'] = 'Status';
+$string['date_na'] = 'Not available';
 $string['enddate'] = 'End Date';
 $string['enrol_confirm_enrol'] = 'Are you sure to enrol in this Track?';
 $string['enrol_confirm_unenrol'] = 'Are you sure to unenrol from this Track?';

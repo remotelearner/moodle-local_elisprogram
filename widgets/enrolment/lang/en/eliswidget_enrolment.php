@@ -43,6 +43,7 @@ $string['data_completetime'] = 'Completed: ';
 $string['data_grade'] = 'Grade';
 $string['data_instructors'] = 'Instructors';
 $string['data_status'] = 'Status';
+$string['date_na'] = 'Not available';
 $string['enddate'] = 'End Date';
 $string['enrol_confirm_enrol'] = 'Are you sure to enrol into Class?';
 $string['enrol_confirm_enterwaitlist'] = 'Are you sure to enter Class waitlist?';

@@ -221,12 +221,12 @@ class track extends \eliswidget_enrolment\datatable\base {
             if ($result->element_startdate > 0) {
                 $pageresultsar[$id]->element_startdate = userdate($result->element_startdate, $dateformat);
             } else {
-                $pageresultsar[$id]->element_startdate = get_string('notavailable');
+                $pageresultsar[$id]->element_startdate = get_string('date_na', 'eliswidget_trackenrol');
             }
             if ($result->element_enddate > 0) {
                 $pageresultsar[$id]->element_enddate = userdate($result->element_enddate, $dateformat);
             } else {
-                $pageresultsar[$id]->element_enddate = get_string('notavailable');
+                $pageresultsar[$id]->element_enddate = get_string('date_na', 'eliswidget_trackenrol');
             }
         }
 

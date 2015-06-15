@@ -292,7 +292,7 @@ class pmclass extends base {
                 if ($pageresultsar[$id]->element_startdate > 0) {
                     $pageresultsar[$id]->element_startdate = userdate($pageresultsar[$id]->element_startdate, $dateformat);
                 } else {
-                    $pageresultsar[$id]->element_startdate = get_string('notavailable');
+                    $pageresultsar[$id]->element_startdate = get_string('date_na', 'eliswidget_enrolment');
                 }
             }
             if (isset($pageresultsar[$id]->element_enddate)) {
@@ -302,7 +302,7 @@ class pmclass extends base {
                     }
                     $pageresultsar[$id]->element_enddate = userdate($pageresultsar[$id]->element_enddate, $dateformat);
                 } else {
-                    $pageresultsar[$id]->element_enddate = get_string('notavailable');
+                    $pageresultsar[$id]->element_enddate = get_string('date_na', 'eliswidget_enrolment');
                 }
             }
             if (($mdlcourse = moodle_get_course($result->id)) && ($mdlcrsrec = $DB->get_record('course', array('id' => $mdlcourse)))) {
@@ -312,7 +312,7 @@ class pmclass extends base {
             if (isset($pageresultsar[$id]->enrol_completetime) && !empty($pageresultsar[$id]->enrol_completetime)) {
                 $pageresultsar[$id]->enrol_completetime = userdate($pageresultsar[$id]->enrol_completetime, $dateformat);
             } else {
-                $pageresultsar[$id]->enrol_completetime = get_string('notavailable');
+                $pageresultsar[$id]->enrol_completetime = get_string('date_na', 'eliswidget_enrolment');
             }
         }
         unset($pageresults);
