@@ -119,9 +119,9 @@ class userpage extends managementpage {
                 'page' => 'linkpage',
                 'params' => array(
                     'linkurl' => 'local/elisreports/render_report_page.php',
-                    'linkparams' => 'report,userid',
+                    'linkparams' => 'report,filterautocomplete_id',
                     'report' => 'individual_user',
-                    'userid' => '=id'
+                    'filterautocomplete_id' => '=id'
                 ),
                 'name' => get_string('report', 'local_elisprogram'),
                 'showbutton' => true,
@@ -144,17 +144,14 @@ class userpage extends managementpage {
         //tab for the Individual User report
         //permissions checking happens in the link page
         if (file_exists($CFG->dirroot.'/local/elisreports/render_report_page.php')) {
-            //script for rendering report pages exists in report block, so reports
-            //are at least installed
-            $report_tab = array('tab_id' => 'report',
-                                'page' => 'induserlinkpage',
-                                'params' => array('linkurl' => 'local/elisreports/render_report_page.php',
-                                                  'linkparams'=>'report,userid',
-                                                  'report'=>'individual_user', 'userid'=>'=id'),
-                                'name' => get_string('report', 'local_elisprogram'),
-                                'showbutton' => true,
-                                'image' => 'report');
-            $this->tabs[] = $report_tab;
+            // Script for rendering report pages exists in report block, so reports are at least installed.
+            $reporttab = array('tab_id' => 'report', 'page' => 'induserlinkpage',
+                'params' => array('linkurl' => 'local/elisreports/render_report_page.php', 'linkparams' => 'report,filterautocomplete_id',
+                    'report' => 'individual_user', 'filterautocomplete_id' => '=id'),
+                'name' => get_string('report', 'local_elisprogram'),
+                'showbutton' => true,
+                'image' => 'report');
+            $this->tabs[] = $reporttab;
         }
 
         parent::__construct($params);
@@ -295,7 +292,7 @@ class induserlinkpage extends linkpage {
         global $USER;
 
         //obtain the target user's PM user id
-        $id = $this->required_param('userid', PARAM_INT);
+        $id = $this->required_param('filterautocomplete_id', PARAM_INT);
         //obtain the target user's PM user id
         $cmuserid = cm_get_crlmuserid($USER->id);
 
