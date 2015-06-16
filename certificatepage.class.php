@@ -52,7 +52,7 @@ abstract class certificatepage extends pm_page {
     /**
      * @var string This page's parent.
      */
-    protected $parentpage;
+    protected $parent_page;
 
     /**
      * @var string The section this page belongs to.
@@ -353,13 +353,13 @@ class course_certificatepage extends certificatepage {
      * @return object A coursepage object
      */
     protected function get_parent_page() {
-        if (!isset($this->parentpage)) {
+        if (!isset($this->parent_page)) {
             global $CFG, $CURMAN;
             require_once(elispm::file('coursepage.class.php'));
             $id = $this->required_param('id', PARAM_INT);
-            $this->parentpage = new coursepage(array('id' => $id, 'action' => 'view'));
+            $this->parent_page = new coursepage(array('id' => $id, 'action' => 'view'));
         }
-        return $this->parentpage;
+        return $this->parent_page;
     }
 
     /**
