@@ -117,7 +117,7 @@ class usersetselect extends \admin_setting_configtext {
         $return = \html_writer::tag('div', $this->form->render(), array('id' => "php_report_body_{$this->instanceid}"));
         $return = preg_replace('/<form.*>/', '', $return, 1); // Cannot use html_writer for RegEx.
         $return = str_replace(\html_writer::end_tag('form'), '', $return);
-        return format_admin_setting($this, $this->visiblename, $return, $this->description, true, '', '', $query);
+        return format_admin_setting($this, $this->visiblename, $return, $this->description, true, '', get_string('allowall', 'local_elisprogram'), $query);
     }
 
     /**
