@@ -57,6 +57,7 @@ $string['adminsetting_usersettree_help'] = 'Select User Sets';
 $string['all_items_assigned'] = 'All available items assigned.';
 $string['all_users_already_enrolled'] = 'All users in track already enrolled.';
 $string['alleliscomponents'] = 'Component Details';
+$string['allowall'] = 'Allow all';
 $string['and_all_children'] = '(and all children)';
 $string['and_dd'] = ' AND ';
 $string['andor_dd'] = ' AND/OR ';
