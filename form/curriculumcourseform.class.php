@@ -216,7 +216,9 @@ class prerequisiteform extends cmform {
 
         $mform->addGroup($group, 'submitbuttons', '', '', false);
 
-        $mform->addElement('cancel', 'exit', get_string('exit', 'local_elisprogram'));
+        $link = new moodle_url('/local/elisprogram/index.php', array('s' => 'currcrs', 'id' => $data->curriculumid));
+        $options = array("onclick" => 'window.location=\''.$link->out(false)."'");
+        $mform->addElement('button', 'exit', get_string('exit', 'local_elisprogram'), $options);
     }
 }
 
