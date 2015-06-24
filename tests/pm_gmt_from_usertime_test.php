@@ -62,7 +62,7 @@ class pm_gmt_from_usertime_testcase extends basic_testcase {
      * @dataProvider pm_gmt_from_usertime_dataprovider
      */
     public function test_pm_gmt_from_usertime($intimestamp, $timezone, $outtimestamp) {
-        if (get_user_timezone_offset($timezone) == 99) {
+        if (core_date::get_user_timezone($timezone) == 99) {
             $this->markTestSkipped("\nSkipping test_pm_gmt_from_usertime() with undefined timezone = '{$timezone}'\n");
         } else {
             $this->assertEquals($outtimestamp, pm_gmt_from_usertime($intimestamp, $timezone));

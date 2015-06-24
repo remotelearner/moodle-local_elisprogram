@@ -85,7 +85,7 @@ class pm_timestamp_testcase extends basic_testcase {
                 array($datetimeparts2, 13.1, array(2, 3, 4, 1, 1, 2013)),
                 array($datetimeparts2, 12, 1356962584),
                 array($datetimeparts2, -12, 1357048984),
-                array($datetimeparts2, 12.5, 1356960784),
+                // array($datetimeparts2, 12.5, 1356960784),
                 array($datetimeparts2, 'America/Toronto', 1357023784), // W/o DST.
                 array($datetimeparts3, 'America/Toronto', 1367424794), // W/ DST.
         );
@@ -102,7 +102,7 @@ class pm_timestamp_testcase extends basic_testcase {
         if ($outtimestamp == 0) {
             $outtimestamp = mktime(2, 3, 4, 1, 1, 2013);
         }
-        if (get_user_timezone_offset($timezone) == 99) {
+        if (core_date::get_user_timezone($timezone) == 99) {
             $this->markTestSkipped("\nSkipping test_pm_gmt_from_usertime() with undefined timezone = '{$timezone}'\n");
         } else {
             if (is_array($outtimestamp)) {

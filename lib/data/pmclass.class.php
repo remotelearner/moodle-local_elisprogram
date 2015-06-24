@@ -105,7 +105,7 @@ class pmclass extends data_object_with_custom_fields {
         if ($this->starttimehour >= 25 || $this->starttimeminute >= 61) {
             return 0;
         }
-        $starttime = ($this->starttimehour - get_user_timezone_offset()) * HOURSECS;
+        $starttime = ($this->starttimehour - rl_get_user_timezone_offset()) * HOURSECS;
         $starttime += $this->starttimeminute * MINSECS;
 
         return $starttime;
@@ -115,7 +115,7 @@ class pmclass extends data_object_with_custom_fields {
         if ($this->endtimehour >= 25 || $this->endtimeminute >= 61) {
             return 0;
         }
-        $endtime = ($this->endtimehour - get_user_timezone_offset()) * HOURSECS;
+        $endtime = ($this->endtimehour - rl_get_user_timezone_offset()) * HOURSECS;
         $endtime += $this->endtimeminute * MINSECS;
 
         return $endtime;

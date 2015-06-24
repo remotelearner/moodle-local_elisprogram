@@ -1869,7 +1869,7 @@ function pm_fix_orphaned_fields() {
  * @return int  timestamp in GMT
  */
 function pm_gmt_from_usertime($usertime, $timezone = 99) {
-    $tz = get_user_timezone_offset($timezone);
+    $tz = rl_get_user_timezone_offset($timezone);
     if (abs($tz) > 13) {
         return $usertime;
     }

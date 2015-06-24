@@ -72,7 +72,7 @@ foreach ($clusters as $clusid => $clusdata) {
 
 if ($clusters_fixed_cnt > 0) {
     mtrace("Rebuilding context paths...");
-    build_context_path();
+    context_helper::build_all_paths();
 } else {
     mtrace("No orphaned User Sets found!");
 }

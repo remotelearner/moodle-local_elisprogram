@@ -808,7 +808,7 @@ class cluster_rolepage extends rolepage {
         global $DB;
 
         if ($parent) {
-            if ($contexts = get_parent_contexts($context)) {
+            if (($contexts = $context->get_parent_context_ids()) && !empty($contexts)) {
                 $parentcontexts = ' OR r.contextid IN ('.implode(',', $contexts).')';
             } else {
                 $parentcontexts = '';
