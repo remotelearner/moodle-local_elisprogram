@@ -86,35 +86,6 @@ class admininfo extends \pm_page {
     }
 
     /**
-     * Get TCPDF library version info.
-     *
-     * @return array Array consisting of componentname, release, and version.
-     */
-    public function get_tcpdf_info() {
-        global $CFG;
-        $ret = [null, null, null];
-        $tcpdfinfofile = $CFG->dirroot.'/local/elisreports/lib/tcpdf/README.TXT';
-        if (file_exists($tcpdfinfofile)) {
-            $tcpdfreadme = file_get_contents($tcpdfinfofile);
-            $matches = [];
-            $name = '';
-            $release = '';
-            $version = '';
-            if (preg_match('/Name: (.*)/', $tcpdfreadme, $matches)) {
-                $name = $matches[1];
-            }
-            if (preg_match('/Version: (.*)/', $tcpdfreadme, $matches)) {
-                $release = $matches[1];
-            }
-            if (preg_match('/Release date: (.*)/', $tcpdfreadme, $matches)) {
-                $version = $matches[1];
-            }
-            $ret = [$name, $release, $version];
-        }
-        return $ret;
-    }
-
-    /**
      * Get pChart library version info.
      *
      * @return array Array consisting of componentname, release, and version.
@@ -148,7 +119,6 @@ class admininfo extends \pm_page {
             'local_datahub' => null,
             'auth_elisfilessso' => null,
             'repository_elisfiles' => null,
-            'lib_tcpdf' => [$this, 'get_tcpdf_info'],
             'lib_pChart' => [$this, 'get_pchart_info'],
         ];
 
