@@ -97,9 +97,9 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
         $requestval = required_param('val', PARAM_CLEAN);
         $ret = array();
         $requestval = strtolower($requestval);
-        foreach ($this->choices as $choice) {
+        foreach ($this->choices as $key => $choice) {
             if (strpos(strtolower($choice), $requestval) !== false) {
-                $ret[] = array('id' => $choice, 'label' => $choice);
+                $ret[] = array('id' => $key, 'label' => $choice);
             }
         }
         return safe_json_encode($ret);
@@ -120,7 +120,7 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
                 if (!is_numeric($val) && !is_string($val)) {
                     return array('', array());
                 }
-                if ($this->datatype == 'bool') {
+                if ($this->datatype == 'bool' && !in_array($val, array(0, 1))) {
                     $val = ($val == get_string('yes'));
                 }
                 $params[] = $val;
