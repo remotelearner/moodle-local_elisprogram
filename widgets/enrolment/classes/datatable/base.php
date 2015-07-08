@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    eliswidget_enrolment
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -233,7 +233,7 @@ abstract class base {
      * @return string A GROUP BY sql fragment, if desired.
      */
     protected function get_groupby_sql() {
-        return '';
+        return ''; // TBD: 'element.id';
     }
 
     /**
@@ -270,29 +270,6 @@ abstract class base {
             throw new \coding_error('You must specify a main table ($this->maintable) in subclasses.');
         }
 
-        // Get the number of results in the full dataset.
-        if (!empty($groupbysql)) {
-            // If the query has a group by statement, we have to put it in a subquery to avoid interaction with our count().
-            $sqlparts = [
-                    'SELECT element.id',
-                    'FROM {'.$this->maintable.'} element',
-                    $joinsql,
-                    $filtersql,
-                    $groupbysql,
-            ];
-            $query = implode(' ', $sqlparts);
-            $query = 'SELECT count(1) as count FROM ('.$query.') results';
-        } else {
-            $sqlparts = [
-                    'SELECT count(1) as count',
-                    'FROM {'.$this->maintable.'} element',
-                    $joinsql,
-                    $filtersql
-            ];
-            $query = implode(' ', $sqlparts);
-        }
-        $totalresults = $this->DB->count_records_sql($query, $params);
-
         // Generate and execute query for a single page of results.
         $sqlparts = [
                 'SELECT '.implode(', ', $selectfields),
@@ -303,20 +280,53 @@ abstract class base {
                 $sortsql,
         ];
         $query = implode(' ', $sqlparts);
-        $results = $this->DB->get_recordset_sql($query, $params, $limitfrom, $limitnum);
+        $results = $this->DB->get_recordset_sql($query, $params); // WAS: +, $limitfrom, $limitnum);
 
+        $totalresults = 0;
         $resultsarray = [];
+        $multivaluedflag = false;
+        $lastid = null;
         foreach ($results as $id => $result) {
-            $resultsarray[$id] = $result;
+            if (empty($resultsarray[$id])) {
+                if ($multivaluedflag && $lastid) {
+                    foreach ($this->customfields as $fieldname => $field) {
+                        $elem = $fieldname.'_data';
+                        if ($field->multivalued && isset($resultsarray[$lastid]->$elem) && is_array($resultsarray[$lastid]->$elem)) {
+                            $resultsarray[$lastid]->$elem = array_unique($resultsarray[$lastid]->$elem);
+                            $resultsarray[$lastid]->$elem = implode(', ', $resultsarray[$lastid]->$elem);
+                        }
+                    }
+                }
+                $resultsarray[$id] = $result;
+                ++$totalresults;
+                $multivaluedflag = false;
+                $lastid = $id;
+            }
             foreach ($this->customfields as $fieldname => $field) {
                 $elem = $fieldname.'_data';
                 if (isset($resultsarray[$id]->$elem) && isset($field->params['control']) && $field->params['control'] == 'datetime') {
                     $resultsarray[$id]->$elem = ds_process_displaytime($resultsarray[$id]->$elem);
                 } else if ($field->datatype == 'bool') {
                     $resultsarray[$id]->$elem = !empty($resultsarray[$id]->$elem) ? get_string('yes') : get_string('no');
+                } else if ($field->multivalued && isset($result->$elem)) {
+                    $multivaluedflag = true;
+                    if (!is_array($resultsarray[$id]->$elem)) {
+                        $resultsarray[$id]->$elem = [$result->$elem];
+                    } else {
+                        $resultsarray[$id]->{$elem}[] = $result->$elem;
+                    }
                 }
             }
         }
-        return [$resultsarray, $totalresults];
+        if ($multivaluedflag && $lastid) {
+            foreach ($this->customfields as $fieldname => $field) {
+                $elem = $fieldname.'_data';
+                if ($field->multivalued && isset($resultsarray[$lastid]->$elem) && is_array($resultsarray[$lastid]->$elem)) {
+                    $resultsarray[$lastid]->$elem = array_unique($resultsarray[$lastid]->$elem);
+                    $resultsarray[$lastid]->$elem = implode(', ', $resultsarray[$lastid]->$elem);
+                }
+            }
+        }
+        return [array_slice($resultsarray, $limitfrom, $limitnum, true), $totalresults];
     }
 }
