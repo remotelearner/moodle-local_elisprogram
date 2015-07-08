@@ -158,7 +158,7 @@ class program extends base {
      * @return string An ORDER BY sql fragment, if desired.
      */
     protected function get_sort_sql() {
-        return 'ORDER BY element.idnumber ASC';
+        return 'ORDER BY element.priority ASC, element.idnumber ASC';
     }
 
     /**
