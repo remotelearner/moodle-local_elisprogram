@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    eliswidget_enrolment
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -48,7 +48,7 @@ trait customfieldfilteringtrait {
         $fielddata = array();
 
         // Add custom fields.
-        $sql = 'SELECT field.id, field.name, field.shortname, field.datatype, owner.params
+        $sql = 'SELECT field.id, field.name, field.shortname, field.datatype, field.multivalued, owner.params
                   FROM {local_eliscore_field} field
                   JOIN {local_eliscore_field_clevels} ctx ON ctx.fieldid = field.id
                   JOIN {local_eliscore_field_owner} owner ON owner.fieldid = field.id AND plugin = "manual"
@@ -66,6 +66,7 @@ trait customfieldfilteringtrait {
 
             $filterfielddata = array($filtername.'.data' => $field->name);
 
+            $filterfielddata['multivalued'] = $field->multivalued; // ELIS-9197.
             if ($field->datatype === 'bool' || (isset($field->params['control']) && $field->params['control'] === 'menu' && !empty($field->params['options']))) {
                 $filterfielddata['datatype'] = $field->datatype;
                 $filtermenu = new \deepsight_filter_menuofchoices($this->DB, $filtername, $field->name, $filterfielddata, $this->endpoint);
