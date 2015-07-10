@@ -72,8 +72,8 @@ class cmCurriculaForm extends cmform {
         $mform->addRule('reqcredits', null, 'maxlength', 10);
         $mform->addHelpButton('reqcredits', 'curriculaform:required_credits', 'local_elisprogram');
 
-        $choices = range(0, 10);
-        $mform->addElement('select', 'priority', get_string('priority', 'local_elisprogram') . ':', $choices);
+        $mform->addElement('text', 'priority', get_string('priority', 'local_elisprogram') . ':');
+        $mform->setType('priority', PARAM_INT);
         $mform->addHelpButton('priority', 'curriculaform:priority', 'local_elisprogram');
 
         //because moodle forms will not allow headers within headers
