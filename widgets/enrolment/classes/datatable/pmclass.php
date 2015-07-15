@@ -89,18 +89,12 @@ class pmclass extends base {
         $customfieldfilters = $this->get_custom_field_info($pmclassctxlevel, ['table' => get_called_class()]);
         $filters = array_merge($filters, $customfieldfilters);
 
-        // Restrict to configured enabled fields.
-        $enabledfields = get_config('eliswidget_enrolment', 'classenabledfields');
-        if (!empty($enabledfields)) {
-            $enabledfields .= ',';
-        }
-        $enabledfields .= 'classstatus'; // TBD: always add classstatus filter?
-        if (!empty($enabledfields)) {
-            $enabledfields = explode(',', $enabledfields);
-            foreach ($filters as $i => $filter) {
-                if (!in_array($filter->get_name(), $enabledfields)) {
-                    unset($filters[$i]);
-                }
+        // Restrict to visible fields.
+        foreach ($filters as $i => $filter) {
+            $filtername = $filter->get_name();
+            $enabled = get_config('eliswidget_enrolment', 'class_field_'.$filtername.'_radio');
+            if ($filtername != 'classstatus' && $enabled && $enabled != 0 && $enabled != 2) { // TBD: always add classstatus filter?
+                unset($filters[$i]);
             }
         }
 

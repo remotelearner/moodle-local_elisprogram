@@ -67,14 +67,11 @@ class courseset extends base {
         $customfieldfilters = $this->get_custom_field_info($crssetctxlevel, ['table' => get_called_class()]);
         $filters = array_merge($filters, $customfieldfilters);
 
-        // Restrict to configured enabled fields.
-        $enabledfields = get_config('eliswidget_enrolment', 'coursesetenabledfields');
-        if (!empty($enabledfields)) {
-            $enabledfields = explode(',', $enabledfields);
-            foreach ($filters as $i => $filter) {
-                if (!in_array($filter->get_name(), $enabledfields)) {
-                    unset($filters[$i]);
-                }
+        // Restrict to visible fields.
+        foreach ($filters as $i => $filter) {
+            $enabled = get_config('eliswidget_enrolment', 'courseset_field_'.$filter->get_name().'_radio');
+            if ($enabled && $enabled != 0 && $enabled != 2) {
+                unset($filters[$i]);
             }
         }
 

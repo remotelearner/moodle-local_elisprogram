@@ -26,7 +26,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2014082501;
+$plugin->version = 2014082502;
 $plugin->release = '2.7.9.0 (Build: 20150714)';
 $plugin->dependencies = array(
     'eliswidget_enrolment' => 2014082500

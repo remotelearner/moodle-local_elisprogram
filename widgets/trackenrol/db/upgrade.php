@@ -74,5 +74,27 @@ function xmldb_eliswidget_trackenrol_upgrade($oldversion = 0) {
         upgrade_plugin_savepoint($result, '2014082501', 'eliswidget', 'trackenrol');
     }
 
+    if ($result && $oldversion < 2014082502) {
+        // Convert enabled fields multiselect to separate radio buttons: 0 => visible, 1 => hidden
+        $fields = [
+            'track' => ['idnumber', 'name', 'description', 'program', 'startdate', 'enddate']
+        ];
+        foreach ($fields as $ctxlvl => $allfields) {
+            if (($curval = get_config('eliswidget_trackenrol', $ctxlvl.'enabledfields'))) {
+                $enabledfields = explode(',', $curval);
+                if (($customfields = field::get_for_context_level($ctxlvl)) && $customfields->valid()) {
+                    foreach ($customfields as $customfield) {
+                        $allfields[] = strtolower('cf_'.$customfield->shortname);
+                    }
+                }
+                foreach ($allfields as $field) {
+                    set_config($ctxlvl.'_field_'.$field.'_radio', in_array($field, $enabledfields) ? 0 : 1, 'eliswidget_trackenrol');
+                }
+                unset_config($ctxlvl.'enabledfields', 'eliswidget_trackenrol');
+            }
+        }
+        upgrade_plugin_savepoint($result, '2014082502', 'eliswidget', 'trackenrol');
+    }
+
     return $result;
 }

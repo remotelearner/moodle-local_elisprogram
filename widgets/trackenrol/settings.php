@@ -39,35 +39,71 @@ if ($ADMIN->fulltree) {
         'track' => [
             'displayname' => get_string('tracks', 'local_elisprogram'),
             'fields' => [
-                'idnumber' => get_string('track_idnumber', 'local_elisprogram'),
-                'name' => get_string('track_name', 'local_elisprogram'),
-                'description' => get_string('description', 'local_elisprogram'),
-                'program' => get_string('curriculum', 'local_elisprogram'),
-                'startdate' => get_string('track_startdate', 'local_elisprogram'),
-                'enddate' => get_string('track_enddate', 'local_elisprogram'),
-            ],
-            'defaultfields' => ['idnumber', 'name', 'description', 'program'],
-        ],
+                'idnumber' => [
+                    'label' => get_string('track_idnumber', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'name' => [
+                    'label' => get_string('track_name', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'description' => [
+                    'label' => get_string('description', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'program' => [
+                    'label' => get_string('curriculum', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'startdate' => [
+                    'label' => get_string('track_startdate', 'local_elisprogram'),
+                    'datatype' => 'date',
+                    'visible' => false
+                ],
+                'enddate' => [
+                    'label' => get_string('track_enddate', 'local_elisprogram'),
+                    'datatype' => 'date',
+                    'visible' => false
+                ]
+            ]
+        ]
     ];
     foreach ($fieldlevels as $ctxlvl => $info) {
-        // Get custom fields and merge with base fields.
-        $fields = field::get_for_context_level($ctxlvl);
-        if ($fields->valid() === true) {
-            foreach ($fields as $field) {
-                $name = strtolower('cf_'.$field->shortname);
-                $info['fields'][$name] = $field->name;
-            }
+        $enabledfields = [
+            'name' => 'eliswidget_trackenrol/'.$ctxlvl.'_field_',
+            'visiblename' => get_string('setting_enabledfields', 'eliswidget_trackenrol', $info['displayname']),
+            'description' => get_string('setting_enabledfields_description', 'eliswidget_trackenrol', $info['displayname'])
+        ];
+        $settings->add(new \admin_setting_heading($enabledfields['name'], $info['displayname'], '')); // TBD.
+        foreach ($info['fields'] as $ckey => $cval) {
+            $settings->add(new \local_elisprogram\admin\setting\widgetfilterconfig($enabledfields['name'].$ckey, $cval['label'],
+                    '', isset($cval['datatype']) ? $cval['datatype'] : '' , (isset($cval['visible']) && $cval['visible'] == false) ? 1 : 0, []));
         }
 
-        $enabledfields = [
-            'name' => 'eliswidget_trackenrol/'.$ctxlvl.'enabledfields',
-            'visiblename' => get_string('setting_enabledfields', 'eliswidget_trackenrol', $info['displayname']),
-            'description' => get_string('setting_enabledfields_description', 'eliswidget_trackenrol', $info['displayname']),
-            'defaultsetting' => $info['defaultfields'],
-            'choices' => $info['fields'],
-        ];
-        $settings->add(new \admin_setting_configmultiselect($enabledfields['name'], $enabledfields['visiblename'],
-                $enabledfields['description'], $enabledfields['defaultsetting'], $enabledfields['choices']));
+        // Get custom fields ...
+        if (($fields = field::get_for_context_level($ctxlvl)) && $fields->valid()) {
+            foreach ($fields as $field) {
+                $manual = null;
+                $name = $enabledfields['name'].strtolower('cf_'.$field->shortname);
+                if ($field->datatype == 'bool') {
+                    $datatype = 'bool';
+                } else {
+                    $manual = new field_owner($field->owners['manual']);
+                    switch ($manual->param_control) {
+                        case 'menu':
+                            $datatype = 'menu';
+                            break;
+                        case 'datetime':
+                            $datatype = 'date';
+                            break;
+                        default:
+                            $datatype = 'text';
+                    }
+                }
+                $settings->add(new \local_elisprogram\admin\setting\widgetfilterconfig($name, $field->name, $field->description, $datatype, 1,
+                        ($datatype == 'menu' && !empty($manual)) ? $manual->get_menu_options() : []));
+            }
+        }
     }
 
     // Criterial to view widget
