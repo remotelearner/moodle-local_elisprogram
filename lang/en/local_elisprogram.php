@@ -687,6 +687,7 @@ $string['field_no_fields_defined'] = 'No fields defined';
 $string['field_resyncing'] = 'Please wait.  Resynchronizing data with Moodle.';
 $string['field_saved'] = 'Field saved';
 $string['field_syncwithmoodle'] = 'Sync with Moodle';
+$string['filter_value'] = 'Filter value: ';
 $string['filters'] = 'Filters';
 $string['fld_class'] = 'Class';
 $string['fld_classstatus'] = 'Status';

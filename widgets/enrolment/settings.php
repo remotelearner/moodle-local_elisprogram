@@ -65,66 +65,143 @@ if ($ADMIN->fulltree) {
         'curriculum' => [
             'displayname' => get_string('curriculum', 'local_elisprogram'),
             'fields' => [
-                'idnumber' => get_string('curriculum_idnumber', 'local_elisprogram'),
-                'name' => get_string('curriculum_name', 'local_elisprogram'),
-                'description' => get_string('description', 'local_elisprogram'),
-                'reqcredits' => get_string('curriculum_reqcredits', 'local_elisprogram'),
-            ],
-            'defaultfields' => ['idnumber', 'name', 'description'],
+                'idnumber' => [
+                    'label' => get_string('curriculum_idnumber', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'name' => [
+                    'label' => get_string('curriculum_name', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'description' => [
+                    'label' => get_string('description', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'reqcredits' => [
+                    'label' => get_string('curriculum_reqcredits', 'local_elisprogram'),
+                    'visible' => false
+                ]
+            ]
         ],
         'courseset' => [
             'displayname' => get_string('courseset', 'local_elisprogram'),
             'fields' => [
-                'idnumber' => get_string('courseset_idnumber', 'local_elisprogram'),
-                'name' => get_string('courseset_name', 'local_elisprogram'),
-                'description' => get_string('description', 'local_elisprogram'),
-            ],
-            'defaultfields' => ['idnumber', 'name', 'description'],
+                'idnumber' => [
+                    'label' => get_string('courseset_idnumber', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'name' => [
+                    'label' => get_string('courseset_name', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'description' => [
+                    'label' => get_string('description', 'local_elisprogram'),
+                    'visible' => true
+                ],
+            ]
         ],
         'course' => [
             'displayname' => get_string('course', 'local_elisprogram'),
             'fields' => [
-                'name' => get_string('course_name', 'local_elisprogram'),
-                'code' => get_string('course_code', 'local_elisprogram'),
-                'idnumber' => get_string('course_idnumber', 'local_elisprogram'),
-                'description' => get_string('course_syllabus', 'local_elisprogram'),
-                'credits' => get_string('credits', 'local_elisprogram'),
-                'cost' => get_string('cost', 'local_elisprogram'),
-                'version' => get_string('course_version', 'local_elisprogram'),
-            ],
-            'defaultfields' => ['name', 'code', 'idnumber', 'description', 'credits'],
+                'name' => [
+                    'label' => get_string('course_name', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'code' => [
+                    'label' => get_string('course_code', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'idnumber' => [
+                    'label' => get_string('course_idnumber', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'description' => [
+                    'label' => get_string('course_syllabus', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'credits' => [
+                    'label' => get_string('credits', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'cost' => [
+                    'label' => get_string('cost', 'local_elisprogram'),
+                    'visible' => false
+                ],
+                'version' => [
+                    'label' => get_string('course_version', 'local_elisprogram'),
+                    'visible' => false
+                ]
+            ]
         ],
         'class' => [
             'displayname' => get_string('class', 'local_elisprogram'),
             'fields' => [
-                'idnumber' => get_string('class_idnumber', 'local_elisprogram'),
-                'startdate' => get_string('class_startdate', 'local_elisprogram'),
-                'enddate' => get_string('class_enddate', 'local_elisprogram'),
-                'starttime' => get_string('class_starttime', 'local_elisprogram'),
-                'endtime' => get_string('class_endtime', 'local_elisprogram'),
-            ],
-            'defaultfields' => ['idnumber', 'startdate', 'enddate', 'starttime', 'endtime'],
-        ],
+                'idnumber' => [
+                    'label' => get_string('class_idnumber', 'local_elisprogram'),
+                    'visible' => true
+                ],
+                'startdate' => [
+                    'label' => get_string('class_startdate', 'local_elisprogram'),
+                    'datatype' => 'date',
+                    'visible' => true
+                ],
+                'enddate' => [
+                    'label' => get_string('class_enddate', 'local_elisprogram'),
+                    'datatype' => 'date',
+                    'visible' => true
+                ]
+              /** TBD: starttime & endtime never were supported!
+                ,
+                'starttime' => [
+                    'label' => get_string('class_starttime', 'local_elisprogram'),
+                    'datatype' => 'time',
+                    'visible' => true
+                ],
+                'endtime' => [
+                    'label' => get_string('class_endtime', 'local_elisprogram'),
+                    'datatype' => 'time',
+                    'visible' => true
+                ]
+              */
+            ]
+        ]
     ];
     foreach ($fieldlevels as $ctxlvl => $info) {
-        // Get custom fields and merge with base fields.
-        $fields = field::get_for_context_level($ctxlvl);
-        if ($fields->valid() === true) {
-            foreach ($fields as $field) {
-                $name = strtolower('cf_'.$field->shortname);
-                $info['fields'][$name] = $field->name;
-            }
+        $enabledfields = [
+            'name' => 'eliswidget_enrolment/'.$ctxlvl.'_field_',
+            'visiblename' => get_string('setting_enabledfields', 'eliswidget_enrolment', $info['displayname']),
+            'description' => get_string('setting_enabledfields_description', 'eliswidget_enrolment', $info['displayname'])
+        ];
+        $settings->add(new \admin_setting_heading($enabledfields['name'], $info['displayname'], '')); // TBD.
+        foreach ($info['fields'] as $ckey => $cval) {
+            $settings->add(new \local_elisprogram\admin\setting\widgetfilterconfig($enabledfields['name'].$ckey, $cval['label'],
+                    '', isset($cval['datatype']) ? $cval['datatype'] : '' , (isset($cval['visible']) && $cval['visible'] == false) ? 1 : 0, []));
         }
 
-        $enabledfields = [
-            'name' => 'eliswidget_enrolment/'.$ctxlvl.'enabledfields',
-            'visiblename' => get_string('setting_enabledfields', 'eliswidget_enrolment', $info['displayname']),
-            'description' => get_string('setting_enabledfields_description', 'eliswidget_enrolment', $info['displayname']),
-            'defaultsetting' => $info['defaultfields'],
-            'choices' => $info['fields'],
-        ];
-        $settings->add(new \admin_setting_configmultiselect($enabledfields['name'], $enabledfields['visiblename'],
-                $enabledfields['description'], $enabledfields['defaultsetting'], $enabledfields['choices']));
+        // Get custom fields ...
+        if (($fields = field::get_for_context_level($ctxlvl)) && $fields->valid()) {
+            foreach ($fields as $field) {
+                $manual = null;
+                $name = $enabledfields['name'].strtolower('cf_'.$field->shortname);
+                if ($field->datatype == 'bool') {
+                    $datatype = 'bool';
+                } else {
+                    $manual = new field_owner($field->owners['manual']);
+                    switch ($manual->param_control) {
+                        case 'menu':
+                            $datatype = 'menu';
+                            break;
+                        case 'datetime':
+                            $datatype = 'date';
+                            break;
+                        default:
+                            $datatype = 'text';
+                    }
+                }
+                $settings->add(new \local_elisprogram\admin\setting\widgetfilterconfig($name, $field->name, $field->description, $datatype, 1,
+                        ($datatype == 'menu' && !empty($manual)) ? $manual->get_menu_options() : []));
+            }
+        }
     }
 
 }
