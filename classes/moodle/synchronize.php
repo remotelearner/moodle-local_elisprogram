@@ -65,36 +65,90 @@ class synchronize {
         }
 
         $gbr = explode(',', $CFG->gradebookroles);
-        list($gbrsql, $gbrparams) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED);
+        list($gbrsql1, $gbrparams1) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'param1');
+        list($gbrsql2, $gbrparams2) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'param2');
 
-        // Get all users (or specified user) that are enroled in any Moodle course that is linked to an ELIS class.
-        $sql = "SELECT u.id AS muid,
-                       u.username AS username,
-                       cu.id AS cmid,
-                       crs.id AS moodlecourseid,
-                       cls.id AS pmclassid,
-                       ecrs.id AS pmcourseid,
-                       ecrs.completion_grade AS pmcoursecompletiongrade,
-                       ecrs.credits AS pmcoursecredits,
-                       stu.*
-                  FROM {user} u
-                  JOIN {role_assignments} ra ON u.id = ra.userid
-                  JOIN {context} ctx ON ctx.id = ra.contextid
-                  JOIN {context} ctx2 ON (ctx2.path LIKE concat('%/',ctx.id,'/%') OR ctx2.path LIKE concat('%/',ctx.id))
-                       AND ctx2.contextlevel = ".CONTEXT_COURSE."
-                  JOIN {".\usermoodle::TABLE."} umdl ON umdl.muserid = u.id
-                  JOIN {".\user::TABLE."} cu ON cu.id = umdl.cuserid
-                  JOIN {course} crs ON crs.id = ctx2.instanceid
-                  JOIN {".\classmoodlecourse::TABLE."} cmc ON cmc.moodlecourseid = crs.id
-                  JOIN {".\pmclass::TABLE."} cls ON cls.id = cmc.classid
-                  JOIN {".\course::TABLE."} ecrs ON ecrs.id = cls.courseid
-             LEFT JOIN {".\student::TABLE."} stu ON stu.userid = cu.id AND stu.classid = cls.id
-                 WHERE ra.roleid $gbrsql
-                       AND u.deleted = 0
-                       {$userfilter}
-              GROUP BY muid, pmclassid
-              ORDER BY muid ASC, pmclassid ASC";
-        $params = array_merge($gbrparams, $userparams);
+        if (empty($muserid)) {
+            // Get all users (or specified user) that are enroled in any Moodle course that is linked to an ELIS class.
+            // The first query locates enrolments by role assignments to a course.
+            // The second query locates enrolments by role assignments to a course category.
+            $sql = "SELECT u.id AS muid,
+                           u.username AS username,
+                           cu.id AS cmid,
+                           crs.id AS moodlecourseid,
+                           cls.id AS pmclassid,
+                           ecrs.id AS pmcourseid,
+                           ecrs.completion_grade AS pmcoursecompletiongrade,
+                           ecrs.credits AS pmcoursecredits,
+                           stu.*
+                      FROM {user} u
+                      JOIN {role_assignments} ra ON u.id = ra.userid
+                      JOIN {context} ctx ON ctx.id = ra.contextid
+                           AND ctx.contextlevel = ".CONTEXT_COURSE."
+                      JOIN {".\usermoodle::TABLE."} umdl ON umdl.muserid = u.id
+                      JOIN {".\user::TABLE."} cu ON cu.id = umdl.cuserid
+                      JOIN {course} crs ON crs.id = ctx.instanceid
+                      JOIN {".\classmoodlecourse::TABLE."} cmc ON cmc.moodlecourseid = crs.id
+                      JOIN {".\pmclass::TABLE."} cls ON cls.id = cmc.classid
+                      JOIN {".\course::TABLE."} ecrs ON ecrs.id = cls.courseid
+                 LEFT JOIN {".\student::TABLE."} stu ON stu.userid = cu.id AND stu.classid = cls.id
+                     WHERE ra.roleid $gbrsql1
+                           AND u.deleted = 0
+                  GROUP BY muid, pmclassid
+                    UNION
+                    SELECT u.id AS muid,
+                           u.username AS username,
+                           cu.id AS cmid,
+                           crs.id AS moodlecourseid,
+                           cls.id AS pmclassid,
+                           ecrs.id AS pmcourseid,
+                           ecrs.completion_grade AS pmcoursecompletiongrade,
+                           ecrs.credits AS pmcoursecredits,
+                           stu.*
+                      FROM {user} u
+                      JOIN {role_assignments} ra ON u.id = ra.userid
+                      JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 40
+                      JOIN {context} ctx2 ON (ctx2.path LIKE concat('%/',ctx.id,'/%') OR ctx2.path LIKE concat('%/',ctx.id))
+                           AND ctx2.contextlevel = ".CONTEXT_COURSE."
+                      JOIN {".\usermoodle::TABLE."} umdl ON umdl.muserid = u.id
+                      JOIN {".\user::TABLE."} cu ON cu.id = umdl.cuserid
+                      JOIN {course} crs ON crs.id = ctx2.instanceid
+                      JOIN {".\classmoodlecourse::TABLE."} cmc ON cmc.moodlecourseid = crs.id
+                      JOIN {".\pmclass::TABLE."} cls ON cls.id = cmc.classid
+                      JOIN {".\course::TABLE."} ecrs ON ecrs.id = cls.courseid
+                 LEFT JOIN {".\student::TABLE."} stu ON stu.userid = cu.id AND stu.classid = cls.id
+                     WHERE ra.roleid $gbrsql2
+                           AND u.deleted = 0
+                  GROUP BY muid, pmclassid";
+         } else {
+            // Retrieve a single user.
+            $sql = "SELECT u.id AS muid,
+                           u.username AS username,
+                           cu.id AS cmid,
+                           crs.id AS moodlecourseid,
+                           cls.id AS pmclassid,
+                           ecrs.id AS pmcourseid,
+                           ecrs.completion_grade AS pmcoursecompletiongrade,
+                           ecrs.credits AS pmcoursecredits,
+                           stu.*
+                      FROM {user} u
+                      JOIN {role_assignments} ra ON u.id = ra.userid
+                      JOIN {context} ctx ON ctx.id = ra.contextid
+                      JOIN {context} ctx2 ON (ctx2.path LIKE concat('%/',ctx.id,'/%') OR ctx2.path LIKE concat('%/',ctx.id))
+                           AND ctx2.contextlevel = ".CONTEXT_COURSE."
+                      JOIN {".\usermoodle::TABLE."} umdl ON umdl.muserid = u.id
+                      JOIN {".\user::TABLE."} cu ON cu.id = umdl.cuserid
+                      JOIN {course} crs ON crs.id = ctx2.instanceid
+                      JOIN {".\classmoodlecourse::TABLE."} cmc ON cmc.moodlecourseid = crs.id
+                      JOIN {".\pmclass::TABLE."} cls ON cls.id = cmc.classid
+                      JOIN {".\course::TABLE."} ecrs ON ecrs.id = cls.courseid
+                 LEFT JOIN {".\student::TABLE."} stu ON stu.userid = cu.id AND stu.classid = cls.id
+                     WHERE ra.roleid $gbrsql1
+                           AND u.deleted = 0
+                           {$userfilter}
+                  GROUP BY muid, pmclassid";
+        }
+        $params = array_merge($gbrparams1, $userparams, $gbrparams2);
         $users = $DB->get_recordset_sql($sql, $params);
         if (!empty($users) && $users->valid() === true) {
             return $users;
