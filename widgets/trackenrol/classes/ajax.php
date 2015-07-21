@@ -188,14 +188,61 @@ class ajax {
         if (empty($data['filters']) || !is_array($data['filters'])) {
             $data['filters'] = [];
         }
+        $allfilters = $this->preparefilters($datatable->get_filters());
+        $initialfilters = $datatable->get_initial_filters(); // TBD?
+
+        // Add defaulted & locked filters.
+        $datatable2ctxlvl = [
+            'eliswidget_trackenrol\datatable\track' => 'track'
+        ];
+        $datatableclass = get_class($datatable);
+        $ctxlvl = '';
+        if (!empty($datatable2ctxlvl[$datatableclass])) {
+            $ctxlvl = $datatable2ctxlvl[$datatableclass];
+        }
+        if (!empty($ctxlvl)) {
+            $widgetcfg = get_config('eliswidget_trackenrol');
+            $cfgprefix = $ctxlvl.'_field_';
+            foreach ($widgetcfg as $name => $val) {
+                $matches = [];
+                if (preg_match("/{$cfgprefix}(.*)_radio/", $name, $matches) && count($matches) == 2 && !isset($data['filters'][$matches[1]]) &&
+                        ($val == 3 || ($val == 2 && $data['initialized'] == 'false'))) {
+                    $elem = $matches[1];
+                    if (($filterval = get_config('eliswidget_trackenrol', $cfgprefix.$elem.'_default')) === false) {
+                        $filterval = get_string('no'); // TBD: checkbox?
+                    }
+                    if (strpos($filterval, 'a:') === 0) {
+                        $filterval = @unserialize($filterval);
+                    }
+                    if (is_array($filterval) && isset($filterval['year'])) { // Fix date filter settings.
+                        if (isset($filterval['day'])) {
+                            $filterval['date'] = (int)$filterval['day'];
+                            $filterval['month'] = (int)$filterval['month'] - 1;
+                            unset($filterval['day']);
+                        } else {
+                            $filterval['date'] = (int)$filterval['date'];
+                            $filterval['month'] = (int)$filterval['month'];
+                        }
+                        $filterval['year'] = (int)$filterval['year'];
+                        $filterval = [$filterval];
+                    }
+                    $data['filters'][$elem] = (array)$filterval;
+                    if ($val == 2) { // Defaulted.
+                        $initialfilters[$elem] = (array)$filterval;
+                    } else { // Locked.
+                        unset($allfilters[$elem]);
+                    }
+                }
+            }
+        }
         $page = (isset($data['page']) && is_numeric($data['page'])) ? (int)$data['page'] : 1;
 
         // Assemble response.
         list($pageresults, $totalresultsamt) = $datatable->get_search_results($data['filters'], $page);
         list($visibledatafields, $hiddendatafields) = $datatable->get_datafields_by_visibility($data['filters']);
         return [
-            'filters' => $this->preparefilters($datatable->get_filters()),
-            'initialfilters' => $datatable->get_initial_filters(),
+            'filters' => $allfilters,
+            'initialfilters' => $initialfilters,
             'fields' => ['visible' => $visibledatafields, 'hidden' => $hiddendatafields],
             'children' => $this->results2array($pageresults),
             'perpage' => $datatable::RESULTSPERPAGE,

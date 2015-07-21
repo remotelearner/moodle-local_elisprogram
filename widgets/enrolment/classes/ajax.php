@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    eliswidget_enrolment
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -267,14 +267,66 @@ class ajax {
         if (empty($data['filters']) || !is_array($data['filters'])) {
             $data['filters'] = [];
         }
+        $allfilters = $this->preparefilters($datatable->get_filters());
+        $initialfilters = $datatable->get_initial_filters(); // TBD?
+
+        // Add defaulted & locked filters.
+        $datatable2ctxlvl = [
+            'eliswidget_enrolment\datatable\program' => 'curriculum',
+            'eliswidget_enrolment\datatable\programcourseset' => 'courseset',
+            'eliswidget_enrolment\datatable\programcourse' => 'course',
+            'eliswidget_enrolment\datatable\nonprogramcourse' => 'course',
+            'eliswidget_enrolment\datatable\coursesetcourse' => 'course',
+            'eliswidget_enrolment\datatable\pmclass' => 'class'
+        ];
+        $datatableclass = get_class($datatable);
+        $ctxlvl = '';
+        if (!empty($datatable2ctxlvl[$datatableclass])) {
+            $ctxlvl = $datatable2ctxlvl[$datatableclass];
+        }
+        if (!empty($ctxlvl)) {
+            $widgetcfg = get_config('eliswidget_enrolment');
+            $cfgprefix = $ctxlvl.'_field_';
+            foreach ($widgetcfg as $name => $val) {
+                $matches = [];
+                if (preg_match("/{$cfgprefix}(.*)_radio/", $name, $matches) && count($matches) == 2 && !isset($data['filters'][$matches[1]]) &&
+                        ($val == 3 || ($val == 2 && $data['initialized'] == 'false'))) {
+                    $elem = $matches[1];
+                    if (($filterval = get_config('eliswidget_enrolment', $cfgprefix.$elem.'_default')) === false) {
+                        $filterval = get_string('no'); // TBD: checkbox?
+                    }
+                    if (strpos($filterval, 'a:') === 0) {
+                        $filterval = @unserialize($filterval);
+                    }
+                    if (is_array($filterval) && isset($filterval['year'])) { // Fix date filter settings.
+                        if (isset($filterval['day'])) {
+                            $filterval['date'] = (int)$filterval['day'];
+                            $filterval['month'] = (int)$filterval['month'] - 1;
+                            unset($filterval['day']);
+                        } else {
+                            $filterval['date'] = (int)$filterval['date'];
+                            $filterval['month'] = (int)$filterval['month'];
+                        }
+                        $filterval['year'] = (int)$filterval['year'];
+                        $filterval = [$filterval];
+                    }
+                    $data['filters'][$elem] = (array)$filterval;
+                    if ($val == 2) { // Defaulted.
+                        $initialfilters[$elem] = (array)$filterval;
+                    } else { // Locked.
+                        unset($allfilters[$elem]);
+                    }
+                }
+            }
+        }
         $page = (isset($data['page']) && is_numeric($data['page'])) ? (int)$data['page'] : 1;
 
         // Assemble response.
         list($pageresults, $totalresultsamt) = $datatable->get_search_results($data['filters'], $page);
         list($visibledatafields, $hiddendatafields) = $datatable->get_datafields_by_visibility($data['filters']);
         return [
-            'filters' => $this->preparefilters($datatable->get_filters()),
-            'initialfilters' => $datatable->get_initial_filters(),
+            'filters' => $allfilters,
+            'initialfilters' => $initialfilters,
             'fields' => ['visible' => $visibledatafields, 'hidden' => $hiddendatafields],
             'children' => $this->results2array($pageresults),
             'perpage' => $datatable::RESULTSPERPAGE,

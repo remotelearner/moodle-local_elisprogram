@@ -102,6 +102,7 @@
         this.doupdatetable = function() {
             main.abortupdatetable();
             main.addClass('loading');
+            opts.requestdata.initialized = main.filtersinit;
             var data = {
                 m: opts.requestmode,
                 data: opts.requestdata,
