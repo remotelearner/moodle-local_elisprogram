@@ -53,6 +53,9 @@ abstract class base {
     /** @var string URL where all AJAX requests will be sent. */
     protected $endpoint = '';
 
+    /** @var array Array of locked filters */
+    protected $lockedfilters = [];
+
     /**
      * Constructor.
      * @param \moodle_database $DB An active database connection.
@@ -145,6 +148,9 @@ abstract class base {
 
         $fixedvisible = array_flip($this->get_fixed_visible_datafields());
         foreach ($this->availablefilters as $filtername => $filter) {
+            if (!empty($this->lockedfilters[$filtername])) {
+                continue;
+            }
             $fields = array_combine(array_values($filter->get_field_list()), array_values($filter->get_column_labels()));
             if (isset($fixedvisible[$filtername]) || isset($filters[$filtername])) {
                 $visiblefields = array_merge($visiblefields, $fields);
