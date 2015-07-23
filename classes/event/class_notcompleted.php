@@ -83,8 +83,6 @@ class class_notcompleted extends \core\event\base {
      */
     protected function get_legacy_eventdata() {
         global $CFG;
-        require_once($CFG->dirroot.'/local/elisprogram/lib/data/student.class.php');
-        $legacyeventdata = new \student($this->other);
-        return $legacyeventdata;
+        return (object)$this->other;
     }
 }
