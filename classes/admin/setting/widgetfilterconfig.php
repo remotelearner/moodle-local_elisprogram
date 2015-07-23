@@ -130,7 +130,7 @@ class widgetfilterconfig extends \admin_setting_configtext {
                 break;
             case 'bool':
                 $return .= get_string('filter_value', 'local_elisprogram').\html_writer::empty_tag('input', array_merge(['name' => $defaultname,
-                    'type' => 'checkbox', 'checked' => !empty($setting[$defaultname]) ? 'checked' : 'false'], $attrs));
+                    'type' => 'checkbox', 'value' => get_string('yes'), 'checked' => !empty($setting[$defaultname]) ? 'checked' : 'false'], $attrs));
                 break;
             case 'menu':
                 $return .= get_string('filter_value', 'local_elisprogram').\html_writer::select($this->options, $defaultname.'[]',

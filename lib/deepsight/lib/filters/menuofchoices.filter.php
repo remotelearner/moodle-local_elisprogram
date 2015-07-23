@@ -120,8 +120,8 @@ class deepsight_filter_menuofchoices extends deepsight_filter_standard {
                 if (!is_numeric($val) && !is_string($val)) {
                     return array('', array());
                 }
-                if ($this->datatype == 'bool' && !in_array($val, array(0, 1))) {
-                    $val = ($val == get_string('yes'));
+                if ($this->datatype == 'bool' && $val != '0' && $val != '1') {
+                    $val = ($val == get_string('yes')) ? 1 : 0;
                 }
                 $params[] = $val;
             }
