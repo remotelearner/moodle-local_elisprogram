@@ -2275,7 +2275,7 @@ class student extends elis_data_object {
     /**
      * Function to handle class not completed events.
      *
-     * @param   student  $student  The class enrolment / student object who is "not completed"
+     * @param   student  $student  The eventdata - not a student data object!
      * @uses    $CFG
      * @uses    $DB
      * @return  boolean            TRUE is successful, otherwise FALSE
@@ -2283,8 +2283,9 @@ class student extends elis_data_object {
 
     public static function class_notcompleted_handler($student) {
         global $CFG, $DB;
-        $student = new student($student->other);
-        $student->load();
+        if (isset($student->other)) {
+            $student = (object)$student->other;
+        }
         require_once elispm::lib('notifications.php');
 
         /// Does the user receive a notification?
