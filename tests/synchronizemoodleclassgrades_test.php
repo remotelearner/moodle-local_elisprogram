@@ -198,7 +198,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
      *
      * @param string $idnumber The grade item's idnumber
      * @param int $grademax The max grade (100 if not specified);
-     * @return int Grade item ID
+     * @return object Grade item Object.
      */
     protected function create_grade_item($idnumber = 'manualitem', $grademax = null) {
         // Required fields.
@@ -217,7 +217,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         // Save the record.
         $gradeitem = new \grade_item($data);
         $gradeitem->insert();
-        return $gradeitem->id;
+        return $gradeitem;
     }
 
     /**
@@ -274,6 +274,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $this->make_course_enrollable();
         enrol_try_internal_enrol(2, 100, 1);
 
+        $this->create_grade_item('', 100);
+
         // Call and validate.
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
@@ -299,6 +301,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $this->make_course_enrollable();
         enrol_try_internal_enrol(2, 100, 1);
         enrol_try_internal_enrol(2, 101, 1);
+
+        $this->create_grade_item('', 100);
 
         // Call and validate.
         $sync = new \local_elisprogram\moodle\synchronize;
@@ -326,6 +330,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         // Set up enrolment.
         $this->make_course_enrollable();
         enrol_try_internal_enrol(2, 100, 1);
+
+        $this->create_grade_item('', 100);
 
         // Orphan the class.
         $DB->delete_records('course');
@@ -360,6 +366,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
         enrol_try_internal_enrol(2, 101, 1);
 
+        $this->create_grade_item('', 100);
+
         // Orphan the class.
         $DB->delete_records('course');
 
@@ -393,7 +401,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Set up grade item and completion item.
-        $itemid = $this->create_grade_item("\'withslashes\'");
+        $itemid = $this->create_grade_item("\'withslashes\'")->id;
         $this->create_grade_grade($itemid, 100, 75);
         $completionid = $this->create_course_completion("\'withslashes\'");
 
@@ -418,7 +426,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Set up grade item and completion item.
-        $itemid = $this->create_grade_item("\'withslashes\'");
+        $itemid = $this->create_grade_item("\'withslashes\'")->id;
         $this->create_grade_grade($itemid, 100, 75);
         $this->create_grade_grade($itemid, 101, 75);
         $completionid = $this->create_course_completion("\'withslashes\'");
@@ -437,6 +445,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         global $DB;
 
         $this->load_csv_data();
+
+        $this->create_grade_item('', 100);
 
         // Call and validate with no enrolments.
         $sync = new \local_elisprogram\moodle\synchronize;
@@ -460,6 +470,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         global $DB;
 
         $this->load_csv_data();
+
+        $this->create_grade_item('', 100);
 
         // Call and validate with no enrolments.
         $sync = new \local_elisprogram\moodle\synchronize;
@@ -490,9 +502,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Create course grade item with no max grade.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->grademax = 0;
-        $coursegradeitem->update();
+        $coursegradeitem = $this->create_grade_item('', 0);
 
         // Call and validate.
         $sync = new \local_elisprogram\moodle\synchronize;
@@ -523,9 +533,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Create course grade item with no max grade.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->grademax = 0;
-        $coursegradeitem->update();
+        $coursegradeitem = $this->create_grade_item('', 0);
 
         // Call and validate.
         $sync = new \local_elisprogram\moodle\synchronize;
@@ -549,6 +557,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         global $DB;
 
         $this->load_csv_data();
+
+        $this->create_grade_item('', 100);
 
         // Set up enrolment.
         $this->make_course_enrollable();
@@ -579,6 +589,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         global $DB;
 
         $this->load_csv_data();
+
+        $this->create_grade_item('', 100);
 
         // Set up enrolments.
         $this->make_course_enrollable();
@@ -618,8 +630,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Set up grade items and PM completion info.
-        $this->create_course_completion();
-        $itemid = $this->create_grade_item();
+        $completionid = $this->create_course_completion();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75, 100, 2);
         $this->create_grade_grade($itemid, 101, 75, 100, 2);
 
@@ -631,8 +643,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $this->assert_student_exists(100, 104);
 
         $this->assert_num_student_grades(2);
-        $this->assert_student_grade_exists(100, 103, 1);
-        $this->assert_student_grade_exists(100, 104, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid);
+        $this->assert_student_grade_exists(100, 104, $completionid);
     }
 
     /**
@@ -642,6 +654,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         global $DB;
 
         $this->load_csv_data();
+
+        $this->create_grade_item('', 100);
 
         // Set up enrolment.
         $this->make_course_enrollable();
@@ -665,6 +679,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         global $DB;
 
         $this->load_csv_data();
+
+        $this->create_grade_item('', 100);
 
         // Set up enrolments.
         $this->make_course_enrollable();
@@ -695,11 +711,9 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Set up grade.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
+        $coursegradeitem = $this->create_grade_item('');
         $coursegradeitem->update();
-        $this->create_grade_grade(1, 100, 75);
+        $this->create_grade_grade($coursegradeitem->id, 100, 75);
 
         // Set up PM enrolments.
         $student = new \student(array('userid' => 103, 'classid' => 100, 'grade' => 25));
@@ -736,12 +750,9 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Set up grade.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
-        $this->create_grade_grade(1, 100, 75);
-        $this->create_grade_grade(1, 101, 75);
+        $coursegradeitem = $this->create_grade_item('');
+        $this->create_grade_grade($coursegradeitem->id, 100, 75);
+        $this->create_grade_grade($coursegradeitem->id, 101, 75);
 
         // Set up PM enrolments.
         $student = new \student(array('userid' => 103, 'classid' => 100, 'grade' => 25));
@@ -774,6 +785,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         $this->load_csv_data();
 
+        $this->create_grade_item('', 100);
+
         // Set up enrolment.
         $this->make_course_enrollable();
         enrol_try_internal_enrol(2, 100, 1, 999999);
@@ -793,6 +806,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         global $DB;
 
         $this->load_csv_data();
+
+        $this->create_grade_item('', 100);
 
         // Set up enrolments.
         $this->make_course_enrollable();
@@ -815,6 +830,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         $this->load_csv_data();
 
+        $this->create_grade_item('', 100);
+
         // Set up enrolment.
         $this->make_course_enrollable();
         enrol_try_internal_enrol(2, 100, 1);
@@ -830,7 +847,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Validate.
         $this->assert_num_students(1);
-        $enrolment = $DB->get_record(\student::TABLE, array('id' => 1));
+        $enrolment = $DB->get_record(\student::TABLE, array('userid' => 103));
         $this->assertGreaterThanOrEqual($mintime, $enrolment->enrolmenttime);
         $this->assertLessThanOrEqual($maxtime, $enrolment->enrolmenttime);
     }
@@ -842,6 +859,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         global $DB;
 
         $this->load_csv_data();
+
+        $this->create_grade_item('', 100);
 
         // Set up enrolments.
         $this->make_course_enrollable();
@@ -859,7 +878,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Validate.
         $this->assert_num_students(1);
-        $enrolment = $DB->get_record(\student::TABLE, array('id' => 1));
+        $enrolment = $DB->get_record(\student::TABLE, array('userid' => 103));
         $this->assertGreaterThanOrEqual($mintime, $enrolment->enrolmenttime);
         $this->assertLessThanOrEqual($maxtime, $enrolment->enrolmenttime);
     }
@@ -895,14 +914,10 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Set up grade information.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->grademax = $grademax;
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('', $grademax)->id;
 
         $coursegradegrade = new \grade_grade(array(
-            'itemid' => 1,
+            'itemid' => $itemid,
             'userid' => 100,
             'rawgrademax' => $grademax,
             'finalgrade' => $finalgrade
@@ -935,21 +950,17 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Set up grade information.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->grademax = $grademax;
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('', $grademax)->id;
 
         $coursegradegrade = new \grade_grade(array(
-            'itemid' => 1,
+            'itemid' => $itemid,
             'userid' => 100,
             'rawgrademax' => $grademax,
             'finalgrade' => $finalgrade
         ));
         $coursegradegrade->insert();
         $coursegradegrade = new \grade_grade(array(
-            'itemid' => 1,
+            'itemid' => $itemid,
             'userid' => 101,
             'rawgrademax' => $grademax,
             'finalgrade' => $finalgrade
@@ -980,14 +991,10 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $pmcourse->save();
 
         // Set up course grade item info in Moodle.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->grademax = 100;
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('', 100)->id;
 
         // Set up PM class enrolment with sufficient grade.
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 100, 'finalgrade' => 100));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 100, 'finalgrade' => 100));
         $coursegradegrade->insert();
 
         // Call and validate.
@@ -1016,16 +1023,12 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $pmcourse->save();
 
         // Set up course grade item info in Moodle.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->grademax = 100;
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('', 100)->id;
 
         // Set up PM class enrolment with sufficient grade.
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 100, 'finalgrade' => 100));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 100, 'finalgrade' => 100));
         $coursegradegrade->insert();
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 101, 'finalgrade' => 100));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 101, 'finalgrade' => 100));
         $coursegradegrade->insert();
 
         // Call and validate.
@@ -1052,13 +1055,10 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $pmcourse->save();
 
         // Set up Moodle course grade item info.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('', 0)->id;
 
         // Assign the user a grade in Moodle.
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 100, 'finalgrade' => 100, 'timemodified' => 12345));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 100, 'finalgrade' => 100, 'timemodified' => 12345));
         $coursegradegrade->insert();
 
         // Call and validate.
@@ -1086,16 +1086,18 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $pmcourse->save();
 
         // Set up Moodle course grade item info.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('')->id;
 
         // Assign the user a grade in Moodle.
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 100, 'finalgrade' => 100, 'timemodified' => 12345));
-        $coursegradegrade->insert();
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 101, 'finalgrade' => 100, 'timemodified' => 12345));
-        $coursegradegrade->insert();
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 100, 'finalgrade' => 100, 'timemodified' => 12345));
+        $coursegradegrade->insert('system');
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 101, 'finalgrade' => 100, 'timemodified' => 12345));
+        $coursegradegrade->insert('system');
+
+        $sql = "UPDATE {grade_grades}
+                   SET aggregationstatus = 'system'
+                 WHERE id > 0";
+        $DB->execute($sql, null);
 
         // Call and validate.
         $sync = new \local_elisprogram\moodle\synchronize;
@@ -1121,13 +1123,10 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $pmcourse->save();
 
         // Set up Moodle course grade item.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('')->id;
 
         // Assign the user a Moodle coruse grade.
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 100, 'finalgrade' => 40, 'timemodified' => 12345));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 100, 'finalgrade' => 40, 'timemodified' => 12345));
         $coursegradegrade->insert();
 
         // Run and validate when no learning objectives exist.
@@ -1138,7 +1137,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Reset state and create learning objective.
         $DB->delete_records(\student::TABLE);
-        $this->create_course_completion();
+        $completionid = $this->create_course_completion();
 
         // Run and validation when a learning objective exists.
         $sync = new \local_elisprogram\moodle\synchronize;
@@ -1156,6 +1155,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         $this->load_csv_data();
 
+        $this->create_grade_item('', 100);
+
         // Set up enrolments.
         $this->make_course_enrollable();
         enrol_try_internal_enrol(2, 100, 1);
@@ -1166,15 +1167,12 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $pmcourse->save();
 
         // Set up Moodle course grade item.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('', 0)->id;
 
         // Assign the user a Moodle coruse grade.
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 100, 'finalgrade' => 40, 'timemodified' => 12345));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 100, 'finalgrade' => 40, 'timemodified' => 12345));
         $coursegradegrade->insert();
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 101, 'finalgrade' => 40, 'timemodified' => 12345));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 101, 'finalgrade' => 40, 'timemodified' => 12345));
         $coursegradegrade->insert();
 
         // Run and validate when no learning objectives exist.
@@ -1185,7 +1183,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Reset state and create learning objective.
         $DB->delete_records(\student::TABLE);
-        $this->create_course_completion();
+        $completionid = $this->create_course_completion();
 
         // Run and validation when a learning objective exists.
         $sync = new \local_elisprogram\moodle\synchronize;
@@ -1207,13 +1205,10 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Set up course grade item.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('')->id;
 
         // Assign a course grade.
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 100, 'finalgrade' => 40, 'timemodified' => 1));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 100, 'finalgrade' => 40, 'timemodified' => 1));
         $coursegradegrade->insert();
 
         // Set a completion grade.
@@ -1248,8 +1243,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_students(1);
-        $this->assert_student_exists(100, 103, 45, STUSTATUS_PASSED, 1, 1);
 
+        $this->assert_student_exists(100, 103, 45, STUSTATUS_PASSED, 1, 1);
         // Update completetime.
         $DB->execute("UPDATE {grade_grades} SET timemodified = 12345");
 
@@ -1282,15 +1277,12 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Set up course grade item.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('', 0)->id;
 
         // Assign a course grade.
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 100, 'finalgrade' => 40, 'timemodified' => 1));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 100, 'finalgrade' => 40, 'timemodified' => 1));
         $coursegradegrade->insert();
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 101, 'finalgrade' => 40, 'timemodified' => 1));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 101, 'finalgrade' => 40, 'timemodified' => 1));
         $coursegradegrade->insert();
 
         // Set a completion grade.
@@ -1361,14 +1353,10 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $pmcourse->save();
 
         // Set up course grade item.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->grademax = 100;
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('', 100)->id;
 
         // Assign a student grade.
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 100, 'finalgrade' => 100));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 100, 'finalgrade' => 100));
         $coursegradegrade->insert();
 
         // Enrol the student.
@@ -1418,16 +1406,12 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $pmcourse->save();
 
         // Set up course grade item.
-        $coursegradeitem = \grade_item::fetch_course_item(2);
-        $coursegradeitem->grademax = 100;
-        $coursegradeitem->needsupdate = false;
-        $coursegradeitem->locked = true;
-        $coursegradeitem->update();
+        $itemid = $this->create_grade_item('', 100)->id;
 
         // Assign student grades.
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 100, 'finalgrade' => 100));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 100, 'finalgrade' => 100));
         $coursegradegrade->insert();
-        $coursegradegrade = new \grade_grade(array('itemid' => 1, 'userid' => 101, 'finalgrade' => 100));
+        $coursegradegrade = new \grade_grade(array('itemid' => $itemid, 'userid' => 101, 'finalgrade' => 100));
         $coursegradegrade->insert();
 
         // Enrol the student.
@@ -1488,15 +1472,15 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Set up the LO and related Moodle structure.
-        $this->create_course_completion();
-        $itemid = $this->create_grade_item('manualitem', $grademax);
+        $completionid = $this->create_course_completion();
+        $itemid = $this->create_grade_item('manualitem', $grademax)->id;
         $this->create_grade_grade($itemid, 100, $finalgrade, $grademax);
 
         // Run and validate.
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, $pmgrade);
+        $this->assert_student_grade_exists(100, 103, $completionid, $pmgrade);
     }
 
     /**
@@ -1519,8 +1503,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Set up the LO and related Moodle structure.
-        $this->create_course_completion();
-        $itemid = $this->create_grade_item('manualitem', $grademax);
+        $completionid = $this->create_course_completion();
+        $itemid = $this->create_grade_item('manualitem', $grademax)->id;
         $this->create_grade_grade($itemid, 100, $finalgrade, $grademax);
         $this->create_grade_grade($itemid, 101, $finalgrade, $grademax);
 
@@ -1528,7 +1512,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, $pmgrade);
+        $this->assert_student_grade_exists(100, 103, $completionid, $pmgrade);
     }
 
     /**
@@ -1544,9 +1528,9 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Set up LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75);
-        $this->create_course_completion();
+        $completionid = $this->create_course_completion();
 
         // Run.
         $mintime = time();
@@ -1556,10 +1540,10 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Validate.
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid);
 
         // Validate time modified since we don't validate it anywhere else for creates.
-        $lograde = $DB->get_record(\student_grade::TABLE, array('classid' => 100, 'userid' => 103, 'completionid' => 1));
+        $lograde = $DB->get_record(\student_grade::TABLE, array('classid' => 100, 'userid' => 103, 'completionid' => $completionid));
         $this->assertGreaterThanOrEqual($mintime, $lograde->timemodified);
         $this->assertLessThanOrEqual($maxtime, $lograde->timemodified);
     }
@@ -1579,10 +1563,10 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Set up LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75);
         $this->create_grade_grade($itemid, 101, 75);
-        $this->create_course_completion();
+        $completionid = $this->create_course_completion();
 
         // Run.
         $mintime = time();
@@ -1592,10 +1576,10 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Validate.
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid);
 
         // Validate time modified since we don't validate it anywhere else for creates.
-        $lograde = $DB->get_record(\student_grade::TABLE, array('classid' => 100, 'userid' => 103, 'completionid' => 1));
+        $lograde = $DB->get_record(\student_grade::TABLE, array('classid' => 100, 'userid' => 103, 'completionid' => $completionid));
         $this->assertGreaterThanOrEqual($mintime, $lograde->timemodified);
         $this->assertLessThanOrEqual($maxtime, $lograde->timemodified);
     }
@@ -1613,15 +1597,15 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Set up LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75, 100, 1);
-        $this->create_course_completion();
+        $completionid = $this->create_course_completion();
 
         // Create LO grade.
         $studentgrade = new \student_grade(array(
             'userid' => 103,
             'classid' => 100,
-            'completionid' => 1,
+            'completionid' => $completionid,
             'grade' => 75,
             'locked' => 0,
             'timegraded' => 1
@@ -1630,7 +1614,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Validate setup.
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 75);
+        $this->assert_student_grade_exists(100, 103, $completionid, 75);
 
         // Update Moodle grade.
         $DB->execute("UPDATE {grade_grades} SET finalgrade = 80, timemodified = 2");
@@ -1639,7 +1623,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 80);
+        $this->assert_student_grade_exists(100, 103, $completionid, 80);
     }
 
     /**
@@ -1657,16 +1641,16 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Set up LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75, 100, 1);
         $this->create_grade_grade($itemid, 101, 75, 100, 1);
-        $this->create_course_completion();
+        $completionid = $this->create_course_completion();
 
         // Create LO grade.
         $studentgrade = new \student_grade(array(
             'userid' => 103,
             'classid' => 100,
-            'completionid' => 1,
+            'completionid' => $completionid,
             'grade' => 75,
             'locked' => 0,
             'timegraded' => 1
@@ -1675,7 +1659,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $studentgrade = new \student_grade(array(
             'userid' => 104,
             'classid' => 100,
-            'completionid' => 1,
+            'completionid' => $completionid,
             'grade' => 75,
             'locked' => 0,
             'timegraded' => 1
@@ -1684,7 +1668,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Validate setup.
         $this->assert_num_student_grades(2);
-        $this->assert_student_grade_exists(100, 103, 1, 75);
+        $this->assert_student_grade_exists(100, 103, $completionid, 75);
 
         // Update Moodle grade.
         $DB->execute("UPDATE {grade_grades} SET finalgrade = 80, timemodified = 2");
@@ -1695,7 +1679,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $this->assert_num_student_grades(2);
         $count = $DB->count_records(\student::TABLE, array('grade' => 80));
         $this->assertEquals(1, $count);
-        $this->assert_student_grade_exists(100, 103, 1, 80);
+        $this->assert_student_grade_exists(100, 103, $completionid, 80);
     }
 
     /**
@@ -1711,15 +1695,15 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Set up LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 40, 100, 1);
-        $this->create_course_completion('manualitem', 50);
+        $completionid = $this->create_course_completion('manualitem', 50);
 
         // Validate setup.
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 40, 0, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, 40, 0, 1);
 
         // Only a bogus db field is updated.
         $DB->execute("UPDATE {grade_grades} SET information = 'updated'");
@@ -1727,7 +1711,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 40, 0, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, 40, 0, 1);
 
         // Update grade.
         $DB->execute("UPDATE {grade_grades} SET finalgrade = 45, timemodified = 2");
@@ -1735,7 +1719,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 45, 0, 2);
+        $this->assert_student_grade_exists(100, 103, $completionid, 45, 0, 2);
 
         // Update timegraded.
         $DB->execute("UPDATE {grade_grades} SET timemodified = 12345");
@@ -1743,7 +1727,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 45, 0, 12345);
+        $this->assert_student_grade_exists(100, 103, $completionid, 45, 0, 12345);
 
         // Update locked.
         $DB->execute("UPDATE {".\coursecompletion::TABLE."} SET completion_grade = 45");
@@ -1752,7 +1736,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 45, 1, 123456);
+        $this->assert_student_grade_exists(100, 103, $completionid, 45, 1, 123456);
     }
 
     /**
@@ -1770,16 +1754,16 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Set up LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 40, 100, 1);
         $this->create_grade_grade($itemid, 101, 40, 100, 1);
-        $this->create_course_completion('manualitem', 50);
+        $completionid = $this->create_course_completion('manualitem', 50);
 
         // Validate setup.
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 40, 0, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, 40, 0, 1);
 
         // Only a bogus db field is updated.
         $DB->execute("UPDATE {grade_grades} SET information = 'updated'");
@@ -1787,7 +1771,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 40, 0, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, 40, 0, 1);
 
         // Update grade.
         $DB->execute("UPDATE {grade_grades} SET finalgrade = 45, timemodified = 2");
@@ -1795,7 +1779,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 45, 0, 2);
+        $this->assert_student_grade_exists(100, 103, $completionid, 45, 0, 2);
 
         // Update timegraded.
         $DB->execute("UPDATE {grade_grades} SET timemodified = 12345");
@@ -1803,7 +1787,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 45, 0, 12345);
+        $this->assert_student_grade_exists(100, 103, $completionid, 45, 0, 12345);
 
         // Update locked.
         $DB->execute("UPDATE {".\coursecompletion::TABLE."} SET completion_grade = 45");
@@ -1812,7 +1796,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 45, 1, 123456);
+        $this->assert_student_grade_exists(100, 103, $completionid, 45, 1, 123456);
     }
 
     /**
@@ -1826,15 +1810,15 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $this->make_course_enrollable();
 
         // Create LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75, 100, 2);
-        $this->create_course_completion('manualitem', 50);
+        $completionid = $this->create_course_completion('manualitem', 50);
 
         // Assign a PM grade.
         $studentgrade = new \student_grade(array(
             'userid' => 103,
             'classid' => 100,
-            'completionid' => 1,
+            'completionid' => $completionid,
             'grade' => 50,
             'locked' => 1,
             'timegraded' => 1
@@ -1846,7 +1830,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 50, 1, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, 50, 1, 1);
 
         // Validate update with element unlocked.
         $DB->execute("UPDATE {".\student_grade::TABLE."} SET locked = 0");
@@ -1855,7 +1839,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 75, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, 75, 1);
     }
 
     /**
@@ -1870,16 +1854,16 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $this->make_course_enrollable();
 
         // Create LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75, 100, 2);
         $this->create_grade_grade($itemid, 101, 75, 100, 2);
-        $this->create_course_completion('manualitem', 50);
+        $completionid = $this->create_course_completion('manualitem', 50);
 
         // Assign a PM grade.
         $studentgrade = new \student_grade(array(
             'userid' => 103,
             'classid' => 100,
-            'completionid' => 1,
+            'completionid' => $completionid,
             'grade' => 50,
             'locked' => 1,
             'timegraded' => 1
@@ -1888,7 +1872,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $studentgrade = new \student_grade(array(
             'userid' => 104,
             'classid' => 100,
-            'completionid' => 1,
+            'completionid' => $completionid,
             'grade' => 50,
             'locked' => 1,
             'timegraded' => 1
@@ -1901,8 +1885,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
         $this->assert_num_student_grades(2);
-        $this->assert_student_grade_exists(100, 103, 1, 50, 1, 1);
-        $this->assert_student_grade_exists(100, 104, 1, 50, 1, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, 50, 1, 1);
+        $this->assert_student_grade_exists(100, 104, $completionid, 50, 1, 1);
 
         // Validate update with element unlocked.
         $DB->execute("UPDATE {".\student_grade::TABLE."} SET locked = 0");
@@ -1911,8 +1895,8 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
         $this->assert_num_student_grades(2);
-        $this->assert_student_grade_exists(100, 103, 1, 75, 1);
-        $this->assert_student_grade_exists(100, 104, 1, 50, 0);
+        $this->assert_student_grade_exists(100, 103, $completionid, 75, 1);
+        $this->assert_student_grade_exists(100, 104, $completionid, 50, 0);
     }
 
     /**
@@ -1929,15 +1913,15 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Create LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75, 100, 1);
-        $this->create_course_completion('manualitem', 50);
+        $completionid = $this->create_course_completion('manualitem', 50);
 
         // Run and validate.
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 75, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, 75, 1);
     }
 
     /**
@@ -1955,16 +1939,16 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Create LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75, 100, 1);
         $this->create_grade_grade($itemid, 101, 75, 100, 1);
-        $this->create_course_completion('manualitem', 50);
+        $completionid = $this->create_course_completion('manualitem', 50);
 
         // Run and validate.
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
         $this->assert_num_student_grades(1);
-        $this->assert_student_grade_exists(100, 103, 1, 75, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, 75, 1);
     }
 
     /**
@@ -1981,15 +1965,15 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 100, 1);
 
         // Create LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75, 100, 1);
-        $this->create_course_completion('manualitem', 50);
+        $completionid = $this->create_course_completion('manualitem', 50);
 
         // Enrol in PM class.
         $studentgrade = new \student_grade(array(
             'userid' => 103,
             'classid' => 100,
-            'completionid' => 1,
+            'completionid' => $completionid,
             'grade' => 75,
             'locked' => 0,
             'timegraded' => 1
@@ -2000,7 +1984,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $this->assert_num_student_grades(1);
         $count = $DB->count_records(\student_grade::TABLE, array('locked' => 1));
         $this->assertEquals(0, $count);
-        $this->assert_student_grade_exists(100, 103, 1, null, 0);
+        $this->assert_student_grade_exists(100, 103, $completionid, null, 0);
 
         // Update Moodle info.
         $DB->execute("UPDATE {grade_grades} SET finalgrade = 80, timemodified = 2");
@@ -2011,7 +1995,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $this->assert_num_student_grades(1);
         $count = $DB->count_records(\student_grade::TABLE, array('locked' => 1));
         $this->assertEquals(1, $count);
-        $this->assert_student_grade_exists(100, 103, 1, null, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, null, 1);
     }
 
     /**
@@ -2029,16 +2013,16 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         enrol_try_internal_enrol(2, 101, 1);
 
         // Create LO and Moodle grade.
-        $itemid = $this->create_grade_item();
+        $itemid = $this->create_grade_item()->id;
         $this->create_grade_grade($itemid, 100, 75, 100, 1);
         $this->create_grade_grade($itemid, 101, 75, 100, 1);
-        $this->create_course_completion('manualitem', 50);
+        $completionid = $this->create_course_completion('manualitem', 50);
 
         // Enrol in PM class.
         $studentgrade = new \student_grade(array(
             'userid' => 103,
             'classid' => 100,
-            'completionid' => 1,
+            'completionid' => $completionid,
             'grade' => 75,
             'locked' => 0,
             'timegraded' => 1
@@ -2047,7 +2031,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $studentgrade = new \student_grade(array(
             'userid' => 104,
             'classid' => 100,
-            'completionid' => 1,
+            'completionid' => $completionid,
             'grade' => 75,
             'locked' => 0,
             'timegraded' => 1
@@ -2058,7 +2042,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $this->assert_num_student_grades(2);
         $count = $DB->count_records(\student_grade::TABLE, array('locked' => 1));
         $this->assertEquals(0, $count);
-        $this->assert_student_grade_exists(100, 103, 1, null, 0);
+        $this->assert_student_grade_exists(100, 103, $completionid, null, 0);
 
         // Update Moodle info.
         $DB->execute("UPDATE {grade_grades} SET finalgrade = 80, timemodified = 2");
@@ -2069,7 +2053,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $this->assert_num_student_grades(2);
         $count = $DB->count_records(\student_grade::TABLE, array('locked' => 1));
         $this->assertEquals(1, $count);
-        $this->assert_student_grade_exists(100, 103, 1, null, 1);
+        $this->assert_student_grade_exists(100, 103, $completionid, null, 1);
     }
 
     /**
@@ -2150,7 +2134,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         }
 
         // Set up grade item and completion item.
-        $itemid = $this->create_grade_item('duplicateidnumber');
+        $itemid = $this->create_grade_item('duplicateidnumber')->id;
         $this->create_grade_grade($itemid, 100, 75);
         $completionid = $this->create_course_completion('duplicateidnumber');
 
