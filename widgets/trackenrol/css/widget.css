@@ -280,18 +280,17 @@
 
 #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch, #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch {
   min-width: 6.5rem; }
-  #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui, #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui {
-    max-width: calc(100% - 1.8rem); }
-    #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui input[type="text"], #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui input[type="text"] {
-      max-width: calc(100% - 2.4rem);
-      width: 100%; }
-    #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui .selection, #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui .selection {
-      max-width: calc(100% - 2.3rem);
-      overflow: hidden;
-      word-wrap: break-word;
-      white-space: nowrap; }
+  #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui input[type="text"], #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui input[type="text"] {
+    max-width: calc(100% - 2.4rem);
+    width: 100%; }
+  #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui .selection, #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch button.filterui .selection {
+    max-width: calc(100% - 2.3rem);
+    overflow: hidden;
+    word-wrap: break-word;
+    white-space: nowrap; }
   #block-region-side-pre .eliswidget_trackenrol .deepsight_filter-textsearch button.deepsight_filter-remove, #block-region-side-post .eliswidget_trackenrol .deepsight_filter-textsearch button.deepsight_filter-remove {
-    width: 1.5rem; }
+    width: 1.5rem;
+    height: 1.25rem; }
 #block-region-side-pre .eliswidget_trackenrol .track > .childrenlist, #block-region-side-post .eliswidget_trackenrol .track > .childrenlist {
   padding: 0; }
 #block-region-side-pre .eliswidget_trackenrol .track .details > h5, #block-region-side-post .eliswidget_trackenrol .track .details > h5 {
