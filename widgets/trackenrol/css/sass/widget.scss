@@ -257,7 +257,6 @@
         .deepsight_filter-textsearch {
             min-width: 6.5rem;
             button.filterui {
-                max-width: calc(100% - 1.8rem);
                 input[type="text"] {
                     max-width: calc(100% - 2.4rem);
                     width: 100%;
@@ -271,6 +270,7 @@
             }
             button.deepsight_filter-remove {
                 width: 1.5rem;
+                height: 1.25rem;
             }
         }
         .track {
