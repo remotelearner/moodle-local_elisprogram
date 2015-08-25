@@ -89,7 +89,7 @@ class nonprogramcourse extends course {
     protected function get_select_fields(array $filters = array()) {
         $selectfields = parent::get_select_fields($filters);
         $selectfields[] = '1 AS numenrol';
-        $selectfields[] = '0 AS higheststatus';
+        $selectfields[] = 'stu.completestatusid AS higheststatus';
         return $selectfields;
     }
 
@@ -100,5 +100,14 @@ class nonprogramcourse extends course {
      */
     public function set_userid($userid) {
         $this->userid = $userid;
+    }
+
+    /**
+     * Get an ORDER BY sql fragment to be used in the get_search_results method.
+     *
+     * @return string An ORDER BY sql fragment, if desired.
+     */
+    protected function get_sort_sql() {
+        return 'ORDER BY element.id ASC, stu.completestatusid DESC';
     }
 }
