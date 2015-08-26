@@ -148,7 +148,7 @@ class ajax {
             throw new \Exception('No table or filter received.');
         }
         $table = '\\'.$table;
-        if (strpos($table, '\eliswidget_enrolment\datatable\\') !== 0 || !class_exists($table)) {
+        if (strpos($table, '\eliswidget_trackenrol\datatable\\') !== 0 || !class_exists($table)) {
             throw new \Exception('Invalid table name received.');
         }
         $datatable = new $table($DB, $this->endpoint);
