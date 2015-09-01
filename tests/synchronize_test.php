@@ -353,7 +353,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 0. Single user w/ single enrolment.
             $cases[0]['muser']->id.'_'.$cases[0]['mcourse'][0]->id.'_'.$cases[0]['pmclass'][0]->id => (object)array(
                 'muid' => (string)$cases[0]['muser']->id,
-                'username' => (string)$cases[0]['muser']->username,
                 'cmid' => (string)$cases[0]['cuser']->id,
                 'moodlecourseid' => (string)$cases[0]['mcourse'][0]->id,
                 'pmclassid' => (string)$cases[0]['pmclass'][0]->id,
@@ -374,7 +373,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 1. Single user w/ single enrolment and student entry.
             $cases[1]['muser']->id.'_'.$cases[1]['mcourse'][0]->id.'_'.$cases[1]['pmclass'][0]->id => (object)array(
                 'muid' => (string)$cases[1]['muser']->id,
-                'username' => (string)$cases[1]['muser']->username,
                 'cmid' => (string)$cases[1]['cuser']->id,
                 'moodlecourseid' => (string)$cases[1]['mcourse'][0]->id,
                 'pmclassid' => (string)$cases[1]['pmclass'][0]->id,
@@ -395,7 +393,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 2. Single user w/ multiple enrolments (1/2)
             $cases[2]['muser']->id.'_'.$cases[2]['mcourse'][0]->id.'_'.$cases[2]['pmclass'][0]->id => (object)array(
                 'muid' => (string)$cases[2]['muser']->id,
-                'username' => (string)$cases[2]['muser']->username,
                 'cmid' => (string)$cases[2]['cuser']->id,
                 'moodlecourseid' => (string)$cases[2]['mcourse'][0]->id,
                 'pmclassid' => (string)$cases[2]['pmclass'][0]->id,
@@ -416,7 +413,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 2. Single user w/ multiple enrolments (2/2)
             $cases[2]['muser']->id.'_'.$cases[2]['mcourse'][1]->id.'_'.$cases[2]['pmclass'][1]->id => (object)array(
                 'muid' => (string)$cases[2]['muser']->id,
-                'username' => (string)$cases[2]['muser']->username,
                 'cmid' => (string)$cases[2]['cuser']->id,
                 'moodlecourseid' => (string)$cases[2]['mcourse'][1]->id,
                 'pmclassid' => (string)$cases[2]['pmclass'][1]->id,
@@ -437,7 +433,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 3. Single user w/ multiple enrolments, one with student entry (1/2)
             $cases[3]['muser']->id.'_'.$cases[3]['mcourse'][0]->id.'_'.$cases[3]['pmclass'][0]->id => (object)array(
                 'muid' => (string)$cases[3]['muser']->id,
-                'username' => (string)$cases[3]['muser']->username,
                 'cmid' => (string)$cases[3]['cuser']->id,
                 'moodlecourseid' => (string)$cases[3]['mcourse'][0]->id,
                 'pmclassid' => (string)$cases[3]['pmclass'][0]->id,
@@ -458,7 +453,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 3. Single user w/ multiple enrolments, one with student entry (2/2)
             $cases[3]['muser']->id.'_'.$cases[3]['mcourse'][1]->id.'_'.$cases[3]['pmclass'][1]->id => (object)array(
                 'muid' => (string)$cases[3]['muser']->id,
-                'username' => (string)$cases[3]['muser']->username,
                 'cmid' => (string)$cases[3]['cuser']->id,
                 'moodlecourseid' => (string)$cases[3]['mcourse'][1]->id,
                 'pmclassid' => (string)$cases[3]['pmclass'][1]->id,
@@ -479,7 +473,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 4. Single user with a single enrolment into a Moodle course linked to multiple ELIS classes.
             $cases[4]['muser']->id.'_'.$cases[4]['mcourse'][0]->id.'_'.$cases[4]['pmclass'][0]->id => (object)array(
                 'muid' => (string)$cases[4]['muser']->id,
-                'username' => (string)$cases[4]['muser']->username,
                 'cmid' => (string)$cases[4]['cuser']->id,
                 'moodlecourseid' => (string)$cases[4]['mcourse'][0]->id,
                 'pmclassid' => (string)$cases[4]['pmclass'][0]->id,
@@ -500,7 +493,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 4. Single user with a single enrolment into a Moodle course linked to multiple ELIS classes.
             $cases[4]['muser']->id.'_'.$cases[4]['mcourse'][0]->id.'_'.$cases[4]['pmclass'][1]->id => (object)array(
                 'muid' => (string)$cases[4]['muser']->id,
-                'username' => (string)$cases[4]['muser']->username,
                 'cmid' => (string)$cases[4]['cuser']->id,
                 'moodlecourseid' => (string)$cases[4]['mcourse'][0]->id,
                 'pmclassid' => (string)$cases[4]['pmclass'][1]->id,
@@ -521,7 +513,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 4. Single user with a single enrolment into a Moodle course linked to multiple ELIS classes.
             $cases[4]['muser']->id.'_'.$cases[4]['mcourse'][0]->id.'_'.$cases[4]['pmclass'][2]->id => (object)array(
                 'muid' => (string)$cases[4]['muser']->id,
-                'username' => (string)$cases[4]['muser']->username,
                 'cmid' => (string)$cases[4]['cuser']->id,
                 'moodlecourseid' => (string)$cases[4]['mcourse'][0]->id,
                 'pmclassid' => (string)$cases[4]['pmclass'][2]->id,
@@ -542,7 +533,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 8. User assigned gradebook role at course category level. No ELIS student information.
             $cases[8]['muser']->id.'_'.$cases[8]['mcourse'][0]->id.'_'.$cases[8]['pmclass'][0]->id => (object)array(
                 'muid' => (string)$cases[8]['muser']->id,
-                'username' => (string)$cases[8]['muser']->username,
                 'cmid' => (string)$cases[8]['cuser']->id,
                 'moodlecourseid' => (string)$cases[8]['mcourse'][0]->id,
                 'pmclassid' => (string)$cases[8]['pmclass'][0]->id,
@@ -563,7 +553,6 @@ class synchronize_testcase extends \elis_database_test {
             // Case 9. User assigned gradebook role at course category level. Existing ELIS student information.
             $cases[9]['muser']->id.'_'.$cases[9]['mcourse'][0]->id.'_'.$cases[9]['pmclass'][0]->id => (object)array(
                 'muid' => (string)$cases[9]['muser']->id,
-                'username' => (string)$cases[9]['muser']->username,
                 'cmid' => (string)$cases[9]['cuser']->id,
                 'moodlecourseid' => (string)$cases[9]['mcourse'][0]->id,
                 'pmclassid' => (string)$cases[9]['pmclass'][0]->id,
