@@ -57,23 +57,16 @@ class synchronize {
         global $DB, $CFG;
 
         // If we are filtering for a specific user, add the necessary SQL fragment.
-        $userfilter = '';
         $userparams = array();
-        if (!empty($muserid)) {
-            $userfilter = ' AND u.id = :userid ';
-            $userparams['userid'] = $muserid;
-        }
-
         $gbr = explode(',', $CFG->gradebookroles);
         list($gbrsql1, $gbrparams1) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'param1');
-        list($gbrsql2, $gbrparams2) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'param2');
-
+        $gbrparams2 = array();
         if (empty($muserid)) {
+            list($gbrsql2, $gbrparams2) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'param2');
             // Get all users (or specified user) that are enroled in any Moodle course that is linked to an ELIS class.
             // The first query locates enrolments by role assignments to a course.
             // The second query locates enrolments by role assignments to a course category.
             $sql = "SELECT u.id AS muid,
-                           u.username AS username,
                            cu.id AS cmid,
                            crs.id AS moodlecourseid,
                            cls.id AS pmclassid,
@@ -97,7 +90,6 @@ class synchronize {
                   GROUP BY muid, pmclassid
                     UNION
                     SELECT u.id AS muid,
-                           u.username AS username,
                            cu.id AS cmid,
                            crs.id AS moodlecourseid,
                            cls.id AS pmclassid,
@@ -107,7 +99,7 @@ class synchronize {
                            stu.*
                       FROM {user} u
                       JOIN {role_assignments} ra ON u.id = ra.userid
-                      JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 40
+                      JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = ".CONTEXT_COURSECAT."
                       JOIN {context} ctx2 ON (ctx2.path LIKE concat('%/',ctx.id,'/%') OR ctx2.path LIKE concat('%/',ctx.id))
                            AND ctx2.contextlevel = ".CONTEXT_COURSE."
                       JOIN {".\usermoodle::TABLE."} umdl ON umdl.muserid = u.id
@@ -121,10 +113,10 @@ class synchronize {
                            AND u.deleted = 0
                   GROUP BY muid, pmclassid";
          } else {
+            $userparams['userid'] = $muserid;
             // Retrieve a single user.
             $sql = "SELECT u.id AS muid,
-                           u.username AS username,
-                           cu.id AS cmid,
+                           umdl.cuserid AS cmid,
                            crs.id AS moodlecourseid,
                            cls.id AS pmclassid,
                            ecrs.id AS pmcourseid,
@@ -134,19 +126,18 @@ class synchronize {
                       FROM {user} u
                       JOIN {role_assignments} ra ON u.id = ra.userid
                       JOIN {context} ctx ON ctx.id = ra.contextid
+                           AND (ctx.contextlevel = ".CONTEXT_COURSECAT." OR ctx.contextlevel = ".CONTEXT_COURSE.")
                       JOIN {context} ctx2 ON (ctx2.path LIKE concat('%/',ctx.id,'/%') OR ctx2.path LIKE concat('%/',ctx.id))
                            AND ctx2.contextlevel = ".CONTEXT_COURSE."
                       JOIN {".\usermoodle::TABLE."} umdl ON umdl.muserid = u.id
-                      JOIN {".\user::TABLE."} cu ON cu.id = umdl.cuserid
-                      JOIN {course} crs ON crs.id = ctx2.instanceid
+                      JOIN {course} crs ON (crs.id = ctx2.instanceid OR (ctx.contextlevel = ".CONTEXT_COURSE." AND crs.id = ctx.instanceid))
                       JOIN {".\classmoodlecourse::TABLE."} cmc ON cmc.moodlecourseid = crs.id
                       JOIN {".\pmclass::TABLE."} cls ON cls.id = cmc.classid
                       JOIN {".\course::TABLE."} ecrs ON ecrs.id = cls.courseid
-                 LEFT JOIN {".\student::TABLE."} stu ON stu.userid = cu.id AND stu.classid = cls.id
-                     WHERE ra.roleid $gbrsql1
-                           AND u.deleted = 0
-                           {$userfilter}
-                  GROUP BY muid, pmclassid";
+                 LEFT JOIN {".\student::TABLE."} stu ON stu.userid = umdl.cuserid AND stu.classid = cls.id
+                     WHERE u.id = :userid
+                           AND (ra.roleid {$gbrsql1})
+                  GROUP BY pmclassid";
         }
         $params = array_merge($gbrparams1, $userparams, $gbrparams2);
         $users = $DB->get_recordset_sql($sql, $params);
@@ -177,6 +168,7 @@ class synchronize {
     public function get_elis_coursecompletion_grades($userpool, $muserid, $pmclassid) {
         global $DB;
 
+        // error_log("synchronize.php::get_elis_coursecompletion_grades({$userpool}, {$muserid}, {$pmclassid})");
         if ($this->completionelementrecset === null) {
             $userfilter = '';
             $params = array();
@@ -603,16 +595,19 @@ class synchronize {
         set_time_limit(0);
         $timenow = time();
 
+        // error_log("synchronize.php::synchronize_moodle_class_grades({$requestedmuserid}) > ENTER!");
         $causers = $this->get_syncable_users($requestedmuserid);
         if (empty($causers)) {
             return false;
         }
 
         // Get moodle course ids.
-        $moodlecourseidsorig = $DB->get_recordset_select(\classmoodlecourse::TABLE, 'moodlecourseid > 0'); // TBD: RLI-9067.
+        $moodlecourseidsorig = $DB->get_recordset_select(\classmoodlecourse::TABLE, 'moodlecourseid > 0'); // TBD: ELIS-9067.
         $moodlecourseids = array();
         foreach ($moodlecourseidsorig as $i => $rec) {
-            $moodlecourseids[] = $rec->moodlecourseid;
+            if (empty($requestedmuserid) || is_enrolled(\context_course::instance($rec->moodlecourseid), $requestedmuserid)) {
+                $moodlecourseids[] = $rec->moodlecourseid;
+            }
         }
         unset($moodlecourseidsorig);
 
@@ -680,5 +675,6 @@ class synchronize {
         if ($this->completionelementrecset !== null) {
             $this->completionelementrecset->close();
         }
+        // error_log("synchronize.php::synchronize_moodle_class_grades({$requestedmuserid}) > EXIT!");
     }
 }

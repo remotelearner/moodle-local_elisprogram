@@ -43,7 +43,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
         require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
         require_once(\elispm::lib('data/user.class.php'));
         require_once(\elispm::lib('lib.php'));
-        if (!$init && isloggedin() && !empty($USER->id) && !isguestuser($USER->id)) {
+        if (!$init && get_config('eliswidget_enrolment', 'syncusergrades') && isloggedin() && !empty($USER->id) && !isguestuser($USER->id)) {
             $init = true;
             pm_update_user_information($USER->id);
         }
