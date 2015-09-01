@@ -30,6 +30,9 @@ global $USER;
 
 if ($ADMIN->fulltree) {
 
+    $settings->add(new \admin_setting_configcheckbox('eliswidget_enrolment/syncusergrades', get_string('setting_syncusergrades', 'eliswidget_enrolment'),
+            get_string('setting_syncusergrades_description', 'eliswidget_enrolment'), 1));
+
     // Progress bar.
     $progressbarheader = get_string('setting_progressbar_heading', 'eliswidget_enrolment');
     $progressbarheaderdesc = get_string('setting_progressbar_heading_description', 'eliswidget_enrolment');
