@@ -146,7 +146,7 @@ class program extends base {
         // Get current user id.
         $euserid = \user::get_current_userid();
 
-        $newsql = $this->get_custom_field_joins($ctxlevel, $enabledcfields);
+        $newsql = $this->get_active_filters_custom_field_joins($filters, $ctxlevel, $enabledcfields);
         $newparams = [$euserid];
         $newsql[] = 'JOIN {'.\curriculumstudent::TABLE.'} curstu ON curstu.curriculumid = element.id AND curstu.userid = ?';
         return [array_merge($sql, $newsql), array_merge($params, $newparams)];
