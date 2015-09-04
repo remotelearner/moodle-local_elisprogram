@@ -196,7 +196,7 @@ class pmclass extends base {
         // Get current user id.
         $euserid = \user::get_current_userid();
 
-        $newsql = $this->get_custom_field_joins($ctxlevel, $enabledcfields);
+        $newsql = $this->get_active_filters_custom_field_joins($filters, $ctxlevel, $enabledcfields);
         $newparams = [];
 
         // Get optional program for track class filtering

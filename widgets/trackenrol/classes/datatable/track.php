@@ -185,7 +185,7 @@ class track extends \eliswidget_enrolment\datatable\base {
         // Get current user id.
         $euserid = \user::get_current_userid();
 
-        $newsql = $this->get_custom_field_joins($ctxlevel, $enabledcfields);
+        $newsql = $this->get_active_filters_custom_field_joins($filters, $ctxlevel, $enabledcfields);
         $newsql[] = 'JOIN {'.\curriculum::TABLE.'} cur ON cur.id = element.curid';
         $newsql[] = 'LEFT JOIN {'.\usertrack::TABLE.'} usertrack ON usertrack.trackid = element.id AND usertrack.userid = ?';
         $newparams = [$euserid];
