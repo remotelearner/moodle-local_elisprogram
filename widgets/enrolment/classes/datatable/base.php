@@ -154,7 +154,7 @@ abstract class base {
             $fields = array_combine(array_values($filter->get_field_list()), array_values($filter->get_column_labels()));
             if (isset($fixedvisible[$filtername]) || isset($filters[$filtername])) {
                 $visiblefields = array_merge($visiblefields, $fields);
-            } else {
+            } else if (strpos($filtername, 'cf_') !== 0) {
                 $hiddenfields = array_merge($hiddenfields, $fields);
             }
         }
@@ -207,7 +207,9 @@ abstract class base {
         }
 
         foreach ($this->availablefilters as $filtername => $filter) {
-            $selectfields = array_merge($selectfields, $filter->get_select_fields());
+            if (strpos($filtername, 'cf_') !== 0 || isset($filters[$filtername])) { // ELIS-9231
+                $selectfields = array_merge($selectfields, $filter->get_select_fields());
+            }
         }
         $selectfields = array_unique($selectfields);
         return $selectfields;
@@ -222,6 +224,23 @@ abstract class base {
      */
     protected function get_join_sql(array $filters = array()) {
         return [[], []];
+    }
+
+    /**
+     * Get a list of desired custom field table joins to be used in the get_search_results method.
+     *
+     * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
+     * @param int $ctxlevel The context level for the fields.
+     * @param array $fields Array of \field objects, indexed by fieldname ("cf_[fieldshortname]")
+     * @return array Array of joins needed to select and search on custom fields.
+     */
+    protected function get_active_filters_custom_field_joins(array $filters = array(), $ctxlevel, array $enabledcfields) {
+        foreach ($enabledcfields as $key => $enabledcfield) {
+            if (!isset($filters[$key])) {
+                unset($enabledcfields[$key]);
+            }
+        }
+        return $this->get_custom_field_joins($ctxlevel, $enabledcfields);
     }
 
     /**
@@ -276,7 +295,40 @@ abstract class base {
             throw new \coding_error('You must specify a main table ($this->maintable) in subclasses.');
         }
 
-        // Generate and execute query for a single page of results.
+        // Get the number of results in the full dataset.
+        $newgroupbysql = empty($groupbysql) ? 'GROUP BY element.id' : preg_replace('/GROUP BY (.*)/i', 'GROUP BY element.id, $1', $groupbysql);
+        // TBD: strip already existing GROUP BY element.id? Doesn't cause problem in MySQL/MariaDB
+        $sqlparts = [
+                'SELECT element.id',
+                'FROM {'.$this->maintable.'} element',
+                $joinsql,
+                $filtersql,
+                $newgroupbysql,
+        ];
+        $query = implode(' ', $sqlparts);
+        $query = 'SELECT count(1) as count FROM ('.$query.') results';
+        $totalresults = $this->DB->count_records_sql($query, $params);
+
+        // Generate and execute query to determine pages w/o multi-valued custom field rows.
+        $sqlparts = [
+                'SELECT '.implode(', ', $selectfields),
+                'FROM {'.$this->maintable.'} element',
+                $joinsql,
+                $filtersql,
+                $newgroupbysql,
+                $sortsql,
+        ];
+        $query = implode(' ', $sqlparts);
+        $resultset = $this->DB->get_recordset_sql($query, $params, $limitfrom, $limitnum);
+        $resultsetarray = [];
+        foreach ($resultset as $id => $result) {
+            $resultsetarray[$id] = $id;
+        }
+        unset($resultset);
+        list($idsql, $idparams) = $this->DB->get_in_or_equal(array_values($resultsetarray));
+        $filtersql = !empty($filtersql) ? $filtersql.' AND element.id '.$idsql : 'WHERE element.id '.$idsql;
+        $params = array_merge($params, $idparams);
+        // Generate and execute query to return all results w/ mutli-valued custom field rows.
         $sqlparts = [
                 'SELECT '.implode(', ', $selectfields),
                 'FROM {'.$this->maintable.'} element',
@@ -286,9 +338,8 @@ abstract class base {
                 $sortsql,
         ];
         $query = implode(' ', $sqlparts);
-        $results = $this->DB->get_recordset_sql($query, $params); // WAS: +, $limitfrom, $limitnum);
+        $results = $this->DB->get_recordset_sql($query, $params);
 
-        $totalresults = 0;
         $resultsarray = [];
         $multivaluedflag = false;
         $lastid = null;
@@ -304,7 +355,6 @@ abstract class base {
                     }
                 }
                 $resultsarray[$id] = $result;
-                ++$totalresults;
                 $multivaluedflag = false;
                 $lastid = $id;
             }
@@ -324,6 +374,7 @@ abstract class base {
                 }
             }
         }
+        unset($results);
         if ($multivaluedflag && $lastid) {
             foreach ($this->customfields as $fieldname => $field) {
                 $elem = $fieldname.'_data';
@@ -333,6 +384,6 @@ abstract class base {
                 }
             }
         }
-        return [array_slice($resultsarray, $limitfrom, $limitnum, true), $totalresults];
+        return [$resultsarray, $totalresults];
     }
 }

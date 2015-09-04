@@ -148,7 +148,7 @@ class course extends base {
 
         $enabledcfields = array_intersect_key($this->customfields, $this->availablefilters);
         $ctxlevel = \local_eliscore\context\helper::get_level_from_name('course');
-        $newsql = $this->get_custom_field_joins($ctxlevel, $enabledcfields);
+        $newsql = $this->get_active_filters_custom_field_joins($filters, $ctxlevel, $enabledcfields);
         return [array_merge($sql, $newsql), $params];
     }
 
