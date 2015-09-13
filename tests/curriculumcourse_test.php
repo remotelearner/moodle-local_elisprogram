@@ -61,6 +61,7 @@ class curriculumcourse_testcase extends elis_database_test {
      */
     public function test_get_prerequisites() {
         $dataset = $this->createCsvDataSet(array(
+            course::TABLE => elispm::file('tests/fixtures/elisprogram_crs.csv'),
             curriculumcourse::TABLE => elispm::file('tests/fixtures/curriculum_course.csv'),
             courseprerequisite::TABLE => elispm::file('tests/fixtures/pmcourse_prerequisite.csv'),
         ));
@@ -69,8 +70,14 @@ class curriculumcourse_testcase extends elis_database_test {
         $curriculumcourse = new curriculumcourse;
         $curriculumcourse->id = 2;
         $prereqs = $curriculumcourse->get_prerequisites();
-
         $this->assertEquals(array(100), $prereqs);
+
+        // ELIS-9233: Remove prereq course.
+        $prereqcrs = new course(100);
+        $prereqcrs->save();
+        $prereqcrs->delete();
+        $prereqs = $curriculumcourse->get_prerequisites();
+        $this->assertEquals(array(), $prereqs);
     }
 
     /**
@@ -78,6 +85,7 @@ class curriculumcourse_testcase extends elis_database_test {
      */
     public function test_get_corequisites() {
         $dataset = $this->createCsvDataSet(array(
+            course::TABLE => elispm::file('tests/fixtures/elisprogram_crs.csv'),
             curriculumcourse::TABLE => elispm::file('tests/fixtures/curriculum_course.csv'),
             coursecorequisite::TABLE => elispm::file('tests/fixtures/pmcourse_corequisite.csv'),
         ));
@@ -86,7 +94,13 @@ class curriculumcourse_testcase extends elis_database_test {
         $curriculumcourse = new curriculumcourse;
         $curriculumcourse->id = 2;
         $coreqs = $curriculumcourse->get_corequisites();
-
         $this->assertEquals(array(100), $coreqs);
+
+        // ELIS-9233: Remove coreq course.
+        $coreqcrs = new course(100);
+        $coreqcrs->save();
+        $coreqcrs->delete();
+        $coreqs = $curriculumcourse->get_corequisites();
+        $this->assertEquals(array(), $coreqs);
     }
 }
