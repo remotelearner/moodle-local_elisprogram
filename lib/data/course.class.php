@@ -667,6 +667,9 @@ class course extends data_object_with_custom_fields {
         coursetemplate::delete_records($filter, $this->_db);
         // ELIS-8528: Remove LOs/completion elements.
         coursecompletion::delete_records($filter, $this->_db);
+        // ELIS-9233: Remove co/pre-reqs that reference this course.
+        coursecorequisite::delete_records($filter, $this->_db);
+        courseprerequisite::delete_records($filter, $this->_db);
         parent::delete();
 
         $context = \local_elisprogram\context\course::instance($this->id);

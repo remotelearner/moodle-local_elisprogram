@@ -362,6 +362,7 @@ class pmclass_testcase extends elis_database_test {
      * @param boolean $expected The expected result.
      */
     public function test_check_user_prerequisite_status($classid, $userid, $expected) {
+        global $DB;
         // Load the data sets.
         $dataset = $this->createCsvDataSet(array(
             curriculum::TABLE => elispm::file('tests/fixtures/elisprogram_pgm.csv'),
@@ -382,6 +383,15 @@ class pmclass_testcase extends elis_database_test {
         // Call the function to test.
         $answer = $classinstance->check_user_prerequisite_status($userid);
         $this->assertEquals($expected, $answer);
+        if (!$expected) {
+            // ELIS-9233: Delete pre-req. course and verify pre-req is removed.
+            $prereqcrs = new course($DB->get_field_sql('SELECT prereq.courseid
+                                                          FROM {'.courseprerequisite::TABLE.'} prereq
+                                                          JOIN {'.curriculumcourse::TABLE.'} curcrs ON curcrs.id = prereq.curriculumcourseid
+                                                         WHERE curcrs.courseid = ?', array($classinstance->courseid)));
+            $prereqcrs->delete();
+            $answer = $classinstance->check_user_prerequisite_status($userid);
+            $this->assertEquals(true, $answer);
+        }
     }
-
 }
