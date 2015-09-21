@@ -714,10 +714,13 @@ function pm_notify_role_assign_handler($eventdata){
  */
 function pm_notify_role_unassign_handler($eventdata){
     global $CFG, $DB;
-    if ((empty($eventdata->userid) || empty($eventdata->contextid) || empty($eventdata->roleid)) && method_exists($eventdata, 'trigger')) {
-        $eventdata = (object)$eventdata->other;
-    }
     $rarec = false;
+    if ((empty($eventdata->userid) || empty($eventdata->contextid) || empty($eventdata->roleid)) && method_exists($eventdata, 'trigger')) {
+        $event = $eventdata;
+        $eventdata = (object)$eventdata->other;
+        $rarec = $event->get_record_snapshot('role_assignments', $eventdata->id);
+        $eventdata = $rarec;
+    }
     if ((empty($eventdata->userid) || empty($eventdata->contextid) || empty($eventdata->roleid)) &&
             !($rarec = $DB->get_record('role_assignments', array('id' => $eventdata->id)))) {
         if (!PHPUNIT_TEST && debugging('', DEBUG_DEVELOPER)) {
@@ -772,11 +775,15 @@ function pm_notify_role_unassign_handler($eventdata){
 
     //clear out instructor assignments in all associated classes
     foreach($associated_classes as $associated_class) {
-        if($instructor_record = $DB->get_record(instructor::TABLE, array('classid'=> $associated_class->classid,
-                                                                         'userid'=>  $crlm_userid))) {
-            $delete_record = new instructor($instructor_record->id);
-            $delete_record->delete();
+        $filters = array(new field_filter('classid', $associated_class->classid),
+                new field_filter('userid', $crlm_userid));
+        if ($instructors = instructor::find($filters)) {
+            foreach ($instructors as $instructor) {
+                $instructor->load();
+                $instructor->delete();
+            }
         }
+        unset($instructors);
     }
     unset($associated_classes);
 
