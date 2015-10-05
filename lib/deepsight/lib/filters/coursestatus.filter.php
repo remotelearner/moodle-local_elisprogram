@@ -54,9 +54,12 @@ class deepsight_filter_coursestatus extends deepsight_filter_menuofchoices {
      * @param string          $endpoint  The endpoint to make requests to, when searching for a choice.
      */
     public function __construct(moodle_database &$DB, $name, $label, array $fielddata = array(), $endpoint=null) {
-        if (isset($fielddata['userid'])) {
-            $this->userid = $fielddata['userid'];
-            unset($fielddata['userid']);
+        foreach ($fielddata as $key => $val) {
+            if (strrpos($key, 'userid') == (strlen($key) - strlen('userid'))) {
+                $this->userid = $fielddata[$key];
+                unset($fielddata[$key]);
+                break;
+            }
         }
         parent::__construct($DB, $name, $label, $fielddata, $endpoint);
         $this->postconstruct();

@@ -62,8 +62,8 @@ class course extends base {
         $langversion = get_string('course_version', 'local_elisprogram');
         $langcoursestatus = get_string('course_status', 'local_elisprogram');
         $euserid = \user::get_current_userid();
-        $coursestatusfilter = new \deepsight_filter_coursestatus($this->DB, 'coursestatus', $langcoursestatus, array('userid' => $euserid),
-                $CFG->wwwroot.'/local/elisprogram/widgets/enrolment/ajax.php'); // TBD.
+        $coursestatusfilter = new \deepsight_filter_coursestatus($this->DB, 'coursestatus', $langcoursestatus,
+                array('{local_elisprogram_cls_enrol}.userid' => $euserid), $CFG->wwwroot.'/local/elisprogram/widgets/enrolment/ajax.php');
         $coursestatusfilter->set_default(''); // TBD.
         $filters = [
                 new \deepsight_filter_textsearch($this->DB, 'name', $langname, ['element.name' => $langname]),
