@@ -29,6 +29,11 @@ defined('MOODLE_INTERNAL') || die;
 global $USER;
 
 if ($ADMIN->fulltree) {
+    global $CFG;
+    require_once($CFG->dirroot.'/local/elisprogram/lib/deepsight/lib/filter.php');
+    require_once($CFG->dirroot.'/local/elisprogram/lib/deepsight/lib/filters/menuofchoices.filter.php');
+    require_once($CFG->dirroot.'/local/elisprogram/lib/deepsight/lib/filters/coursestatus.filter.php');
+    require_once($CFG->dirroot.'/local/elisprogram/lib/deepsight/lib/filters/classstatus.filter.php');
 
     $settings->add(new \admin_setting_configcheckbox('eliswidget_enrolment/syncusergrades', get_string('setting_syncusergrades', 'eliswidget_enrolment'),
             get_string('setting_syncusergrades_description', 'eliswidget_enrolment'), 1));
@@ -133,6 +138,12 @@ if ($ADMIN->fulltree) {
                 'version' => [
                     'label' => get_string('course_version', 'local_elisprogram'),
                     'visible' => false
+                ],
+                'coursestatus' => [
+                    'label' => get_string('course_status', 'local_elisprogram'),
+                    'visible' => true,
+                    'datatype' => 'menu',
+                    'choices' => deepsight_filter_coursestatus::get_static_choices()
                 ]
             ]
         ],
@@ -152,7 +163,7 @@ if ($ADMIN->fulltree) {
                     'label' => get_string('class_enddate', 'local_elisprogram'),
                     'datatype' => 'date',
                     'visible' => true
-                ]
+                ],
               /** TBD: starttime & endtime never were supported!
                 ,
                 'starttime' => [
@@ -164,8 +175,14 @@ if ($ADMIN->fulltree) {
                     'label' => get_string('class_endtime', 'local_elisprogram'),
                     'datatype' => 'time',
                     'visible' => true
-                ]
+                ],
               */
+                'classstatus' => [
+                    'label' => get_string('class_status', 'local_elisprogram'),
+                    'visible' => true,
+                    'datatype' => 'menu',
+                    'choices' => deepsight_filter_classstatus::get_static_choices()
+                ]
             ]
         ]
     ];
@@ -178,7 +195,8 @@ if ($ADMIN->fulltree) {
         $settings->add(new \admin_setting_heading($enabledfields['name'], $info['displayname'], '')); // TBD.
         foreach ($info['fields'] as $ckey => $cval) {
             $settings->add(new \local_elisprogram\admin\setting\widgetfilterconfig($enabledfields['name'].$ckey, $cval['label'],
-                    '', isset($cval['datatype']) ? $cval['datatype'] : '' , (isset($cval['visible']) && $cval['visible'] == false) ? 1 : 0, []));
+                    '', isset($cval['datatype']) ? $cval['datatype'] : '' , (isset($cval['visible']) && $cval['visible'] == false) ? 1 : 0,
+                    isset($cval['choices']) ? $cval['choices'] : []));
         }
 
         // Get custom fields ...

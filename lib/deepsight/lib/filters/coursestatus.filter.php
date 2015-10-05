@@ -63,13 +63,24 @@ class deepsight_filter_coursestatus extends deepsight_filter_menuofchoices {
     }
 
     /**
+     * Get the static choices for this filter.
+     *
+     * @return array The array of choices.
+     */
+    public static function get_static_choices() {
+        return [
+            'notenrolled' => get_string('ds_notenrolled', 'local_elisprogram'),
+            'enrolled' => get_string('ds_enrolled', 'local_elisprogram'),
+            'notcompleted' => get_string('ds_notcompleted', 'local_elisprogram'),
+            'completed' => get_string('ds_completed', 'local_elisprogram'),
+        ];
+    }
+
+    /**
      * Sets the available choices - not enrolled, enrolled, or all.
      */
     public function postconstruct() {
-        $this->choices['notenrolled'] = get_string('ds_notenrolled', 'local_elisprogram');
-        $this->choices['enrolled'] = get_string('ds_enrolled', 'local_elisprogram');
-        $this->choices['notcompleted'] = get_string('ds_notcompleted', 'local_elisprogram');
-        $this->choices['completed'] = get_string('ds_completed', 'local_elisprogram');
+        $this->choices = static::get_static_choices();
     }
 
     /**
