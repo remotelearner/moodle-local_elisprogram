@@ -129,8 +129,12 @@ class widgetfilterconfig extends \admin_setting_configtext {
                     'type' => 'text', 'value' => !empty($setting[$defaultname]) ? $setting[$defaultname] : ''], $attrs));
                 break;
             case 'bool':
+                $defval = isset($setting[$defaultname]) ? $setting[$defaultname] : '';
+                if (is_array($defval) && (count($defval) > 1 || $defval[0] != get_string('no'))) {
+                    $attrs['checked'] = 'checked';
+                }
                 $return .= get_string('filter_value', 'local_elisprogram').\html_writer::empty_tag('input', array_merge(['name' => $defaultname,
-                    'type' => 'checkbox', 'value' => get_string('yes'), 'checked' => !empty($setting[$defaultname]) ? 'checked' : 'false'], $attrs));
+                    'type' => 'checkbox', 'value' => get_string('yes')], $attrs));
                 break;
             case 'menu':
                 $return .= get_string('filter_value', 'local_elisprogram').\html_writer::select($this->options, $defaultname.'[]',
@@ -201,10 +205,18 @@ class widgetfilterconfig extends \admin_setting_configtext {
     public function write_setting($data) {
         if (isset($_POST[$this->name.'_radio'])) {
             $this->config_write($this->name.'_radio', $_POST[$this->name.'_radio']);
+            $set = false;
             foreach ($_POST as $key => $val) {
                 if (strpos($key, $this->name.'_default') === 0) {
+                    if ($this->datatype == 'bool') {
+                        $val = [$val ? get_string('yes') : get_string('no')];
+                    }
                     $this->config_write($key, is_array($val) ? serialize($val) : $val);
+                    $set = true;
                 }
+            }
+            if (!$set) {
+                $this->config_write($this->name.'_default', ($this->datatype == 'bool') ? serialize([get_string('no')]) : '');
             }
             return '';
         }
