@@ -92,13 +92,11 @@ class pmclass extends base {
         // Restrict to visible fields.
         foreach ($filters as $i => $filter) {
             $filtername = $filter->get_name();
-            if ($filtername != 'classstatus') { // TBD: always add classstatus filter?
-                $enabled = get_config('eliswidget_enrolment', 'class_field_'.$filtername.'_radio');
-                if ($enabled == 1 || ($enabled === false && strpos($filtername, 'cf_') === 0)) { // Hidden.
-                    unset($filters[$i]);
-                } else if ($enabled == 3) { // Locked.
-                    $this->lockedfilters[$filtername] = true;
-                }
+            $enabled = get_config('eliswidget_enrolment', 'class_field_'.$filtername.'_radio');
+            if ($enabled == 1 || ($enabled === false && strpos($filtername, 'cf_') === 0)) { // Hidden.
+                unset($filters[$i]);
+            } else if ($enabled == 3) { // Locked.
+                $this->lockedfilters[$filtername] = true;
             }
         }
 
