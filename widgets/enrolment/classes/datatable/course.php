@@ -84,13 +84,11 @@ class course extends base {
         // Restrict to visible fields.
         foreach ($filters as $i => $filter) {
             $filtername = $filter->get_name();
-            if ($filtername != 'coursestatus') { // TBD: always enable 'coursestatus' filter?
-                $enabled = get_config('eliswidget_enrolment', 'course_field_'.$filtername.'_radio');
-                if ($enabled == 1 || ($enabled === false && strpos($filtername, 'cf_') === 0)) { // Hidden.
-                    unset($filters[$i]);
-                } else if ($enabled == 3) { // Locked.
-                    $this->lockedfilters[$filtername] = true;
-                }
+            $enabled = get_config('eliswidget_enrolment', 'course_field_'.$filtername.'_radio');
+            if ($enabled == 1 || ($enabled === false && strpos($filtername, 'cf_') === 0)) { // Hidden.
+                unset($filters[$i]);
+            } else if ($enabled == 3) { // Locked.
+                $this->lockedfilters[$filtername] = true;
             }
         }
 
