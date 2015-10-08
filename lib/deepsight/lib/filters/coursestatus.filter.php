@@ -42,6 +42,9 @@ class deepsight_filter_coursestatus extends deepsight_filter_menuofchoices {
     /** @var int $userid */
     protected $userid = 0;
 
+    /** @var string $tablealias */
+    protected $tablealias = 'enrol';
+
     /**
      * Constructor.
      *
@@ -54,6 +57,10 @@ class deepsight_filter_coursestatus extends deepsight_filter_menuofchoices {
      * @param string          $endpoint  The endpoint to make requests to, when searching for a choice.
      */
     public function __construct(moodle_database &$DB, $name, $label, array $fielddata = array(), $endpoint=null) {
+        if (isset($fielddata['tablealias'])) {
+            $this->tablealias = $fielddata['tablealias'];
+            unset($fielddata['tablealias']);
+        }
         foreach ($fielddata as $key => $val) {
             if (strrpos($key, 'userid') == (strlen($key) - strlen('userid'))) {
                 $this->userid = $fielddata[$key];
@@ -132,13 +139,13 @@ class deepsight_filter_coursestatus extends deepsight_filter_menuofchoices {
         $params = array();
         foreach ($data as $option) {
             if ($option == 'notenrolled') {
-                $sql[] = 'enrol.id IS NULL';
+                $sql[] = "{$this->tablealias}.id IS NULL";
             } else if ($option == 'enrolled') {
-                $sql[] = 'enrol.id IS NOT NULL';
+                $sql[] = "{$this->tablealias}.id IS NOT NULL";
             } else if ($option == 'notcompleted') {
-                $sql[] = '(enrol.id IS NOT NULL AND enrol.completestatusid = '.STUSTATUS_NOTCOMPLETE.')';
+                $sql[] = "({$this->tablealias}.id IS NOT NULL AND {$this->tablealias}.completestatusid = ".STUSTATUS_NOTCOMPLETE.')';
             } else if ($option == 'completed') {
-                $sql[] = '(enrol.id IS NOT NULL AND enrol.completestatusid > '.STUSTATUS_NOTCOMPLETE.')';
+                $sql[] = "({$this->tablealias}.id IS NOT NULL AND {$this->tablealias}.completestatusid > ".STUSTATUS_NOTCOMPLETE.')';
             }
         }
         if (empty($sql)) {
