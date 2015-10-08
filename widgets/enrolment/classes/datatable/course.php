@@ -62,9 +62,11 @@ class course extends base {
         $langversion = get_string('course_version', 'local_elisprogram');
         $langcoursestatus = get_string('course_status', 'local_elisprogram');
         $euserid = \user::get_current_userid();
-        $coursestatusfilter = new \deepsight_filter_coursestatus($this->DB, 'coursestatus', $langcoursestatus,
-                array('{local_elisprogram_cls_enrol}.userid' => $euserid), $CFG->wwwroot.'/local/elisprogram/widgets/enrolment/ajax.php');
-        $coursestatusfilter->set_default(''); // TBD.
+        $enrolalias = (get_class($this) == 'eliswidget_enrolment\\datatable\\nonprogramcourse') ? 'stu' : 'enrol';
+        $coursestatusfilter = new \deepsight_filter_coursestatus($this->DB, 'coursestatus', $langcoursestatus, [
+           "{$enrolalias}.userid" => $euserid,
+           'tablealias' => $enrolalias], $CFG->wwwroot.'/local/elisprogram/widgets/enrolment/ajax.php');
+        $coursestatusfilter->set_default('');
         $filters = [
                 new \deepsight_filter_textsearch($this->DB, 'name', $langname, ['element.name' => $langname]),
                 new \deepsight_filter_textsearch($this->DB, 'code', $langcode, ['element.code' => $langcode]),
