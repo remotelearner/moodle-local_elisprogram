@@ -139,7 +139,13 @@ class deepsight_filter_coursestatus extends deepsight_filter_menuofchoices {
         $params = array();
         foreach ($data as $option) {
             if ($option == 'notenrolled') {
-                $sql[] = "{$this->tablealias}.id IS NULL";
+                $sql[] = "({$this->tablealias}.id IS NULL
+                           AND NOT EXISTS (SELECT 'x'
+                                             FROM {local_elisprogram_cls} clscs
+                                             JOIN {local_elisprogram_cls_enrol} enrolcs ON enrolcs.classid = clscs.id
+                                                  AND enrolcs.userid = ?
+                                            WHERE clscs.courseid = element.id))";
+                $params[] = $this->userid;
             } else if ($option == 'enrolled') {
                 $sql[] = "{$this->tablealias}.id IS NOT NULL";
             } else if ($option == 'notcompleted') {
