@@ -34,7 +34,7 @@ function xmldb_eliswidget_enrolment_upgrade($oldversion = 0) {
     global $DB;
     $result = true;
 
-    if ($result && $oldversion < 2015051102) {
+    if ($result && $oldversion < 2015102201) {
         // Convert enabled fields multiselect to separate radio buttons: 0 => visible, 1 => hidden
         $fields = [
             'curriculum' => ['idnumber', 'name', 'description', 'reqcredits'],
@@ -56,7 +56,7 @@ function xmldb_eliswidget_enrolment_upgrade($oldversion = 0) {
                 unset_config($ctxlvl.'enabledfields', 'eliswidget_enrolment');
             }
         }
-        upgrade_plugin_savepoint($result, '2015051102', 'eliswidget', 'enrolment');
+        upgrade_plugin_savepoint($result, '2015102201', 'eliswidget', 'enrolment');
     }
 
     return $result;

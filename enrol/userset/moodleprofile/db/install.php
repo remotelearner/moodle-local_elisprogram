@@ -39,8 +39,8 @@ function xmldb_usetenrol_moodleprofile_install() {
     if ($migrator->old_component_installed() === true) {
         $migrator->migrate();
         require_once(dirname(__FILE__).'/upgrade.php');
-        set_config('version', 2015051100, 'usetenrol_moodleprofile');
-        xmldb_usetenrol_moodleprofile_upgrade(2015051100);
+        set_config('version', 2015102200, 'usetenrol_moodleprofile');
+        xmldb_usetenrol_moodleprofile_upgrade(2015102200);
     }
 }
 

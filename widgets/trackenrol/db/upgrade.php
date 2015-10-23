@@ -34,7 +34,7 @@ function xmldb_eliswidget_trackenrol_upgrade($oldversion = 0) {
     global $DB;
     $result = true;
 
-    if ($result && $oldversion < 2015051101) {
+    if ($result && $oldversion < 2015102201) {
         // Convert allowed usersets setting from multi-select drop-down to new tree-selector
         $allowedusersets = get_config('eliswidget_trackenrol', 'viewusersets');
         if (!empty($allowedusersets)) {
@@ -71,10 +71,10 @@ function xmldb_eliswidget_trackenrol_upgrade($oldversion = 0) {
             set_config('viewusersetstree', serialize($viewusersetstree), 'eliswidget_trackenrol');
         }
         unset_config('viewusersets', 'eliswidget_trackenrol');
-        upgrade_plugin_savepoint($result, '2015051101', 'eliswidget', 'trackenrol');
+        upgrade_plugin_savepoint($result, '2015102201', 'eliswidget', 'trackenrol');
     }
 
-    if ($result && $oldversion < 2015051102) {
+    if ($result && $oldversion < 2015102202) {
         // Convert enabled fields multiselect to separate radio buttons: 0 => visible, 1 => hidden
         $fields = [
             'track' => ['idnumber', 'name', 'description', 'program', 'startdate', 'enddate']
@@ -93,7 +93,7 @@ function xmldb_eliswidget_trackenrol_upgrade($oldversion = 0) {
                 unset_config($ctxlvl.'enabledfields', 'eliswidget_trackenrol');
             }
         }
-        upgrade_plugin_savepoint($result, '2015051102', 'eliswidget', 'trackenrol');
+        upgrade_plugin_savepoint($result, '2015102202', 'eliswidget', 'trackenrol');
     }
 
     return $result;
