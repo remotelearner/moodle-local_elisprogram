@@ -96,6 +96,10 @@ class track extends \eliswidget_enrolment\datatable\base {
      */
     protected function get_select_fields(array $filters = array()) {
         $selectfields = parent::get_select_fields($filters);
+        $selectfields[] = 'element.idnumber AS idnumber';
+        $selectfields[] = 'element.name AS name';
+        $selectfields[] = 'element.description AS description';
+        $selectfields[] = 'cur.name AS programname';
         $selectfields[] = 'cur.id AS curid';
         return $selectfields;
     }
@@ -125,25 +129,6 @@ class track extends \eliswidget_enrolment\datatable\base {
      */
     public function get_fixed_visible_datafields() {
         return ['program'];
-    }
-
-    /**
-     * Get an array containing a list of visible and hidden datafields.
-     *
-     * For fields that are not fixed (see self::get_fixed_visible_datafields), additional fields are displayed when the user
-     * searches on them. For fields that are not being searched on, they can be viewed by clicking a "more" link.
-     *
-     * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
-     * @return array Array of field information, first item is visible fields, second is hidden fields.
-     */
-    public function get_datafields_by_visibility(array $filters = array()) {
-        list($visible, $hidden) = parent::get_datafields_by_visibility($filters);
-        $hidden['element_idnumber'] = get_string('track_idnumber', 'eliswidget_trackenrol');
-        $hidden['element_name'] = get_string('track_name', 'eliswidget_trackenrol');
-        $hidden['element_description'] = get_string('track_description', 'eliswidget_trackenrol');
-        $hidden['element_startdate'] = get_string('startdate', 'eliswidget_trackenrol');
-        $hidden['element_enddate'] = get_string('enddate', 'eliswidget_trackenrol');
-        return [$visible, $hidden];
     }
 
     /**
