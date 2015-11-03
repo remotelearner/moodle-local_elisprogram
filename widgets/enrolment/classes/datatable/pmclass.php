@@ -260,24 +260,24 @@ class pmclass extends base {
 
         // Note: get_search results returns a recordset, so we also array-ify pageresults - recordsets are one-time-use.
         $timenow = time();
-        $enrolallowed = true;
+        $globalenrolallowed = true;
         if (($classids = $DB->get_records($this->maintable, array('courseid' => $this->courseid), '', 'id'))) {
             $userfilter = new \field_filter('userid', \user::get_current_userid());
             $classfilter =  new \in_list_filter('classid', array_keys($classids));
-            $enrolallowed = !\student::exists(array($userfilter, $classfilter)) && !\waitlist::exists(array($userfilter, $classfilter));
+            $globalenrolallowed = !\student::exists(array($userfilter, $classfilter)) && !\waitlist::exists(array($userfilter, $classfilter));
         }
         // Assemble class ids.
         $classids = [];
         $pageresultsar = [];
         $dateformat = get_string('strftimedate');
         foreach ($pageresults as $id => $result) {
+            $enrolallowed = $globalenrolallowed;
             $classids[] = $result->id;
             $pageresultsar[$id] = $result;
             $pageresultsar[$id]->instructors = [];
             if (!isset($pageresultsar[$id]->meta)) {
                 $pageresultsar[$id]->meta = new \stdClass;
             }
-            $pageresultsar[$id]->meta->enrolallowed = $enrolallowed;
             $pageresultsar[$id]->meta->limit = $result->maxstudents;
             $classfilter = new \field_filter('classid', $result->id);
             $pageresultsar[$id]->meta->total = \student::count($classfilter);
@@ -294,7 +294,7 @@ class pmclass extends base {
             if (isset($pageresultsar[$id]->element_enddate)) {
                 if ($pageresultsar[$id]->element_enddate > 0) {
                     if ($pageresultsar[$id]->element_enddate < $timenow) {
-                        $pageresultsar[$id]->meta->enrolallowed = false;
+                        $enrolallowed = false;
                     }
                     $pageresultsar[$id]->element_enddate = userdate($pageresultsar[$id]->element_enddate, $dateformat);
                 } else {
@@ -304,6 +304,11 @@ class pmclass extends base {
             if (($mdlcourse = moodle_get_course($result->id)) && ($mdlcrsrec = $DB->get_record('course', array('id' => $mdlcourse)))) {
                 $pageresultsar[$id]->element_idnumber .= ' - '.\html_writer::tag('a', get_string('moodlecourse_enrolwidget', 'local_elisprogram', $mdlcrsrec),
                         array('href' => $CFG->wwwroot.'/course/view.php?id='.$mdlcourse));
+                // ELIS-9259: check the enrol_elis instance of the Moodle course.
+                $enrolmethods = enrol_get_instances($mdlcourse, true);
+                $pageresultsar[$id]->meta->enrolallowed = (isset($enrolmethods['elis']) && !empty($enrolmethods['elis']->customint1)) ? $enrolallowed : false;
+            } else {
+                $pageresultsar[$id]->meta->enrolallowed = $enrolallowed;
             }
             if (isset($pageresultsar[$id]->enrol_completetime) && !empty($pageresultsar[$id]->enrol_completetime)) {
                 $pageresultsar[$id]->enrol_completetime = userdate($pageresultsar[$id]->enrol_completetime, $dateformat);
