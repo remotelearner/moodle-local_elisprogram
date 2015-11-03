@@ -118,6 +118,7 @@
                 success: function(data, textStatus, jqXHR) {
                     main.removeClass('loading');
                     main.children().remove();
+                    main.newfilters = data.data.filters;
                     if (typeof data.data.children === 'object' && data.data.children.length > 0) {
                         for (var i in data.data.children) {
                             var child = $('<div></div>')[opts.childrenderer](data.data.children[i], opts.ids, data.data.fields, opts.childopts, main);
@@ -453,7 +454,10 @@
                 }
 
                 // Class status.
-                details.append(this.generateitem(opts.lang.data_status, main.renderstatus(status)));
+                if ((typeof(main.datatable.newfilters) != 'undefined' && typeof(main.datatable.newfilters["classstatus"]) != 'undefined') ||
+                        opts.enrolallowed == '1' || opts.unenrolallowed == '1') {
+                    details.append(this.generateitem(opts.lang.data_status, main.renderstatus(status)));
+                }
                 if (status == 'passed' || status == 'failed') {
                     details.append(this.generateitem(opts.lang.data_grade, this.data.enrol_grade));
                 }
@@ -563,24 +567,26 @@
                 var header = $('<div class="header"></div>');
                 header.append('<h6 class="title">'+main.data.header+'</h6>');
 
-                // Determine status.
-                if (main.data.numenrol > 0) {
-                    if (main.data.higheststatus == 2) {
-                        var status = opts.lang.status_passed;
-                    } else if (main.data.higheststatus == 1) {
-                        var status = opts.lang.status_failed;
+                if (typeof(main.datatable.newfilters) != 'undefined' && typeof(main.datatable.newfilters["coursestatus"]) != 'undefined') {
+                    // Determine status.
+                    var status;
+                    if (main.data.numenrol > 0) {
+                        if (main.data.higheststatus == 2) {
+                            status = opts.lang.status_passed;
+                        } else if (main.data.higheststatus == 1) {
+                            status = opts.lang.status_failed;
+                        } else {
+                            status = opts.lang.status_enroled;
+                        }
+                    } else if (main.data.numwaitlist > 0) {
+                        status = opts.lang.status_waitlist;
+                    } else if (main.data.numnoncompleteprereq > 0) {
+                        status = opts.lang.status_prereqnotmet;
                     } else {
-                        var status = opts.lang.status_enroled;
+                        status = opts.lang.status_notenroled;
                     }
-                } else if (main.data.numwaitlist > 0) {
-                    var status = opts.lang.status_waitlist;
-                } else if (main.data.numnoncompleteprereq > 0) {
-                    var status = opts.lang.status_prereqnotmet;
-                } else {
-                    var status = opts.lang.status_notenroled;
+                    header.append('<small>'+status+'</small>');
                 }
-                header.append('<small>'+status+'</small>');
-
                 // Build and add details.
                 var details = $('<div class="details"></div>');
                 for (var fieldalias in fieldvisibility.visible) {
