@@ -372,10 +372,26 @@ abstract class base {
                     $resultsarray[$id]->$elem = !empty($resultsarray[$id]->$elem) ? get_string('yes') : get_string('no');
                 } else if ($field->multivalued && isset($result->$elem)) {
                     $multivaluedflag = true;
-                    if (!is_array($resultsarray[$id]->$elem)) {
-                        $resultsarray[$id]->$elem = [$result->$elem];
+                    // ELIS-9234: Iff filtering on this multi-valued custom field all rows/values won't exist!
+                    if (strpos($sqlparts[0], ' '.$fieldname.'.data') !== false) {
+                        $fldctxlvl = $this->DB->get_field(\field_contextlevel::TABLE, 'contextlevel', array('fieldid' => $field->id));
+                        if (count($resultsarray[$id]->$elem) <= 1 && $fldctxlvl &&
+                                ($ctx = $this->DB->get_record('context', array('instanceid' => $id, 'contextlevel' => $fldctxlvl)))) {
+                            $resultsarray[$id]->$elem = [];
+                            $allvals = \field_data::get_for_context_and_field($ctx, $field->shortname, true);
+                            if ($allvals && $allvals->valid()) {
+                                foreach ($allvals as $val) {
+                                    $resultsarray[$id]->{$elem}[] = $val->data;
+                                }
+                            }
+                            unset($allvals);
+                        }
                     } else {
-                        $resultsarray[$id]->{$elem}[] = $result->$elem;
+                        if (!is_array($resultsarray[$id]->$elem)) {
+                            $resultsarray[$id]->$elem = [$result->$elem];
+                        } else {
+                            $resultsarray[$id]->{$elem}[] = $result->$elem;
+                        }
                     }
                 }
             }
