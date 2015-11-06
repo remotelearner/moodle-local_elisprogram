@@ -651,13 +651,15 @@ function pm_notify_role_assign_handler($eventdata){
         }
         return true;
     } else {
-        if (empty($course) && $context->contextlevel != CONTEXT_ELIS_CLASS) { // TBD
-             //error_log("/local/elisprogram/lib/notifications.php::pm_notify_role_assign_handler(); eventdata->contextid != CONTEXT_ELIS_CLASS");
-            return true;
+        $name = false;
+        if (empty($course)) {
+            if ($context->contextlevel == CONTEXT_ELIS_CLASS) {
+                $name = $DB->get_field(pmclass::TABLE, 'idnumber', array('id' => $context->instanceid));
+            }
+        } else if ($DB->count_records(classmoodlecourse::TABLE, array('moodlecourseid' => $course->id)) > 0) {
+            // ELIS-9264: In CONTEXT_COURSE (Moodle) so we've verified Moodle Course linked to an ELIS Class Instance.
+            $name = $course->fullname;
         }
-        $name = !empty($course) ? $course->fullname
-                                : $DB->get_field(pmclass::TABLE, 'idnumber',
-                                          array('id' => $context->instanceid));
         if (empty($name)) {
             return true;
         }
