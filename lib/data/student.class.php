@@ -323,32 +323,17 @@ class student extends elis_data_object {
                     }
                 }
             }
-        } else {
-            // ELIS-3397: must still trigger events for notifications
-            $sturoleid = get_config('elisprogram_enrolrolesync', 'student_role');
-            if ($moodlecourseid && ($muser = $this->users->get_moodleuser()) && ($roleid = !empty($sturoleid) ? $sturoleid
-                    : $DB->get_field('role', 'id', array('shortname' => 'student')))) {
-                $context = context_course::instance($moodlecourseid);
-                // error_log("\nstudent.class.php::save(): Checking for role_assignment record\n");
-                if ($ra = $DB->get_record('role_assignments', array('roleid' => $roleid, 'userid' => $muser->id, 'contextid' => $context->id))) {
-                    // error_log("\nstudent.class.php::save(): triggering role_assignment event\n");
-                    $eventdata = array(
-                        'context' => $context,
-                        'objectid' => $roleid,
-                        'other' => array(
-                            'id' => $ra->id,
-                            'roleid' => $roleid,
-                            'contextid' => \local_elisprogram\context\pmclass::instance($this->classid)->id, // TBD
-                            'userid' => $muser->id,
-                            'component' => 'enrol_elis',
-                            'timemodified' => time(),
-                            'modifierid' => empty($USER->id) ? 0 : $USER->id
-                          )
-                    );
-                    $event = \core\event\role_assigned::create($eventdata);
-                    $event->trigger();
-                }
-            }
+        } else if ($muser = $this->users->get_moodleuser()) {
+            // ELIS-3397,ELIS-9266: must still 'trigger' events for notifications
+            require_once elispm::lib('notifications.php');
+            $context = \local_elisprogram\context\pmclass::instance($this->classid);
+            $eventdata = array(
+                'contextid' => $context->id,
+                'userid' => $muser->id,
+                'roleid' => -1, // TBD: cannot be empty!
+                'id' => 0
+            );
+            pm_notify_role_assign_handler((object)$eventdata);
         }
 
         return;
