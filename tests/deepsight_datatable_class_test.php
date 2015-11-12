@@ -151,7 +151,7 @@ class deepsight_datatable_class_testcase extends deepsight_datatable_standard_im
                 // Test Default.
                 array(
                         array(),
-                        array('element.idnumber' => 'ASC'),
+                        array('element_idnumber' => 'ASC'),
                         0,
                         20,
                         array($results[5], $results[6], $results[7], $results[8]),
@@ -160,7 +160,7 @@ class deepsight_datatable_class_testcase extends deepsight_datatable_standard_im
                 // Test Sorting.
                 array(
                         array(),
-                        array('element.idnumber' => 'DESC'),
+                        array('element_idnumber' => 'DESC'),
                         0,
                         20,
                         array($results[8], $results[7], $results[6], $results[5]),
@@ -169,7 +169,7 @@ class deepsight_datatable_class_testcase extends deepsight_datatable_standard_im
                 // Test Basic Searching.
                 array(
                         array('idnumber' => array('CL 5')),
-                        array('element.idnumber' => 'DESC'),
+                        array('element_idnumber' => 'DESC'),
                         0,
                         20,
                         array($results[5]),
@@ -178,7 +178,7 @@ class deepsight_datatable_class_testcase extends deepsight_datatable_standard_im
                 // Test program searching.
                 array(
                         array('course_name' => array('Test Course100')),
-                        array('element.idnumber' => 'ASC'),
+                        array('element_idnumber' => 'ASC'),
                         0,
                         20,
                         array($results[5], $results[6]),
@@ -187,7 +187,7 @@ class deepsight_datatable_class_testcase extends deepsight_datatable_standard_im
                 // Test limited page results.
                 array(
                         array(),
-                        array('element.idnumber' => 'ASC'),
+                        array('element_idnumber' => 'ASC'),
                         0,
                         2,
                         array($results[5], $results[6]),
