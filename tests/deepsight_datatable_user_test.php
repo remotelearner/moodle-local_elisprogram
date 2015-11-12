@@ -149,7 +149,7 @@ class deepsight_datatable_user_testcase extends deepsight_datatable_standard_imp
             // Test Default.
             array(
                 array(),
-                array('element.idnumber' => 'ASC'),
+                array('element_idnumber' => 'ASC'),
                 0,
                 20,
                 array($results[100], $results[101]),
@@ -158,7 +158,7 @@ class deepsight_datatable_user_testcase extends deepsight_datatable_standard_imp
             // Test Sorting.
             array(
                 array(),
-                array('element.idnumber' => 'DESC'),
+                array('element_idnumber' => 'DESC'),
                 0,
                 20,
                 array($results[101], $results[100]),
@@ -167,7 +167,7 @@ class deepsight_datatable_user_testcase extends deepsight_datatable_standard_imp
             // Test Basic Searching.
             array(
                 array('name' => array('Test 100')),
-                array('element.idnumber' => 'DESC'),
+                array('element_idnumber' => 'DESC'),
                 0,
                 20,
                 array($results[100]),
@@ -176,7 +176,7 @@ class deepsight_datatable_user_testcase extends deepsight_datatable_standard_imp
             // Test limited page results.
             array(
                 array(),
-                array('element.idnumber' => 'ASC'),
+                array('element_idnumber' => 'ASC'),
                 0,
                 2,
                 array($results[100], $results[101]),

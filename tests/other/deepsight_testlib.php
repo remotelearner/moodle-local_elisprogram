@@ -71,7 +71,7 @@ abstract class deepsight_datatable_searchresults_test extends elis_database_test
         $this->assertInternalType('int', $actualresults[1]);
 
         // Assert search results.
-        $this->assertEquals($expectedresults, $actualresults[0]);
+        $this->assertArraysSimilar($expectedresults, $actualresults[0]);
 
         // Assert total count.
         $this->assertEquals($expectedtotal, $actualresults[1]);
@@ -318,7 +318,7 @@ abstract class deepsight_datatable_standard_implementation_test extends elis_dat
         $this->assertInternalType('int', $actualresults[1]);
 
         // Assert search results.
-        $this->assertEquals($expectedresults, $actualresults[0]);
+        $this->assertArraysSimilar($expectedresults, $actualresults[0]);
 
         // Assert total count.
         $this->assertEquals($expectedtotal, $actualresults[1]);
