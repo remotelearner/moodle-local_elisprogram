@@ -150,17 +150,17 @@ class deepsight_filter_testcase extends elis_database_test {
             array(
                 array('date' => 'Date'),
                 array(array('month' => 0, 'date' => 1, 'year' => 1970)),
-                array('date >= 0 AND date <= 86399', array())
+                array('(date >= 0 AND date <= 86399)', array())
             ),
             array(
                 array('element.date' => 'Date'),
                 array(array('month' => 0, 'date' => 1, 'year' => 1970)),
-                array('element.date >= 0 AND element.date <= 86399', array())
+                array('(element.date >= 0 AND element.date <= 86399)', array())
             ),
             array(
                 array('element.date' => 'Date'),
                 array(array('month' => 0, 'date' => 2, 'year' => 1970)),
-                array('element.date >= 86400 AND element.date <= 172799', array())
+                array('(element.date >= 86400 AND element.date <= 172799)', array())
             ),
             array(
                 array('element.date' => 'Date'),
@@ -215,9 +215,9 @@ class deepsight_filter_testcase extends elis_database_test {
      * @dataProvider datefilter_dataprovider
      */
     public function test_filter_date_filtersql($fielddata, $filterdata, $expectedfiltersql) {
-        global $DB;
-
-        date_default_timezone_set('UTC');
+        global $DB, $CFG;
+        $CFG->timezone = 'Etc/UTC';
+        date_default_timezone_set($CFG->timezone);
 
         $filter = new deepsight_filter_date($DB, 'date', 'Date', $fielddata);
         $filtersql = $filter->get_filter_sql($filterdata);
@@ -349,8 +349,8 @@ class deepsight_filter_testcase extends elis_database_test {
 
         foreach ($searchandresults as $search => $results) {
             $formattedresults = array();
-            foreach ($results as $result) {
-                $formattedresults[] = array('id' => $result, 'label' => $result);
+            foreach ($results as $key => $result) {
+                $formattedresults[] = array('id' => count($formattedresults), 'label' => $result);
             }
             $tests[] = array($search, $formattedresults);
         }
@@ -377,8 +377,35 @@ class deepsight_filter_testcase extends elis_database_test {
 
         $_POST['val'] = $filterdata;
         $response = $filter->respond_to_js();
-
-        $this->assertEquals($expectedresponse, $response);
+        if (($t1 = strpos($response, 'throw 1;')) !== false) {
+            $response = substr($response, $t1 + strlen('throw 1;'));
+        }
+        try {
+            $jsonresponse = json_decode($response);
+        } catch (Exception $e) {
+            $jsonresponse = null;
+        }
+        if (!is_null($jsonresponse)) {
+            $response = $jsonresponse;
+        }
+        if (($t1 = strpos($expectedresponse, 'throw 1;')) !== false) {
+            $expectedresponse = substr($expectedresponse, $t1 + strlen('throw 1;'));
+        }
+        try {
+            $jsonexpected = json_decode($expectedresponse);
+        } catch (Exception $e) {
+            $jsonexpected = null;
+        }
+        if (!is_null($jsonexpected)) {
+            $expectedresponse = $jsonexpected;
+        }
+        if (is_array($response) && isset($response[0]->label)) {
+            foreach ($response as $key => $val) {
+                $this->assertEquals($expectedresponse[$key]->label, $response[$key]->label);
+            }
+        } else {
+            $this->assertEquals($expectedresponse, $response);
+        }
     }
 
     /**
@@ -409,7 +436,7 @@ class deepsight_filter_testcase extends elis_database_test {
 
         $validvals = array(array('Apple'), array('Apple', 'Banana'), array('A', 'B', 'C'), array(0, 1, 2, 3));
         foreach ($validvals as $val) {
-            $tests[] = array($val, array('choice IN ('.implode(',', array_fill(0, count($val), '?')).')', $val));
+            $tests[] = array($val, array('(choice IN ('.implode(',', array_fill(0, count($val), '?')).'))', $val));
         }
 
         return $tests;

@@ -88,8 +88,8 @@ class deepsight_datatable_program_testcase extends deepsight_datatable_standard_
      * @return deepsight_datatable The deepsight_datatable object we're testing.
      */
     protected function get_test_table() {
-        global $DB;
-        return new deepsight_datatable_program_mock($DB, 'test', '', 'testuniqid');
+        global $DB, $CFG;
+        return new deepsight_datatable_program_mock($DB, 'test', $CFG->wwwroot, 'testuniqid');
     }
 
     /**
