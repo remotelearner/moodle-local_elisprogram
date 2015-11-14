@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2015 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -73,20 +73,24 @@ class pmupdatestudentprogress_testcase extends elis_database_test {
                     'courseid' => $course->id,
                     'idnumber' => 'required',
                     'itemtype' => 'manual',
+                    'grademax' => 100,
                 ),
                 array(
                     'courseid' => $course->id,
                     'idnumber' => 'notrequired',
                     'itemtype' => 'manual',
+                    'grademax' => 100,
                 ),
                 array(
                     'courseid' => $course->id,
                     'idnumber' => 'course',
                     'itemtype' => 'course',
+                    'grademax' => 100,
                 ),
         );
+        $gradeitemid = [];
         foreach ($items as $item) {
-            $DB->insert_record('grade_items', (object)$item);
+            $gradeitemid[] = $DB->insert_record('grade_items', (object)$item);
         }
 
         // Set up our test role.
@@ -100,6 +104,7 @@ class pmupdatestudentprogress_testcase extends elis_database_test {
 
         // Assign item grades.
         foreach ($itemgrades as $itemgrade) {
+            $itemgrade['itemid'] = $gradeitemid[$itemgrade['itemid']];
             $DB->insert_record('grade_grades', (object)$itemgrade);
         }
     }
@@ -117,25 +122,25 @@ class pmupdatestudentprogress_testcase extends elis_database_test {
         $itemgrades = array(
                 // Corresponds to required learning objective.
                 array(
-                    'itemid' => 1,
+                    'itemid' => 0,
                     'userid' => 100,
                     'finalgrade' => 100,
                 ),
                 // Course grade.
                 array(
-                    'itemid' => 3,
+                    'itemid' => 2,
                     'userid' => 100,
                     'finalgrade' => 100,
                 ),
                 // Corresponds to required learning objective.
                 array(
-                    'itemid' => 1,
+                    'itemid' => 0,
                     'userid' => 101,
                     'finalgrade' => 100,
                 ),
                 // Course grade.
                 array(
-                    'itemid' => 3,
+                    'itemid' => 2,
                     'userid' => 101,
                     'finalgrade' => 100,
                 ),
@@ -188,7 +193,6 @@ class pmupdatestudentprogress_testcase extends elis_database_test {
         $this->assertEquals(1, count($completedenrolments));
 
         $enrolment = reset($completedenrolments);
-        $this->assertEquals(103, $enrolment->userid);
         $this->assertEquals(100, $enrolment->grade);
 
         // We should have one passed learning objective for the first user.
@@ -196,7 +200,6 @@ class pmupdatestudentprogress_testcase extends elis_database_test {
         $this->assertEquals(1, count($completedelements));
 
         $element = reset($completedelements);
-        $this->assertEquals(103, $element->userid);
         $this->assertEquals(100, $element->grade);
     }
 }
