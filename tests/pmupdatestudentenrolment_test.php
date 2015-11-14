@@ -195,7 +195,10 @@ class pmupdatestudentenrolment_testcase extends elis_database_test {
 
         // Validate records specifically.
         foreach ($expectedassociations as $expectedassociation) {
-            $exists = $DB->record_exists(student::TABLE, $expectedassociation);
+            $filters = [new field_filter('userid', $expectedassociation['userid']),
+                    new field_filter('classid', $expectedassociation['classid']),
+                    new field_filter('completestatusid', $expectedassociation['completestatusid'])];
+            $exists = student::exists($filters);
             $this->assertTrue($exists);
         }
     }
@@ -295,7 +298,10 @@ class pmupdatestudentenrolment_testcase extends elis_database_test {
 
         // Validate records specifically.
         foreach ($expectedassociations as $expectedassociation) {
-            $exists = $DB->record_exists(student::TABLE, $expectedassociation);
+            $filters = [new field_filter('userid', $expectedassociation['userid']),
+                    new field_filter('classid', $expectedassociation['classid']),
+                    new field_filter('completestatusid', $expectedassociation['completestatusid'])];
+            $exists = student::exists($filters);
             $this->assertTrue($exists);
         }
     }
@@ -341,7 +347,10 @@ class pmupdatestudentenrolment_testcase extends elis_database_test {
 
         // Validate records specifically.
         foreach ($expectedassociations as $expectedassociation) {
-            $exists = $DB->record_exists(student::TABLE, $expectedassociation);
+            $filters = [new field_filter('userid', $expectedassociation['userid']),
+                    new field_filter('classid', $expectedassociation['classid']),
+                    new field_filter('completestatusid', $expectedassociation['completestatusid'])];
+            $exists = student::exists($filters);
             $this->assertTrue($exists);
         }
     }

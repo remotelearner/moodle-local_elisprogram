@@ -465,6 +465,15 @@ class pmmigratemoodleusers_testcase extends elis_database_test {
                   JOIN {user} mdlu ON um.muserid = mdlu.id
               ORDER BY mdlu.username";
 
+        $sqluniq = "SELECT COUNT('x')
+                      FROM {".user::TABLE."} crlmu
+                      JOIN {".usermoodle::TABLE."} um ON crlmu.id = um.cuserid
+                      JOIN {user} mdlu ON um.muserid = mdlu.id
+                     WHERE NOT EXISTS (SELECT 'x'
+                                         FROM {".user::TABLE."} crlmu2
+                                        WHERE crlmu2.idnumber = crlmu.idnumber
+                                              AND crlmu2.id != crlmu.id)";
+
         // Run loop twice to make sure the migrate function doesn't do anything on its second run for the same data set.
         for ($i = 0; $i < 2; $i++) {
             // Call the migration method.
@@ -472,15 +481,16 @@ class pmmigratemoodleusers_testcase extends elis_database_test {
 
             // Validate record count.
             $records = $DB->get_records_sql($sql);
-            $this->assertEquals(3, count($records));
+            $uniqcount = $DB->count_records_sql($sqluniq);
+            $this->assertEquals(count($records), $uniqcount);
 
             // Validate usernames and idnumbers.
-            $this->assertEquals('migrateuser1', $records[1]->username);
-            $this->assertEquals('migrateuser1', $records[1]->idnumber);
-            $this->assertEquals('migrateuser2', $records[2]->username);
-            $this->assertEquals('migrateuser2', $records[2]->idnumber);
-            $this->assertEquals('migrateuser3', $records[3]->username);
-            $this->assertEquals('migrateuser3', $records[3]->idnumber);
+            $this->assertEquals(1, $DB->count_records(user::TABLE, array('username' => 'migrateuser1')));
+            $this->assertEquals(1, $DB->count_records(user::TABLE, array('idnumber' => 'migrateuser1')));
+            $this->assertEquals(1, $DB->count_records(user::TABLE, array('username' => 'migrateuser2')));
+            $this->assertEquals(1, $DB->count_records(user::TABLE, array('idnumber' => 'migrateuser2')));
+            $this->assertEquals(1, $DB->count_records(user::TABLE, array('username' => 'migrateuser3')));
+            $this->assertEquals(1, $DB->count_records(user::TABLE, array('idnumber' => 'migrateuser3')));
         }
     }
 
@@ -618,17 +628,29 @@ class pmmigratemoodleusers_testcase extends elis_database_test {
                   JOIN {user} mdlu ON um.muserid = mdlu.id
               ORDER BY mdlu.username";
 
+        $sqluniq = "SELECT COUNT('x')
+                      FROM {".user::TABLE."} crlmu
+                      JOIN {".usermoodle::TABLE."} um ON crlmu.id = um.cuserid
+                      JOIN {user} mdlu ON um.muserid = mdlu.id
+                     WHERE NOT EXISTS (SELECT 'x'
+                                         FROM {".user::TABLE."} crlmu2
+                                        WHERE crlmu2.idnumber = crlmu.idnumber
+                                              AND crlmu2.id != crlmu.id)";
+
         // Validate record count.
         $records = $DB->get_records_sql($sql);
-        $this->assertEquals(3, count($records));
+        $uniqcount = $DB->count_records_sql($sqluniq);
+        $this->assertEquals(count($records), $uniqcount);
 
         // Validate that everyone but the second user has been included.
-        $this->assertEquals('timemodifieduser1', $records[1]->username);
-        $this->assertEquals('timemodifieduser1', $records[1]->idnumber);
-        $this->assertEquals('timemodifieduser3', $records[2]->username);
-        $this->assertEquals('timemodifieduser3', $records[2]->idnumber);
-        $this->assertEquals('timemodifieduser4', $records[3]->username);
-        $this->assertEquals('timemodifieduser4', $records[3]->idnumber);
+        $this->assertEquals(1, $DB->count_records(user::TABLE, array('username' => 'timemodifieduser1')));
+        $this->assertEquals(1, $DB->count_records(user::TABLE, array('idnumber' => 'timemodifieduser1')));
+        $this->assertEquals(0, $DB->count_records(user::TABLE, array('username' => 'timemodifieduser2')));
+        $this->assertEquals(0, $DB->count_records(user::TABLE, array('idnumber' => 'timemodifieduser2')));
+        $this->assertEquals(1, $DB->count_records(user::TABLE, array('username' => 'timemodifieduser3')));
+        $this->assertEquals(1, $DB->count_records(user::TABLE, array('idnumber' => 'timemodifieduser3')));
+        $this->assertEquals(1, $DB->count_records(user::TABLE, array('username' => 'timemodifieduser4')));
+        $this->assertEquals(1, $DB->count_records(user::TABLE, array('idnumber' => 'timemodifieduser4')));
 
         // Validate that the time for the first user was auto-assigned.
         $moodleuser = $DB->get_record('user', array('username' => 'timemodifieduser1'));

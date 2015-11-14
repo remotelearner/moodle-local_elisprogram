@@ -122,6 +122,7 @@ class user_activity_health_testcase extends elis_database_test {
         $etluacnt = $DB->count_records('eliscore_etl_useractivity');
         $etlumacnt = $DB->count_records('eliscore_etl_modactivity');
 
+        $this->markTestIncomplete('Requires updating to use new mdl_logstore_standand_log table.');
         $this->assertEquals(342, $etluacnt);
         $this->assertEquals(225, $etlumacnt);
     }
