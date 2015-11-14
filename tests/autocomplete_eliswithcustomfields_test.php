@@ -67,7 +67,13 @@ class autocompleteeliswithcustomfields_testcase extends elis_database_test {
     protected $contextlevel = CONTEXT_ELIS_USER;
 
     /**
+     * @var int The custom fieldid.
+     */
+    protected $fieldid;
+
+    /**
      * Create a custom field.
+     * @return int the custom field id.
      */
     protected function create_custom_field() {
         $data = new stdClass;
@@ -97,6 +103,7 @@ class autocompleteeliswithcustomfields_testcase extends elis_database_test {
         $fieldcontext->fieldid      = $field->id;
         $fieldcontext->contextlevel = $this->contextlevel;
         $fieldcontext->save();
+        return $field->id;
     }
 
     /**
@@ -169,7 +176,7 @@ class autocompleteeliswithcustomfields_testcase extends elis_database_test {
 
         require_once($CFG->dirroot.'/local/elisreports/php_report_base.php');
 
-        $this->create_custom_field();
+        $this->fieldid = $this->create_custom_field();
         $this->set_filter_config();
 
         $alias = 'u';
@@ -319,7 +326,7 @@ class autocompleteeliswithcustomfields_testcase extends elis_database_test {
         $this->assertArrayHasKey('label', $displaycustomfields['testfield']);
         $this->assertArrayHasKey('shortname', $displaycustomfields['testfield']);
         $this->assertArrayHasKey('datatype', $displaycustomfields['testfield']);
-        $this->assertEquals(10, $displaycustomfields['testfield']['fieldid']);
+        $this->assertEquals($this->fieldid, $displaycustomfields['testfield']['fieldid']);
         $this->assertEquals('Test Field', $displaycustomfields['testfield']['label']);
         $this->assertEquals('testfield', $displaycustomfields['testfield']['shortname']);
         $this->assertEquals('text', $displaycustomfields['testfield']['datatype']);
@@ -338,7 +345,7 @@ class autocompleteeliswithcustomfields_testcase extends elis_database_test {
         $this->assertArrayHasKey('label', $searchcustomfields['testfield']);
         $this->assertArrayHasKey('shortname', $searchcustomfields['testfield']);
         $this->assertArrayHasKey('datatype', $searchcustomfields['testfield']);
-        $this->assertEquals(10, $searchcustomfields['testfield']['fieldid']);
+        $this->assertEquals($this->fieldid, $searchcustomfields['testfield']['fieldid']);
         $this->assertEquals('Test Field', $searchcustomfields['testfield']['label']);
         $this->assertEquals('testfield', $searchcustomfields['testfield']['shortname']);
         $this->assertEquals('text', $searchcustomfields['testfield']['datatype']);
@@ -397,9 +404,9 @@ class autocompleteeliswithcustomfields_testcase extends elis_database_test {
         $searchresults = $filter->get_search_results('test');
 
         $this->assertInternalType('array', $searchresults);
-        $this->assertArrayHasKey(1, $searchresults);
-        $this->assertInternalType('object', $searchresults[1]);
-        $this->assertObjectHasAttribute('idnumber', $searchresults[1]);
-        $this->assertEquals('testuser12345678', $searchresults[1]->idnumber);
+        $this->assertArrayHasKey($pmuser->id, $searchresults);
+        $this->assertInternalType('object', $searchresults[$pmuser->id]);
+        $this->assertObjectHasAttribute('idnumber', $searchresults[$pmuser->id]);
+        $this->assertEquals('testuser12345678', $searchresults[$pmuser->id]->idnumber);
     }
 }
