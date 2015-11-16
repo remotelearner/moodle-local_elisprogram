@@ -290,7 +290,7 @@ class courseset_testcase extends elis_database_test {
         $this->assertEquals(0, curriculumcourse_count_records($program->id));
         $this->assertEquals(2, curriculumcourse_count_records($program->id, '', '', array('coursesets' => true)));
         $cnt = -1;
-        $rs = user::get_non_curriculum_classes($program->id, $cnt);
+        $rs = user::get_non_curriculum_classes($elisuser->id, $cnt);
         $this->assertEquals(1, $cnt);
 
         // Mark one program class as incomplete
