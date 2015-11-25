@@ -56,7 +56,7 @@ class customfieldform extends cmform {
         $form->addElement('header', '_commonsettings', get_string('profilecommonsettings', 'admin'));
         $strrequired = get_string('required');
         $form->addElement('text', 'shortname', get_string('profileshortname', 'admin'), array('maxlength'=>'100', 'size'=>'25'));
-        $form->setType('shortname', PARAM_SAFEDIR);
+        $form->setType('shortname', PARAM_CLEAN);
 
         $form->addElement('text', 'name', get_string('profilename', 'admin'), array('size'=>'50'));
         $form->addRule('name', $strrequired, 'required', null, 'client');
@@ -364,30 +364,34 @@ class customfieldform extends cmform {
         if (empty($data['shortname'])) {
             $err['shortname'] = get_string('required');
         } else {
-            // Check for duplicate shortnames
             $level = $this->_customdata['level'];
             $contextlevel = \local_eliscore\context\helper::get_level_from_name($level);
             if (!$contextlevel) {
                 print_error('invalid_context_level', 'local_elisprogram');
             }
 
-            $editsql = '';
-            // We are in edit mode
-            if (!empty($fid)) {
-                $editsql = "AND ef.id != {$fid}";
-            }
-
-            $sql = 'SELECT ef.id
-                      FROM {'.field::TABLE.'} ef
-                INNER JOIN {'.field_contextlevel::TABLE."} cl ON ef.id = cl.fieldid
-                     WHERE LOWER(ef.shortname) = LOWER(?)
-                           AND cl.contextlevel = ?
-                           {$editsql}";
-
-            $params =  array($data['shortname'], $contextlevel);
-
-            if ($DB->record_exists_sql($sql, $params)) {
-                 $err['shortname'] = get_string('profileshortnamenotunique', 'admin');
+            $illegalchars = array(',', '.', ';', ':', ' ', '-', '+', '=', '!', '^', '~', '#', '*', '$', '@', '&', '/', '\\', '|',
+                    "'", '"', '`', '{', '}', '[', ']', '(', ')', '?', '<', '>', '%', '%%');
+            if ($data['shortname'] != str_replace($illegalchars, '', $data['shortname'])) {
+                array_pop($illegalchars);
+                $err['shortname'] = get_string('customfield_shortname_invalid', 'local_elisprogram', htmlspecialchars(implode(', ', $illegalchars)));
+            } else {
+                // Check for duplicate shortnames
+                $editsql = '';
+                if (!empty($fid)) {
+                    // We are in edit mode
+                    $editsql = "AND ef.id != {$fid}";
+                }
+                $sql = 'SELECT ef.id
+                          FROM {'.field::TABLE.'} ef
+                    INNER JOIN {'.field_contextlevel::TABLE."} cl ON ef.id = cl.fieldid
+                         WHERE LOWER(ef.shortname) = LOWER(?)
+                               AND cl.contextlevel = ?
+                               {$editsql}";
+                $params = array($data['shortname'], $contextlevel);
+                if ($DB->record_exists_sql($sql, $params)) {
+                     $err['shortname'] = get_string('profileshortnamenotunique', 'admin');
+                }
             }
         }
 

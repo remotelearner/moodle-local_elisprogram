@@ -403,6 +403,7 @@ To disable this functionality, select "N/A" from the list.';
 $string['curriculum_role_setting'] = 'Default Program Role';
 $string['curriculum_userid_mismatch'] = 'Your current user ID does not match the user ID for this program completion.';
 $string['customfields'] = 'Custom fields';
+$string['customfield_shortname_invalid'] = 'shortname cannot contain any of the following characters: {$a}';
 
 $string['dashboard'] = 'Dashboard';
 $string['dashboard_na'] = 'N/A';
