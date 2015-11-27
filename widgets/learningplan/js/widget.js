@@ -211,7 +211,7 @@
      * ELIS LearningPlan Widget Class Renderer.
      *
      * Usage:
-     *     $('[container selector]').eliswidget_learningplan_pmclass(data, ids, fieldvisibility, opts);
+     *     $('[container selector]').eliswidget_learningplan_mdlclass(data, ids, fieldvisibility, opts);
      *
      * Required Options:
      *     string endpoint The URL to send ajax requests.
@@ -224,7 +224,7 @@
      * @param object datatable The datatable object
      * @return object jQuery object for each instance.
      */
-    $.fn.eliswidget_learingplan_pmclass = function(data, ids, fieldvisibility, opts, datatable) {
+    $.fn.eliswidget_learningplan_mdlclass = function(data, ids, fieldvisibility, opts, datatable) {
         return this.each(function() {
             var jqthis = $(this);
             var ajaxendpoint = opts.endpoint;
@@ -286,35 +286,9 @@
              * @return object jQuery object for the status/link element.
              */
             this.renderstatus = function(status) {
-                var status2action = {
-                    enroled: 'unenrol',
-                    passed: '',
-                    failed: '',
-                    waitlist: 'leavewaitlist',
-                    available: 'enrol',
-                    full: 'enterwaitlist',
-                    unavailable: ''
-                };
-                var action = status2action[status];
-                if (action == 'enrol' && opts.enrolallowed != '1') {
-                    action = '';
-                }
-                if (action == 'enterwaitlist' && opts.enrolallowed != '1') {
-                    action = '';
-                }
-                if (action == 'unenrol' && opts.unenrolallowed != '1') {
-                    action = '';
-                }
                 var statusele = $('<span id="'+main.generateid('status')+'" class="pmclassstatus"></span>');
                 var enrolinfo = '';
                 var waitinfo = '';
-                if (action != '') {
-                    if (status != 'enroled' && this.data.meta.limit > 0) {
-                        enrolinfo = ' (';
-                        enrolinfo += this.data.meta.total+' '+opts.lang.enrolled+'/'+this.data.meta.limit+' '+opts.lang.max;
-                        enrolinfo += ')';
-                    }
-                }
                 if (status == 'full' || status == 'waitlist') {
                     waitinfo = ' (';
                     if (this.data.meta.waitpos) {
@@ -325,89 +299,10 @@
                     waitinfo += ')';
                 }
                 statusele.append('<span>'+opts.lang['status_'+status]+enrolinfo+'</span>');
-                if (action != '') {
-                    statusele.append('<a href="javascript:;">'+opts.lang['action_'+action]+'</a>'+waitinfo);
-                } else if (waitinfo != '') {
+                if (waitinfo != '') {
                     statusele.append(waitinfo);
                 }
-                statusele.find('a').click(function(e) {
-                    main.changestatus(e, action);
-                });
                 return statusele;
-            }
-
-            /**
-             * Change the student's status within the class.
-             *
-             * @param object e Click event from clicking the change status link.
-             * @param string action The action to perform.
-             */
-            this.changestatus = function(e, action) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Check if a dialog is already present.
-                if ($('.modaldialog').length) {
-                    return false;
-                }
-                // Add confirm dialog.
-                var height = 175;
-                var prompt = '<b>'+opts.lang['enrol_confirm_'+action]+'</b><br/>&nbsp;&nbsp;'+opts.lang.idnumber+': '+main.data.element_idnumber;
-                if (action == 'enrol' || action == 'unenrol') {
-                    if (Date.parse(main.data.element_startdate)) {
-                        height += 25;
-                        prompt += '<br/>&nbsp;&nbsp;'+opts.lang.startdate+': '+main.data.element_startdate;
-                    }
-                    if (Date.parse(main.data.element_enddate)) {
-                        height += 25;
-                        prompt += '<br/>&nbsp;&nbsp;'+opts.lang.enddate+': '+main.data.element_enddate;
-                    }
-                }
-                $('<div></div>').appendTo('body')
-                    .html(prompt)
-                    .dialog({
-                        dialogClass: 'modaldialog',
-                        modal: true,
-                        resizable: true,
-                        height: height,
-                        width: 500,
-                        title: opts.lang.enrol_confirm_title,
-                        buttons: [{
-                            text: opts.lang.yes,
-                            click: function() {
-                                    $(this).dialog("close");
-                                    var data = {
-                                        m: 'changeclassstatus',
-                                        data: {action: action, classid: main.classid},
-                                    };
-                                    $('#'+main.generateid('status')).find('a').replaceWith('<span class="smloader">'+opts.lang.working+'</span>');
-                                    $.ajax({
-                                        url: ajaxendpoint,
-                                        data: data,
-                                        dataType: 'json',
-                                        type: 'POST',
-                                        success: function(data, textStatus, jqXHR) {
-                                            main.datatable.doupdatetable();
-                                            var coursedt = jqthis.closest('.program, .courseset');
-                                            if (coursedt) {
-                                                // Update the parent table so Course shows updated enrolment status.
-                                                // console.debug(coursedt);
-                                                if (typeof(coursedt[0].coursedatatable) !== 'undefined') {
-                                                    coursedt[0].coursedatatable.doupdatetable();
-                                                } else {
-                                                    coursedt[0].datatable.doupdatetable();
-                                                }
-                                            }
-                                        }
-                                    });
-                            }
-                        }, {
-                            text: opts.lang.cancel,
-                            click: function() {
-                                    $(this).dialog("close");
-                            }
-                        }],
-                        close: function(event, ui) { $(this).remove(); },
-                });
             }
 
             /**
@@ -416,7 +311,7 @@
              * @return object jQuery object for the class.
              */
             this.render = function() {
-                var status = 'unavailable';
+                var status = '?';
                 if (this.data.enrol_id != null) {
                     if (this.data.enrol_completestatusid == 2) {
                         status = 'passed';
@@ -427,11 +322,10 @@
                     }
                 } else if (this.data.waitlist_id != null) {
                     status = 'waitlist';
-                } else if (this.data.meta.enrolallowed) {
-                    status = (this.data.meta.limit > 0 && this.data.meta.total >= this.data.meta.limit) ? 'full' : 'available';
                 }
 
                 var details = $('<div class="details"></div>');
+                details.append('<div class="header"><h5 class="header">'+main.data.header+'</h5></div>');
 
                 // Visible details.
                 for (var fieldalias in fieldvisibility.visible) {
@@ -440,42 +334,12 @@
                     details.append(main.generateitem(label, value, fieldalias));
                 }
 
-                // Instructors.
-                if (this.data.instructors.length > 0) {
-                    var instructorshtml = '';
-                    for (var i in this.data.instructors) {
-                        var href = 'mailto:'+this.data.instructors[i].email;
-                        var name = this.data.instructors[i].firstname+' '+this.data.instructors[i].lastname;
-                        instructorshtml += '<span><a href="'+href+'">'+name+'</a></span>';
-                    }
-                    details.append(this.generateitem(opts.lang.data_instructors, instructorshtml, 'instructors'));
-                }
-
                 // Class status.
                 details.append(this.generateitem(opts.lang.data_status, main.renderstatus(status)));
                 if (status == 'passed' || status == 'failed') {
                     details.append(this.generateitem(opts.lang.data_grade, this.data.enrol_grade));
                 }
 
-                // Hidden details.
-                var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
-                for (var fieldalias in fieldvisibility.hidden) {
-                    if (typeof main.data[fieldalias] != 'undefined') {
-                        var label = fieldvisibility.hidden[fieldalias];
-                        var value = main.data[fieldalias];
-                        detailshidden.append(main.generateitem(label, value, fieldalias));
-                    }
-                }
-                details.append(detailshidden);
-
-                var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
-                morelesslink.click(function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    $(this).siblings('.detailshidden').toggle();
-                    $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
-                });
-                details.append(morelesslink);
                 return details;
             }
 
@@ -594,24 +458,6 @@
                         details.append(main.generateitem(label, value, fieldalias));
                     }
                 }
-                var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
-                for (var fieldalias in fieldvisibility.hidden) {
-                    if (typeof main.data[fieldalias] != 'undefined') {
-                        var label = fieldvisibility.hidden[fieldalias];
-                        var value = main.data[fieldalias];
-                        detailshidden.append(main.generateitem(label, value, fieldalias));
-                    }
-                }
-                details.append(detailshidden);
-
-                var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
-                morelesslink.click(function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    $(this).siblings('.detailshidden').toggle();
-                    $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
-                });
-                details.append(morelesslink);
                 header.append(details);
                 return header;
             }
@@ -641,7 +487,7 @@
                         endpoint: opts.endpoint,
                         requestmode: 'classesforprogram',
                         requestdata: {programid: main.programid},
-                        childrenderer: 'eliswidget_learningplan_pmclass',
+                        childrenderer: 'eliswidget_learningplan_mdlclass',
                         childopts: opts,
                         lang: opts.lang
                     });

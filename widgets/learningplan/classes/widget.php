@@ -60,13 +60,10 @@ class widget extends \local_elisprogram\lib\widgetbase {
         $initopts = [
             'endpoint' => $CFG->wwwroot.'/local/elisprogram/widgets/learningplan/ajax.php',
             'lang' => [
-                'status_available' => get_string('status_available', 'eliswidget_learningplan'),
-                'status_notenroled' => get_string('status_notenroled', 'eliswidget_learningplan'),
                 'status_enroled' => get_string('status_enroled', 'eliswidget_learningplan'),
                 'status_passed' => get_string('status_passed', 'eliswidget_learningplan'),
                 'status_failed' => get_string('status_failed', 'eliswidget_learningplan'),
                 'status_full' => get_string('status_full', 'eliswidget_learningplan'),
-                'status_unavailable' => get_string('status_unavailable', 'eliswidget_learningplan'),
                 'status_waitlist' => get_string('status_waitlist', 'eliswidget_learningplan'),
                 'status_prereqnotmet' => get_string('status_prereqnotmet', 'eliswidget_learningplan'),
                 'max' => get_string('max', 'eliswidget_learningplan'),

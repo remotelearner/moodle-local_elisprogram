@@ -170,17 +170,20 @@ class ajax {
      */
     public function get_classesforprogram(array $data) {
         global $DB;
-        if (empty($data['programid']) || (!is_numeric($data['programid']) && $data['programid'] !== 'none')) {
-            throw new \Exception('No valid Program ID received.');
-        }
-        if (is_numeric($data['programid'])) {
-            $datatable = new \eliswidget_learningplan\datatable\programclasses($DB, $this->endpoint);
-            $datatable->set_programid($data['programid']);
-        } else if ($data['programid'] === 'none') {
+        if (isset($data['programid'])) {
             require_once(\elispm::lib('data/user.class.php'));
+            if (!empty($data['programid']) && is_numeric($data['programid'])) {
+                $datatable = new \eliswidget_learningplan\datatable\programclasses($DB, $this->endpoint);
+                $datatable->set_programid($data['programid']);
+            } else if ($data['programid'] == 'none') {
+                $datatable = new \eliswidget_learningplan\datatable\nonprogramclasses($DB, $this->endpoint);
+            } else {
+                throw new \Exception('No valid Program ID received.');
+            }
             $euserid = \user::get_current_userid();
-            $datatable = new \eliswidget_learningplan\datatable\nonprogramclasses($DB, $this->endpoint);
             $datatable->set_userid($euserid);
+        } else {
+            throw new \Exception('No Program ID received.');
         }
         return $this->get_listing_response($datatable, $data);
     }
