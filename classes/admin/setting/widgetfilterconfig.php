@@ -60,6 +60,9 @@ class widgetfilterconfig extends \admin_setting_configtext {
         }
         $this->defaultradio = $default;
         $this->options = $options;
+        $illegalchars = [',', '.', ';', ':', ' ', '-', '+', '=', '!', '^', '~', '#', '*', '$', '@', '&', '/', '\\', '|',
+                "'", '"', '`', '{', '}', '[', ']', '(', ')', '?', '<', '>', '%', '%%'];
+        $name = str_replace($illegalchars, '', $name);
         parent::__construct($name, $visiblename, $description, '', $options);
     }
 

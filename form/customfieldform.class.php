@@ -56,7 +56,7 @@ class customfieldform extends cmform {
         $form->addElement('header', '_commonsettings', get_string('profilecommonsettings', 'admin'));
         $strrequired = get_string('required');
         $form->addElement('text', 'shortname', get_string('profileshortname', 'admin'), array('maxlength'=>'100', 'size'=>'25'));
-        $form->setType('shortname', PARAM_CLEAN);
+        $form->setType('shortname', PARAM_RAW_TRIMMED);
 
         $form->addElement('text', 'name', get_string('profilename', 'admin'), array('size'=>'50'));
         $form->addRule('name', $strrequired, 'required', null, 'client');
