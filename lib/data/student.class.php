@@ -509,7 +509,7 @@ class student extends elis_data_object {
 
             // Send notifications to any users who need to receive them.
             foreach ($users as $touser) {
-                $message->send_notification($text, $touser, $enroluser);
+                $message->send_notification($text, $touser);
             }
         }
         return true;
@@ -2251,7 +2251,7 @@ class student extends elis_data_object {
 
         // Send notifications to any users who need to receive them.
         foreach ($users as $touser) {
-            $message->send_notification($text, $touser, $user, $eventlog);
+            $message->send_notification($text, $touser, null, $eventlog);
         }
 
         return true;
@@ -2346,7 +2346,7 @@ class student extends elis_data_object {
 
         // Send notifications to any users who need to receive them.
         foreach ($users as $touser) {
-            $message->send_notification($text, $touser, $user, $eventlog);
+            $message->send_notification($text, $touser, null, $eventlog);
         }
 
         return true;

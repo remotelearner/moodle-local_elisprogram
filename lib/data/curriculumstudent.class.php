@@ -206,7 +206,7 @@ class curriculumstudent extends elis_data_object {
         }
 
         foreach ($users as $user) {
-            $message->send_notification($text, $user, $enroluser);
+            $message->send_notification($text, $user);
         }
     }
 
