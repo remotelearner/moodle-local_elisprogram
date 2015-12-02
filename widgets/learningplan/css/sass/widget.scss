@@ -79,15 +79,13 @@
             }
             &:before {
                 margin-right: 0.1rem;
-                content: "\e020";
-                color: rgba(0, 0, 0, 0.2);
                 @include iconbasics();
                 position: absolute;
                 left: 0;
                 top: 0.55rem;
             }
             > h5 {
-                margin: 0 16px;
+                margin: 0.1rem;
                 font-size: 0.9rem;
                 line-height: 1rem;
             }
@@ -95,10 +93,6 @@
         &.expanded {
             > .header {
                 border-bottom: 1px dotted rgba(0, 0, 0, 0.2);
-                &:before {
-                    color: rgba(0, 0, 0, 0.4);
-                    content: "\e021";
-                }
             }
             > .childrenlist {
                 display: block;

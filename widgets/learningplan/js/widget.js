@@ -448,17 +448,7 @@
                 var progressbar = main.generateprogressbar(main.data.pctcomplete);
                 header.append(progressbar);
                 header.append('<div class="header"><h5 class="header">'+main.data.header+'</h5></div>');
-
-                // Build and add details.
-                var details = $('<div class="details"></div>');
-                for (var fieldalias in fieldvisibility.visible) {
-                    if (typeof main.data[fieldalias] != 'undefined') {
-                        var label = fieldvisibility.visible[fieldalias];
-                        var value = main.data[fieldalias];
-                        details.append(main.generateitem(label, value, fieldalias));
-                    }
-                }
-                header.append(details);
+                header.append(main.generateitem('', main.data.description, 'description'));
                 return header;
             }
 
@@ -494,6 +484,7 @@
                     main.coursedatatable.doupdatetable();
                 }
             });
+            jqthis.children('.header').trigger('click');
         });
     }
 
@@ -533,11 +524,6 @@
             var childrenlist = jqthis.children('.childrenlist');
             if (childrenlist.is(':empty')) {
                 var programwrapper = $('<div id="'+main.generateid('programwrapper')+'"></div>');
-                var programheading = $('<div class="childrenlistheader"></div>');
-                programheading.append('<h6>'+opts.lang.programs+'</h6>');
-                // New line for program filters
-                programheading.append('<span id="'+main.generateid('programfilterbar')+'" class="filterbar"></span>');
-                programwrapper.append(programheading);
                 var programlist = $('<div id="'+main.generateid('programlist')+'"></div>');
                 programwrapper.append(programlist);
                 var programpagination = $('<div id="'+main.generateid('programpagination')+'" class="ds_pagelinks"></div>');
