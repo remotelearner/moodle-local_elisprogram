@@ -650,7 +650,7 @@ class course extends data_object_with_custom_fields {
         }
 
         foreach ($users as $u) {
-            $message->send_notification($text, $u, $enroluser, $eventlog);
+            $message->send_notification($text, $u, null, $eventlog);
         }
 
         return true;
