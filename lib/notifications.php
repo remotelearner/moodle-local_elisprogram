@@ -191,7 +191,7 @@ class notification extends message {
         /// Handle parameters:
         if (!empty($userto)) {
             $this->userto = $userto;
-        } else if (empty($this->userto)) {
+        } else {
             if (in_cron()) {
                 mtrace(get_string('message_nodestinationuser', 'local_elisprogram'));
             } else {
@@ -202,8 +202,8 @@ class notification extends message {
 
         if (!empty($userfrom)) {
             $this->userfrom = $userfrom;
-        } else if (empty($this->userfrom)) {
-            $this->userfrom = $USER;
+        } else {
+            $this->userfrom = empty($USER->id) ? get_admin() : $USER;
         }
 
         if ($message != '') {
@@ -701,7 +701,7 @@ function pm_notify_role_assign_handler($eventdata){
 
     foreach ($users as $user) {
         //error_log("/local/elisprogram/lib/notifications.php::pm_notify_role_assign_handler(eventdata); Sending notification to user[{$user->id}]: {$user->email}");
-        $message->send_notification($text, $user, $enroluser);
+        $message->send_notification($text, $user);
     }
 
     /// If you don't return true, the message queue will clog and no more will be sent.
@@ -881,7 +881,7 @@ function pm_notify_track_assign_handler($eventdata){
     }
 
     foreach ($users as $user) {
-        $message->send_notification($text, $user, $enroluser);
+        $message->send_notification($text, $user);
     }
 
     /// If you don't return true, the message queue will clog and no more will be sent.

@@ -282,7 +282,7 @@ class roleassignments_testcase extends elis_database_test {
      * Test pmnotifyroleassignhandler
      */
     public function test_pmnotifyroleassignhandler() {
-        global $DB;
+        global $DB, $USER;
 
         // Setup ELIS PM configuration for notification messages on enrolment.
         elis::$config->local_elisprogram->notify_classenrol_user             = 0;
@@ -313,10 +313,12 @@ class roleassignments_testcase extends elis_database_test {
         $messages = $sink->get_messages();
         $this->assertNotEmpty($messages);
         $fullname = elis_fullname($testuser);
+        $adminuser = empty($USER->id) ? get_admin() : $USER;
+        $adminname = elis_fullname($adminuser);
         $expected = array(
-            'useridfrom' => $testuser->id,
+            'useridfrom' => $adminuser->id,
             'useridto' => $admin->id,
-            'subject' => get_string('unreadnewmessage', 'message', $fullname),
+            'subject' => get_string('unreadnewmessage', 'message', $adminname),
             'smallmessage' => $fullname.' has been enrolled in the class instance '.$pmclass->idnumber.'.',
         );
         foreach ($expected as $k => $v) {
