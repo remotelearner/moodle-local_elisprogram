@@ -368,8 +368,6 @@
       cursor: pointer; }
     .eliswidget_learningplan .program > .header:before, .eliswidget_learningplan .learningplan > .header:before {
       margin-right: 0.1rem;
-      content: "\e020";
-      color: rgba(0, 0, 0, 0.2);
       display: inline-block;
       speak: none;
       font-family: 'icomoon';
@@ -383,14 +381,11 @@
       left: 0;
       top: 0.55rem; }
     .eliswidget_learningplan .program > .header > h5, .eliswidget_learningplan .learningplan > .header > h5 {
-      margin: 0 16px;
+      margin: 0.1rem;
       font-size: 0.9rem;
       line-height: 1rem; }
   .eliswidget_learningplan .program.expanded > .header, .eliswidget_learningplan .learningplan.expanded > .header {
     border-bottom: 1px dotted rgba(0, 0, 0, 0.2); }
-    .eliswidget_learningplan .program.expanded > .header:before, .eliswidget_learningplan .learningplan.expanded > .header:before {
-      color: rgba(0, 0, 0, 0.4);
-      content: "\e021"; }
   .eliswidget_learningplan .program.expanded > .childrenlist, .eliswidget_learningplan .learningplan.expanded > .childrenlist {
     display: block;
     margin-bottom: 1rem; }
