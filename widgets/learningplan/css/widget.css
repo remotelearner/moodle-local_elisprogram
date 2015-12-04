@@ -275,6 +275,13 @@
   padding: 0.1rem;
   float: right;
   height: 0.5rem; }
+.eliswidget_learningplan .showhide {
+  display: block;
+  float: right;
+  font-size: 0.8rem;
+  height: 1.25rem;
+  margin: 0 0.4rem;
+  padding-top: 0.08rem; }
 .eliswidget_learningplan .elisloader {
   display: block;
   text-align: center; }
