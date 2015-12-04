@@ -10,7 +10,14 @@
 
 .eliswidget_learningplan {
     @import 'progressbar';
-
+    .showhide {
+        display: block;
+        float: right;
+        font-size: 0.8rem;
+        height: 1.25rem;
+        margin: 0 0.4rem;
+        padding-top: 0.08rem;
+    }
     .elisloader {
         display: block;
         text-align: center;
