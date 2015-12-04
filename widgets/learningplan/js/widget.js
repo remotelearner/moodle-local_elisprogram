@@ -137,7 +137,7 @@
                             pagination.hide();
                         }
                     } else {
-                        main.append('<span class="empty">'+opts.lang.nonefound+'</span>');
+                        main.parents('.program').find('.showhide').css('display', 'none');
                     }
                     if (main.filtersinit === false) {
                         // Initialize filterbar.
@@ -456,9 +456,18 @@
             jqthis.data('id', this.programid);
             jqthis.append(this.renderheader());
             jqthis.append('<div class="childrenlist"></div>');
-            jqthis.children('.header').click(function() {
+            var spacing = $('<div></div>').css('height', '1.5rem').css('display', 'block');
+            var hideshow = $('<button></button>').addClass('showhide');
+            hideshow.html(opts.lang.show_classes);
+            jqthis.append(hideshow);
+            jqthis.append(spacing);
+            jqthis.children('.showhide').click(function() {
                 var childrenlist = jqthis.children('.childrenlist');
                 jqthis.toggleClass('expanded');
+                var hideshow = jqthis.children('.showhide');
+                if (hideshow) {
+                    hideshow.html(jqthis.hasClass('expanded') ? opts.lang.hide_classes : opts.lang.show_classes);
+                }
                 if (childrenlist.is(':empty')) {
                     var coursewrapper = $('<div id="'+main.generateid('coursewrapper')+'"></div>');
                     var courseheading = $('<div class="childrenlistheader"></div>');
@@ -484,7 +493,7 @@
                     main.coursedatatable.doupdatetable();
                 }
             });
-            jqthis.children('.header').trigger('click');
+            jqthis.children('.showhide').trigger('click');
         });
     }
 
