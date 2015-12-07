@@ -198,6 +198,7 @@ class ajax {
     public function get_programsforuser(array $data) {
         global $DB;
         $datatable = new \eliswidget_enrolment\datatable\program($DB, $this->endpoint); // TBD?
+        $datatable->set_progressbar(get_config('eliswidget_learningplan', 'progressbarenabled'));
         return $this->get_listing_response($datatable, $data);
     }
 
