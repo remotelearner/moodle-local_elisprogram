@@ -250,6 +250,7 @@ class ajax {
     protected function get_programsforuser(array $data) {
         global $DB;
         $datatable = new \eliswidget_enrolment\datatable\program($DB, $this->endpoint);
+        $datatable->set_progressbar(get_config('eliswidget_enrolment', 'progressbarenabled'));
         return $this->get_listing_response($datatable, $data);
     }
 

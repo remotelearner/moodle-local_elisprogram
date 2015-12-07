@@ -130,9 +130,9 @@ class widget extends \local_elisprogram\lib\widgetbase {
         $config = get_config('eliswidget_enrolment');
         if (!empty($config->progressbarenabled)) {
             $html .= '<style>'."\n";
-            $html .= 'svg.elisprogress rect.colorcode1 { fill: '.$config->progressbarcolor1.'; }'."\n";
-            $html .= 'svg.elisprogress rect.colorcode2 { fill: '.$config->progressbarcolor2.'; }'."\n";
-            $html .= 'svg.elisprogress rect.colorcode3 { fill: '.$config->progressbarcolor3.'; }'."\n";
+            $html .= '.eliswidget_enrolment svg.elisprogress rect.colorcode1 { fill: '.$config->progressbarcolor1.'; }'."\n";
+            $html .= '.eliswidget_enrolment svg.elisprogress rect.colorcode2 { fill: '.$config->progressbarcolor2.'; }'."\n";
+            $html .= '.eliswidget_enrolment svg.elisprogress rect.colorcode3 { fill: '.$config->progressbarcolor3.'; }'."\n";
             $html .= '</style>'."\n";
         }
         echo $html;

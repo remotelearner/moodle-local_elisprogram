@@ -42,6 +42,9 @@ class program extends base {
     /** @var int The ID of the program we're getting classes for. Optional. */
     protected $programid = null;
 
+    /** @var bool The state of the program progressbar. */
+    protected $progressbarenabled = true;
+
     /**
      * Gets an array of available filters.
      *
@@ -162,6 +165,15 @@ class program extends base {
     }
 
     /**
+     * Set the progressbar enabled.
+     *
+     * @param bool $progressbarenabled The state of the progress bar display.
+     */
+    public function set_progressbar($progressbarenabled) {
+        $this->progressbarenabled = $progressbarenabled;
+    }
+
+    /**
      * Get search results/
      *
      * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
@@ -178,7 +190,7 @@ class program extends base {
         foreach ($pageresults as $id => $result) {
             $result->header = get_string('program_header', 'eliswidget_enrolment', $result);
             $result->numcrssets = \programcrsset::count(new \field_filter('prgid', $id), $DB);
-            if ($result->reqcredits > 0 && ($pgmstu = new \curriculumstudent(['curriculumid' => $id, 'userid' => $euserid]))) {
+            if (!empty($this->progressbarenabled) && $result->reqcredits > 0 && ($pgmstu = new \curriculumstudent(['curriculumid' => $id, 'userid' => $euserid]))) {
                 $pgmstu->load();
                 $result->pctcomplete = $pgmstu->get_percent_complete();
             } else {
