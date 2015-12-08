@@ -31,13 +31,15 @@ $string['name'] = 'ELIS Learning Plan Widget';
 $string['description'] = 'A widget allowing students to view their learning plans, and view their progress.';
 
 $string['classes'] = 'Classes';
+$string['course'] = 'Course';
 $string['courses'] = 'Courses';
 $string['coursesets'] = 'CourseSets';
 
-$string['data_completetime'] = 'Completed: ';
+$string['data_completetime'] = 'Completed';
 $string['data_grade'] = 'Grade';
 $string['data_instructors'] = 'Instructors';
 $string['data_status'] = 'Status';
+$string['date_format'] = '%b %d, %Y';
 $string['date_na'] = 'Not available';
 $string['eliscourse_header'] = '{$a->name}';
 $string['enddate'] = 'End Date';
@@ -77,6 +79,7 @@ $string['setting_syncusergrades_description'] = 'If enabled, user\'s grades will
 $string['show_classes'] = 'Show Classes';
 $string['startdate'] = 'Start Date';
 $string['status_enroled'] = 'Enrolled';
+$string['status_notenroled'] = 'Not Enrolled';
 $string['status_passed'] = 'Passed';
 $string['status_prereqnotmet'] = 'Prerequisites not complete';
 $string['status_failed'] = 'Failed';

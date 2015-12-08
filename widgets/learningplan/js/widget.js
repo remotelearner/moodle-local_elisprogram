@@ -116,10 +116,16 @@
                 type: 'GET',
                 success: function(data, textStatus, jqXHR) {
                     main.removeClass('loading');
-                    main.children().remove();
+                    var tagname = main.prop('tagName');
+                    var classname = '';
+                    main.children().not('.tableheaderrow').remove();
+                    if (tagname == 'TR') {
+                        main = main.parents('table:first');
+                        classname = ' class="classtablerow"';
+                    }
                     if (typeof data.data.children === 'object' && data.data.children.length > 0) {
                         for (var i in data.data.children) {
-                            var child = $('<div></div>')[opts.childrenderer](data.data.children[i], opts.ids, data.data.fields, opts.childopts, main);
+                            var child = $('<'+tagname+classname+'></'+tagname+'>')[opts.childrenderer](data.data.children[i], opts.ids, data.data.fields, opts.childopts, main);
                             main.append(child);
                         }
 
@@ -136,21 +142,12 @@
                         } else {
                             pagination.hide();
                         }
-                    } else {
+                    } else if (tagname == 'TR') {
+                        main.parents('.program').find('.childrenlist').css('display', 'none');
+                        main.parents('.program').find('.programspace').css('display', 'none');
                         main.parents('.program').find('.showhide').css('display', 'none');
-                    }
-                    if (main.filtersinit === false) {
-                        // Initialize filterbar.
-                        var filterbar = main.siblings('.childrenlistheader').find('.filterbar');
-
-                        filterbar.show().deepsight_filterbar({
-                            datatable: main,
-                            filters: data.data.filters,
-                            starting_filters: data.data.initialfilters,
-                            lang_add: '',
-                            lang_addtitle: opts.lang.generatortitle,
-                        });
-                        main.filtersinit = true;
+                    } else {
+                        main.append('<span class="empty">'+opts.lang.nonefound+'</span>');
                     }
                 }
             });
@@ -260,26 +257,6 @@
             }
 
             /**
-             * Generate display elements for a piece of element information.
-             *
-             * @param string name The label of the information.
-             * @param string val The value of the information.
-             * @param string id An ID for the information (added to CSS classes)
-             * @return object A jQuery object for the DOM element.
-             */
-            this.generateitem = function(name, val, id) {
-                var itemclass = 'item';
-                if (id != null) {
-                    itemclass += ' '+id;
-                }
-                var item = $('<span class="'+itemclass+'"></span>');
-                item.append('<span class="key">'+name+'</span>');
-                var value = $('<span class="val"></span>').append(val);
-                item.append(value);
-                return item;
-            }
-
-            /**
              * Render the class enrolment status, and the link to change it.
              *
              * @param string status The student's current status in the class.
@@ -307,15 +284,14 @@
 
             /**
              * Render the class.
-             *
-             * @return object jQuery object for the class.
+             * @param parenttr the parent tr element.
              */
-            this.render = function() {
-                var status = '?';
+            this.render = function(parenttr) {
+                var status = 'notenroled';
                 if (this.data.enrol_id != null) {
-                    if (this.data.enrol_completestatusid == 2) {
+                    if (this.data.completestatusid == 2) {
                         status = 'passed';
-                    } else if (this.data.enrol_completestatusid == 1) {
+                    } else if (this.data.completestatusid == 1) {
                         status = 'failed';
                     } else {
                         status = 'enroled';
@@ -324,28 +300,17 @@
                     status = 'waitlist';
                 }
 
-                var details = $('<div class="details"></div>');
-                details.append('<div class="header"><h5 class="header">'+main.data.header+'</h5></div>');
-
-                // Visible details.
-                for (var fieldalias in fieldvisibility.visible) {
-                    var label = fieldvisibility.visible[fieldalias];
-                    var value = main.data[fieldalias];
-                    details.append(main.generateitem(label, value, fieldalias));
-                }
-
-                // Class status.
-                details.append(this.generateitem(opts.lang.data_status, main.renderstatus(status)));
-                if (status == 'passed' || status == 'failed') {
-                    details.append(this.generateitem(opts.lang.data_grade, this.data.enrol_grade));
-                }
-
-                return details;
+                var completed = (status == 'passed' || status == 'failed');
+                parenttr.append('<td align="left">'+main.data.header+'</td>');
+                parenttr.append('<td align="left">'+main.renderstatus(status).html()+'</td>');
+                parenttr.append('<td align="center">'+this.data.completetime+'</td>');
+                parenttr.append('<td align="center">'+(completed ? parseFloat(this.data.grade).toFixed(2) : '-')+'</td>');
+                parenttr.addClass(completed ? 'completed' : 'notcompleted');
             }
 
             jqthis.attr({id: 'pmclass_'+this.classid, class: 'pmclass'});
             jqthis.data('id', this.classid);
-            jqthis.append(this.render());
+            this.render((jqthis.prop('tagName') == 'TR') ? jqthis : jqthis.parents('tr:first'));
         });
     }
 
@@ -449,6 +414,9 @@
                 header.append(progressbar);
                 header.append('<div class="header"><h5 class="header">'+main.data.header+'</h5></div>');
                 header.append(main.generateitem('', main.data.description, 'description'));
+                var spacing = $('<div class="programspace"></div>');
+                spacing.html('<br/>&nbsp;');
+                header.append(spacing);
                 return header;
             }
 
@@ -456,26 +424,29 @@
             jqthis.data('id', this.programid);
             jqthis.append(this.renderheader());
             jqthis.append('<div class="childrenlist"></div>');
-            var spacing = $('<div></div>').css('height', '1.5rem').css('display', 'block');
             var hideshow = $('<button></button>').addClass('showhide');
             hideshow.html(opts.lang.show_classes);
             jqthis.append(hideshow);
+            var spacing = $('<div></div>').css('height', '1.5rem').css('display', 'block');
             jqthis.append(spacing);
             jqthis.children('.showhide').click(function() {
                 var childrenlist = jqthis.children('.childrenlist');
                 jqthis.toggleClass('expanded');
+                jqthis.children('.programspace').toggleClass('expanded');
                 var hideshow = jqthis.children('.showhide');
                 if (hideshow) {
                     hideshow.html(jqthis.hasClass('expanded') ? opts.lang.hide_classes : opts.lang.show_classes);
                 }
                 if (childrenlist.is(':empty')) {
                     var coursewrapper = $('<div id="'+main.generateid('coursewrapper')+'"></div>');
-                    var courseheading = $('<div class="childrenlistheader"></div>');
-                    courseheading.append('<h6>'+opts.lang.courses+'</h6>');
-                    courseheading.append('<span id="'+main.generateid('coursefilterbar')+'" class="filterbar"></span>');
-                    coursewrapper.append(courseheading);
-                    var courselist = $('<div id="'+main.generateid('courselist')+'"></div>');
-                    coursewrapper.append(courselist);
+                    var coursetable = $('<table id="'+main.generateid('courselist')+'" class="lpclasstable"></table>');
+                    var courselist = $('<tr class="tableheaderrow"></tr>'); // TBD: heading
+                    courselist.append('<th class="tableheaderrow">'+opts.lang.course+'</th>');
+                    courselist.append('<th class="tableheaderrow">'+opts.lang.data_status+'&nbsp;&nbsp;&nbsp;&nbsp;</th>');
+                    courselist.append('<th class="tableheaderrow">&nbsp;&nbsp;'+opts.lang.data_completetime+'&nbsp;&nbsp;</th>');
+                    courselist.append('<th class="tableheaderrow">'+opts.lang.data_grade+'</th>');
+                    coursetable.append(courselist);
+                    coursewrapper.append(coursetable);
                     var coursepagination = $('<div id="'+main.generateid('coursepagination')+'" class="ds_pagelinks"></div>');
                     coursewrapper.append(coursepagination);
                     childrenlist.append(coursewrapper);
