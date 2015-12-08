@@ -2268,3 +2268,38 @@ function local_elisprogram_update_tab_defs($plugin, $uninstall = false) {
     }
     return true;
 }
+
+/**
+ * Returns enrolment instances in given course.
+ * @param int $courseid
+ * @param bool $enabled
+ * @return array of enrol instances with keys being enrol plugin type.
+ */
+function rl_enrol_get_instances($courseid, $enabled) {
+    global $DB, $CFG;
+
+    $enrolfields = 'enrol, id, status, courseid, sortorder, name, enrolperiod, enrolstartdate, enrolenddate, expirynotify, expirythreshold, notifyall,'.
+            ' password, cost, currency, roleid, customint1, customint2, customint3, customint4, customint5, customint6, customint7, customint8,'.
+            ' customchar1, customchar2, customchar3, customdec1, customdec2, customtext1, customtext2, customtext3, customtext4, timecreated, timemodified';
+    $params = array('courseid' => $courseid);
+    if ($enabled) {
+        $params['status'] = ENROL_INSTANCE_ENABLED;
+    }
+    $result = $DB->get_records('enrol', $params, 'sortorder,id', $enrolfields);
+    if (!$enabled) {
+        return $result;
+    }
+    $enabled = explode(',', $CFG->enrol_plugins_enabled);
+    foreach ($result as $key => $instance) {
+        if (!in_array($instance->enrol, $enabled)) {
+            unset($result[$key]);
+            continue;
+        }
+        if (!file_exists("$CFG->dirroot/enrol/$instance->enrol/lib.php")) {
+            // broken plugin
+            unset($result[$key]);
+            continue;
+        }
+    }
+    return $result;
+}
