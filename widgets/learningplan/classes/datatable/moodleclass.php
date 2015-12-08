@@ -164,6 +164,7 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
     public function get_search_results(array $filters = array(), $page = 1) {
         list($pageresults, $totalresultsamt) = parent::get_search_results($filters, $page);
         $pageresultsar = [];
+        $dateformat = get_string('date_format', 'eliswidget_learningplan');
         foreach ($pageresults as $id => $result) {
             if (!empty($result->moodlecourseid)) {
                 $result->header = get_string('moodlecourse_header', 'eliswidget_learningplan', $result);
@@ -174,6 +175,11 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
                 $result->header = get_string('eliscourse_header', 'eliswidget_learningplan', $result);
             }
             $pageresultsar[$id] = $result;
+            if (isset($pageresultsar[$id]->completetime) && !empty($pageresultsar[$id]->completetime)) {
+                $pageresultsar[$id]->completetime = userdate($pageresultsar[$id]->completetime, $dateformat);
+            } else {
+                $pageresultsar[$id]->completetime = get_string('date_na', 'eliswidget_learningplan');
+            }
         }
         return [array_values($pageresultsar), $totalresultsamt];
     }

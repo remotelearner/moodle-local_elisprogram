@@ -18,6 +18,19 @@
         margin: 0 0.4rem;
         padding-top: 0.08rem;
     }
+    .lpclasstable > table, th, td {
+        width: 100%;
+        border: 1px solid black;
+        padding: 0.25rem;
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+    .programspace {
+        display: none;
+    }
+    .programspace.expanded {
+        display: block;
+        height: 1.5rem;
+    }
     .elisloader {
         display: block;
         text-align: center;
@@ -80,6 +93,7 @@
             font-weight: bold;
             padding: 0 0 0 1rem;
             position: relative;
+            border-bottom: 1px dotted rgba(0, 0, 0, 0.2);
             &:hover {
                 background-color: rgba(0, 0, 0, 0.05);
                 cursor: pointer;
