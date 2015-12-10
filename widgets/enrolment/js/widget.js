@@ -463,24 +463,26 @@
                 }
 
                 // Hidden details.
-                var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
-                for (var fieldalias in fieldvisibility.hidden) {
-                    if (typeof main.data[fieldalias] != 'undefined') {
-                        var label = fieldvisibility.hidden[fieldalias];
-                        var value = main.data[fieldalias];
-                        detailshidden.append(main.generateitem(label, value, fieldalias));
+                if (Object.keys(fieldvisibility.hidden).length > 0) {
+                    var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
+                    for (var fieldalias in fieldvisibility.hidden) {
+                        if (typeof main.data[fieldalias] != 'undefined') {
+                            var label = fieldvisibility.hidden[fieldalias];
+                            var value = main.data[fieldalias];
+                            detailshidden.append(main.generateitem(label, value, fieldalias));
+                        }
                     }
-                }
-                details.append(detailshidden);
+                    details.append(detailshidden);
 
-                var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
-                morelesslink.click(function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    $(this).siblings('.detailshidden').toggle();
-                    $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
-                });
-                details.append(morelesslink);
+                    var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
+                    morelesslink.click(function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        $(this).siblings('.detailshidden').toggle();
+                        $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
+                    });
+                    details.append(morelesslink);
+                }
                 return details;
             }
 
@@ -595,24 +597,26 @@
                     details.append(main.generateitem(label, value, fieldalias));
                 }
 
-                var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
-                for (var fieldalias in fieldvisibility.hidden) {
-                    if (typeof main.data[fieldalias] != 'undefined') {
-                        var label = fieldvisibility.hidden[fieldalias];
-                        var value = main.data[fieldalias];
-                        detailshidden.append(main.generateitem(label, value, fieldalias));
+                if (Object.keys(fieldvisibility.hidden).length > 0) {
+                    var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
+                    for (var fieldalias in fieldvisibility.hidden) {
+                        if (typeof main.data[fieldalias] != 'undefined') {
+                            var label = fieldvisibility.hidden[fieldalias];
+                            var value = main.data[fieldalias];
+                            detailshidden.append(main.generateitem(label, value, fieldalias));
+                        }
                     }
-                }
-                details.append(detailshidden);
+                    details.append(detailshidden);
 
-                var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
-                morelesslink.click(function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    $(this).siblings('.detailshidden').toggle();
-                    $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
-                });
-                details.append(morelesslink);
+                    var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
+                    morelesslink.click(function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        $(this).siblings('.detailshidden').toggle();
+                        $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
+                    });
+                    details.append(morelesslink);
+                }
                 header.append(details);
                 return header;
             }
@@ -745,24 +749,26 @@
                     details.append(main.generateitem(label, value, fieldalias));
                 }
 
-                var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
-                for (var fieldalias in fieldvisibility.hidden) {
-                    if (typeof main.data[fieldalias] != 'undefined') {
-                        var label = fieldvisibility.hidden[fieldalias];
-                        var value = main.data[fieldalias];
-                        detailshidden.append(main.generateitem(label, value, fieldalias));
+                if (Object.keys(fieldvisibility.hidden).length > 0) {
+                    var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
+                    for (var fieldalias in fieldvisibility.hidden) {
+                        if (typeof main.data[fieldalias] != 'undefined') {
+                            var label = fieldvisibility.hidden[fieldalias];
+                            var value = main.data[fieldalias];
+                            detailshidden.append(main.generateitem(label, value, fieldalias));
+                        }
                     }
-                }
-                details.append(detailshidden);
+                    details.append(detailshidden);
 
-                var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
-                morelesslink.click(function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    $(this).siblings('.detailshidden').toggle();
-                    $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
-                });
-                details.append(morelesslink);
+                    var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
+                    morelesslink.click(function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        $(this).siblings('.detailshidden').toggle();
+                        $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
+                    });
+                    details.append(morelesslink);
+                }
 
                 header.append(details);
                 return header;
@@ -910,24 +916,26 @@
                         details.append(main.generateitem(label, value, fieldalias));
                     }
                 }
-                var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
-                for (var fieldalias in fieldvisibility.hidden) {
-                    if (typeof main.data[fieldalias] != 'undefined') {
-                        var label = fieldvisibility.hidden[fieldalias];
-                        var value = main.data[fieldalias];
-                        detailshidden.append(main.generateitem(label, value, fieldalias));
+                if (Object.keys(fieldvisibility.hidden).length > 0) {
+                    var detailshidden = $('<div class="detailshidden" style="display:none;"></div>');
+                    for (var fieldalias in fieldvisibility.hidden) {
+                        if (typeof main.data[fieldalias] != 'undefined') {
+                            var label = fieldvisibility.hidden[fieldalias];
+                            var value = main.data[fieldalias];
+                            detailshidden.append(main.generateitem(label, value, fieldalias));
+                        }
                     }
-                }
-                details.append(detailshidden);
+                    details.append(detailshidden);
 
-                var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
-                morelesslink.click(function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    $(this).siblings('.detailshidden').toggle();
-                    $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
-                });
-                details.append(morelesslink);
+                    var morelesslink = $('<a class="morelesslink" href="javascript:;">'+opts.lang.more+'</a>');
+                    morelesslink.click(function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        $(this).siblings('.detailshidden').toggle();
+                        $(this).html(($(this).html() === opts.lang.more) ? opts.lang.less : opts.lang.more);
+                    });
+                    details.append(morelesslink);
+                }
                 header.append(details);
                 return header;
             }
