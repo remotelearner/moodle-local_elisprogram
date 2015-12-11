@@ -92,6 +92,8 @@ class widget extends \local_elisprogram\lib\widgetbase {
                 'programs' => get_string('programs', 'eliswidget_learningplan'),
                 'hide_classes' => get_string('hide_classes', 'eliswidget_learningplan'),
                 'show_classes' => get_string('show_classes', 'eliswidget_learningplan'),
+                'show_completed' => get_string('show_completed', 'eliswidget_learningplan'),
+                'show_all' => get_string('show_all', 'eliswidget_learningplan'),
             ],
         ];
         $initjs = "\n(function($) {"."\n";

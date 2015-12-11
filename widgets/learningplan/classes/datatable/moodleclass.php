@@ -51,19 +51,14 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
 
         require_once(\elispm::lib('deepsight/lib/filter.php'));
         require_once(\elispm::lib('data/user.class.php'));
-
+        $euserid = $this->userid ? $this->userid : \user::get_current_userid();
         $langcoursestatus = get_string('course_status', 'local_elisprogram');
-        $euserid = $this->userid;
-        $enrolalias = (get_class($this) == 'eliswidget_enrolment\\datatable\\nonprogramcourse') ? 'stu' : 'enrol';
         $coursestatusfilter = new \deepsight_filter_coursestatus($this->DB, 'coursestatus', $langcoursestatus, [
-           "{$enrolalias}.userid" => $euserid,
-           'tablealias' => $enrolalias], $CFG->wwwroot.'/local/elisprogram/widgets/enrolment/ajax.php');
+            'stu.userid' => $euserid,
+            'tablealias' => 'stu'], $CFG->wwwroot.'/local/elisprogram/widgets/learningplan/ajax.php');
         $coursestatusfilter->set_default('');
-        $filters = [
-                // $coursestatusfilter
-        ];
-
-        return $filters;
+        $coursestatusfilter->set_userid($euserid);
+        return [$coursestatusfilter];
     }
 
     /**

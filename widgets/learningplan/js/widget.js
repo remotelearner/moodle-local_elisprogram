@@ -100,6 +100,7 @@
          * Receives data and sends to renderers.
          */
         this.doupdatetable = function() {
+            var main = this;
             main.abortupdatetable();
             main.addClass('loading');
             opts.requestdata.initialized = main.filtersinit;
@@ -118,11 +119,12 @@
                     main.removeClass('loading');
                     var tagname = main.prop('tagName');
                     var classname = '';
-                    main.children().not('.tableheaderrow').remove();
+                    var oldmain = main;
                     if (tagname == 'TR') {
                         main = main.parents('table:first');
                         classname = ' class="classtablerow"';
                     }
+                    main.children().children('.pmclass').remove();
                     if (typeof data.data.children === 'object' && data.data.children.length > 0) {
                         for (var i in data.data.children) {
                             var child = $('<'+tagname+classname+'></'+tagname+'>')[opts.childrenderer](data.data.children[i], opts.ids, data.data.fields, opts.childopts, main);
@@ -142,12 +144,19 @@
                         } else {
                             pagination.hide();
                         }
-                    } else if (tagname == 'TR') {
-                        main.parents('.program').find('.childrenlist').css('display', 'none');
-                        main.parents('.program').find('.programspace').css('display', 'none');
-                        main.parents('.program').find('.showhide').css('display', 'none');
-                    } else {
+                    } else if (tagname != 'TR') {
                         main.append('<span class="empty">'+opts.lang.nonefound+'</span>');
+                    }
+                    if (tagname == 'TR' &&
+                            (typeof(oldmain.filters['coursestatus']) == 'undefined' ||
+                            !(oldmain.filters['coursestatus'].length == 1 && oldmain.filters['coursestatus'][0] == 'completed')) &&
+                            !main.children().children('.notcompleted').length) {
+                        if (typeof data.data.children != 'object' || !data.data.children.length) {
+                            main.parents('.program').find('.programspace').css('display', 'none');
+                            main.parents('.program').find('.showhide').css('display', 'none');
+                            main.parents('.program').find('.childrenlist').css('display', 'none');
+                        }
+                        main.parents('.program').find('.lpstatus').remove();
                     }
                 }
             });
@@ -420,31 +429,37 @@
                 return header;
             }
 
-            jqthis.attr({id: 'program_'+this.programid, class: 'program'});
-            jqthis.data('id', this.programid);
-            jqthis.append(this.renderheader());
-            jqthis.append('<div class="childrenlist"></div>');
-            var hideshow = $('<button></button>').addClass('showhide');
-            hideshow.html(opts.lang.show_classes);
-            jqthis.append(hideshow);
-            var spacing = $('<div></div>').css('height', '1.5rem').css('display', 'block');
-            jqthis.append(spacing);
-            jqthis.children('.showhide').click(function() {
+            /**
+             * Update datatable.
+             * @return object the course datatable
+             */
+            this.updatetable = function() {
                 var childrenlist = jqthis.children('.childrenlist');
                 jqthis.toggleClass('expanded');
                 jqthis.children('.programspace').toggleClass('expanded');
                 var hideshow = jqthis.children('.showhide');
                 if (hideshow) {
-                    hideshow.html(jqthis.hasClass('expanded') ? opts.lang.hide_classes : opts.lang.show_classes);
+                    var lpstatus = jqthis.children('.lpstatus');
+                    if (jqthis.hasClass('expanded')) {
+                        hideshow.html(opts.lang.hide_classes);
+                        if (lpstatus) {
+                            lpstatus.css('display', 'block');
+                        }
+                    } else {
+                        hideshow.html(opts.lang.show_classes);
+                        if (lpstatus) {
+                            lpstatus.css('display', 'none');
+                        }
+                    }
                 }
                 if (childrenlist.is(':empty')) {
                     var coursewrapper = $('<div id="'+main.generateid('coursewrapper')+'"></div>');
                     var coursetable = $('<table id="'+main.generateid('courselist')+'" class="lpclasstable"></table>');
-                    var courselist = $('<tr class="tableheaderrow"></tr>'); // TBD: heading
+                    var courselist = $('<tr class="tableheaderrow"></tr>');
                     courselist.append('<th class="tableheaderrow">'+opts.lang.course+'</th>');
                     courselist.append('<th class="tableheaderrow">'+opts.lang.data_status+'&nbsp;&nbsp;&nbsp;&nbsp;</th>');
                     courselist.append('<th class="tableheaderrow">&nbsp;&nbsp;'+opts.lang.data_completetime+'&nbsp;&nbsp;</th>');
-                    courselist.append('<th class="tableheaderrow">'+opts.lang.data_grade+'</th>');
+                    courselist.append('<th class="tableheaderrow">'+opts.lang.data_grade+'&nbsp;</th>');
                     coursetable.append(courselist);
                     coursewrapper.append(coursetable);
                     var coursepagination = $('<div id="'+main.generateid('coursepagination')+'" class="ds_pagelinks"></div>');
@@ -463,8 +478,35 @@
                     });
                     main.coursedatatable.doupdatetable();
                 }
+                return main.coursedatatable;
+            }
+
+            jqthis.attr({id: 'program_'+this.programid, class: 'program'});
+            jqthis.data('id', this.programid);
+            jqthis.append(this.renderheader());
+            jqthis.append('<div class="childrenlist"></div>');
+            var hideshow = $('<button></button>').addClass('showhide');
+            hideshow.html(opts.lang.show_classes);
+            jqthis.append(hideshow);
+            var statusfilter = $('<button></button>').addClass('lpstatus');
+            statusfilter.html(opts.lang.show_completed);
+            jqthis.append(statusfilter);
+            var spacing = $('<div></div>').css('height', '1.5rem').css('display', 'block');
+            jqthis.append(spacing);
+            jqthis.children('.showhide').click(this.updatetable);
+            var crsdatatable = this.updatetable();
+            statusfilter.click(function() {
+                if (typeof(crsdatatable.filters['coursestatus']) !== 'undefined') {
+                   delete crsdatatable.filters['coursestatus'];
+                   statusfilter.html(opts.lang.show_completed);
+                } else {
+                   crsdatatable.filters['coursestatus'] = [];
+                   crsdatatable.filters['coursestatus'].push('completed');
+                   crsdatatable.page = 1;
+                   statusfilter.html(opts.lang.show_all);
+                }
+                crsdatatable.doupdatetable();
             });
-            jqthis.children('.showhide').trigger('click');
         });
     }
 
