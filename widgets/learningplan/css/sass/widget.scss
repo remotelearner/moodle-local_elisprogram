@@ -10,7 +10,7 @@
 
 .eliswidget_learningplan {
     @import 'progressbar';
-    .showhide {
+    .showhide, .lpstatus {
         display: block;
         float: right;
         font-size: 0.8rem;

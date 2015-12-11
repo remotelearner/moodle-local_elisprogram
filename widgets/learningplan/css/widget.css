@@ -275,7 +275,7 @@
   padding: 0.1rem;
   float: right;
   height: 0.5rem; }
-.eliswidget_learningplan .showhide {
+.eliswidget_learningplan .showhide, .eliswidget_learningplan .lpstatus {
   display: block;
   float: right;
   font-size: 0.8rem;
