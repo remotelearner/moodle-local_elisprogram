@@ -170,22 +170,41 @@ class ajax {
      */
     public function get_classesforprogram(array $data) {
         global $DB;
+        $response = [];
         if (isset($data['programid'])) {
             require_once(\elispm::lib('data/user.class.php'));
+            $euserid = \user::get_current_userid();
             if (!empty($data['programid']) && is_numeric($data['programid'])) {
-                $datatable = new \eliswidget_learningplan\datatable\programclasses($DB, $this->endpoint);
-                $datatable->set_programid($data['programid']);
+                $pgmclsdatatable = new \eliswidget_learningplan\datatable\programclasses($DB, $this->endpoint);
+                $pgmclsdatatable->set_programid($data['programid']);
+                $pgmclsdatatable->set_userid($euserid);
+                $pgmclsresponse = $this->get_listing_response($pgmclsdatatable, $data);
+                $crssetclsdatatable = new \eliswidget_learningplan\datatable\crssetclasses($DB, $this->endpoint);
+                $crssetclsdatatable->set_programid($data['programid']);
+                $crssetclsdatatable->set_userid($euserid);
+                $crssetclsresponse = $this->get_listing_response($crssetclsdatatable, $data);
+                if (!empty($pgmclsresponse['totalresults'])) {
+                    $response = $pgmclsresponse;
+                    if (!empty($crssetclsresponse['totalresults'])) {
+                        $response['children'] = array_merge($pgmclsresponse['children'], $crssetclsresponse['children']);
+                        $response['totalresults'] += $crssetclsresponse['totalresults'];
+                    }
+                } else if (!empty($crssetclsresponse['totalresults'])) {
+                    $response = $crssetclsresponse;
+                } else {
+                    $response = $pgmclsresponse;
+                }
             } else if ($data['programid'] == 'none') {
                 $datatable = new \eliswidget_learningplan\datatable\nonprogramclasses($DB, $this->endpoint);
+                $datatable->set_userid($euserid);
+                $response = $this->get_listing_response($datatable, $data);
             } else {
-                throw new \Exception('No valid Program ID received.');
+                throw new \Exception('Invalid Program ID received.');
             }
-            $euserid = \user::get_current_userid();
-            $datatable->set_userid($euserid);
         } else {
             throw new \Exception('No Program ID received.');
         }
-        return $this->get_listing_response($datatable, $data);
+        return $response;
     }
 
     /**
