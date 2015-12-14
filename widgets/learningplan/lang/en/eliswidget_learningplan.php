@@ -33,8 +33,8 @@ $string['description'] = 'A widget allowing students to view their learning plan
 $string['classes'] = 'Classes';
 $string['course'] = 'Course';
 $string['courses'] = 'Courses';
+$string['courseset_format'] = '<br/>Course Set: {$a}';
 $string['coursesets'] = 'CourseSets';
-
 $string['data_completetime'] = 'Completed';
 $string['data_grade'] = 'Grade';
 $string['data_instructors'] = 'Instructors';
