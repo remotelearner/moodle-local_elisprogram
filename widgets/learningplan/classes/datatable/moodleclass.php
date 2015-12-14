@@ -111,8 +111,15 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
         // error_log("classes/datatable/moodleclass.php::get_join_sql(): this->maintable = {$this->maintable}");
         if ($this->maintable == \course::TABLE) {
             $newsql = ['JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = element.id'];
-        } else { // Main table is local_elisprogram_pgm_crs.
+        } else if ($this->maintable == \curriculumcourse::TABLE) {
             $newsql = [
+                    'JOIN {'.\course::TABLE.'} crs ON crs.id = element.courseid',
+                    'JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = crs.id'
+            ];
+        } else { // Main table is local_elisprogram_crssetcrs.
+            $newsql = [
+                    'JOIN {'.\programcrsset::TABLE.'} pgmcrsset ON pgmcrsset.crssetid = element.crssetid',
+                    'JOIN {'.\courseset::TABLE.'} crsset ON crsset.id = element.crssetid',
                     'JOIN {'.\course::TABLE.'} crs ON crs.id = element.courseid',
                     'JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = crs.id'
             ];
@@ -161,6 +168,10 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
         $pageresultsar = [];
         $dateformat = get_string('date_format', 'eliswidget_learningplan');
         foreach ($pageresults as $id => $result) {
+            $crsset = '';
+            if (!empty($result->courseset)) {
+                $crsset = get_string('courseset_format', 'eliswidget_learningplan', $result->courseset);
+            }
             if (!empty($result->moodlecourseid)) {
                 $result->header = get_string('moodlecourse_header', 'eliswidget_learningplan', $result);
                 // Change Moodle course header to link.
@@ -169,6 +180,7 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
             } else {
                 $result->header = get_string('eliscourse_header', 'eliswidget_learningplan', $result);
             }
+            $result->header .= $crsset;
             $pageresultsar[$id] = $result;
             if (isset($pageresultsar[$id]->completetime) && !empty($pageresultsar[$id]->completetime)) {
                 $pageresultsar[$id]->completetime = userdate($pageresultsar[$id]->completetime, $dateformat);
