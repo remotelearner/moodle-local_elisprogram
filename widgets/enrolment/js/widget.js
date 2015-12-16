@@ -24,6 +24,9 @@
  *
  */
 
+/** @var array The global list of expanded elements. */
+var eliswidgetenrolmentexpandedlist = [];
+
 (function($) {
 
     /**
@@ -101,6 +104,8 @@
          * Receives data and sends to renderers.
          */
         this.doupdatetable = function() {
+            var allexpanded = $.merge(main.find('.expanded'), window.eliswidgetenrolmentexpandedlist);
+            window.eliswidgetenrolmentexpandedlist = $.unique(allexpanded);
             main.abortupdatetable();
             main.addClass('loading');
             opts.requestdata.initialized = main.filtersinit;
@@ -137,6 +142,21 @@
                             });
                         } else {
                             pagination.hide();
+                        }
+
+                        // ELIS-9082: Re-expanded expanded entities.
+                        if (window.eliswidgetenrolmentexpandedlist.length) {
+                            window.eliswidgetenrolmentexpandedlist.each(function() {
+                                var jqthis = $(this);
+                                var elem = $('.eliswidget_enrolment').find('#'+jqthis.prop('id'));
+                                if (typeof(elem[0]) != 'undefined') {
+                                    elem.children('.header').trigger('click');
+                                    var index = $.inArray(this, window.eliswidgetenrolmentexpandedlist);
+                                    if (index >= 0) {
+                                        window.eliswidgetenrolmentexpandedlist.splice(index, 1);
+                                    }
+                                }
+                            });
                         }
                     } else {
                         main.append('<span class="empty">'+opts.lang.nonefound+'</span>');
@@ -388,7 +408,6 @@
                                         dataType: 'json',
                                         type: 'POST',
                                         success: function(data, textStatus, jqXHR) {
-                                            main.datatable.doupdatetable();
                                             var coursedt = jqthis.closest('.program, .courseset');
                                             if (coursedt) {
                                                 // Update the parent table so Course shows updated enrolment status.
@@ -399,6 +418,7 @@
                                                     coursedt[0].datatable.doupdatetable();
                                                 }
                                             }
+                                            main.datatable.doupdatetable();
                                         }
                                     });
                             }
