@@ -27,4 +27,4 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version = 2015010403;
-$plugin->release = '2.8.9.0 (Build: 20151117)';
+$plugin->release = '2.8.9.1 (Build: 20151216)';
