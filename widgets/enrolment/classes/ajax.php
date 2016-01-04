@@ -356,7 +356,12 @@ class ajax {
         switch($data['action']) {
             case 'enrol':
             case 'enterwaitlist':
-                $enrolallowed = get_config('enrol_elis', 'enrol_from_course_catalog');
+                if (($pmclass = new \pmclass($data['classid'])) && ($mdlcrs = $pmclass->get_moodle_course_id())) {
+                    $enrolmethods = rl_enrol_get_instances($mdlcrs, true);
+                    $enrolallowed = (isset($enrolmethods['elis']) && !empty($enrolmethods['elis']->customint1)) ? '1' : false;
+                } else {
+                    $enrolallowed = get_config('enrol_elis', 'enrol_from_course_catalog');
+                }
                 if (empty($enrolallowed) || $enrolallowed != '1') {
                     throw new \Exception('Self-enrolments from dashboard not allowed.');
                 }
@@ -383,7 +388,12 @@ class ajax {
                 return ['newstatus' => 'enroled'];
 
             case 'unenrol':
-                $unenrolallowed = get_config('enrol_elis', 'unenrol_from_course_catalog');
+                if (($pmclass = new \pmclass($data['classid'])) && ($mdlcrs = $pmclass->get_moodle_course_id())) {
+                    $enrolmethods = rl_enrol_get_instances($mdlcrs, true);
+                    $unenrolallowed = (isset($enrolmethods['elis']) && !empty($enrolmethods['elis']->customint2)) ? '1' : false;
+                } else {
+                    $unenrolallowed = get_config('enrol_elis', 'unenrol_from_course_catalog');
+                }
                 if (empty($unenrolallowed) || $unenrolallowed != '1') {
                     throw new \Exception('Self-unenrolments from dashboard not allowed.');
                 }
