@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -260,11 +260,15 @@ class pmclass extends base {
 
         // Note: get_search results returns a recordset, so we also array-ify pageresults - recordsets are one-time-use.
         $timenow = time();
+        $configenrolallowed = get_config('enrol_elis', 'enrol_from_course_catalog') == '1';
+        $configunenrolallowed = get_config('enrol_elis', 'unenrol_from_course_catalog') == '1';
         $globalenrolallowed = true;
+        $globalunenrolallowed = true;
+        $userfilter = new \field_filter('userid', \user::get_current_userid());
         if (($classids = $DB->get_records($this->maintable, array('courseid' => $this->courseid), '', 'id'))) {
-            $userfilter = new \field_filter('userid', \user::get_current_userid());
             $classfilter =  new \in_list_filter('classid', array_keys($classids));
-            $globalenrolallowed = !\student::exists(array($userfilter, $classfilter)) && !\waitlist::exists(array($userfilter, $classfilter));
+            $globalenrolallowed = !\student::exists([$userfilter, $classfilter]) && !\waitlist::exists([$userfilter, $classfilter]);
+            $globalunenrolallowed = \waitlist::exists([$userfilter, $classfilter]) || \student::exists([$userfilter, $classfilter]);
         }
         // Assemble class ids.
         $classids = [];
@@ -280,6 +284,7 @@ class pmclass extends base {
             }
             $pageresultsar[$id]->meta->limit = $result->maxstudents;
             $classfilter = new \field_filter('classid', $result->id);
+            $unenrolallowed = $globalunenrolallowed && $result->enrol_completestatusid <= 0 && !\student_grade::exists([$classfilter, $userfilter]);
             $pageresultsar[$id]->meta->total = \student::count($classfilter);
             $pageresultsar[$id]->meta->waiting = \waitlist::count($classfilter);
             $pageresultsar[$id]->meta->waitpos = !empty($result->waitlist_id) ? $DB->count_records_select(\waitlist::TABLE, 'classid = ? AND id <= ?',
@@ -306,9 +311,11 @@ class pmclass extends base {
                         array('href' => $CFG->wwwroot.'/course/view.php?id='.$mdlcourse));
                 // ELIS-9259: check the enrol_elis instance of the Moodle course.
                 $enrolmethods = rl_enrol_get_instances($mdlcourse, true);
-                $pageresultsar[$id]->meta->enrolallowed = (isset($enrolmethods['elis']) && !empty($enrolmethods['elis']->customint1)) ? $enrolallowed : false;
+                $pageresultsar[$id]->meta->enrolallowed = (isset($enrolmethods['elis']) && !empty($enrolmethods['elis']->customint1) && $enrolallowed) ? '1' : false;
+                $pageresultsar[$id]->meta->unenrolallowed = (isset($enrolmethods['elis']) && !empty($enrolmethods['elis']->customint2) && $unenrolallowed) ? '1' : false;
             } else {
-                $pageresultsar[$id]->meta->enrolallowed = $enrolallowed;
+                $pageresultsar[$id]->meta->enrolallowed = ($enrolallowed && $configenrolallowed) ? '1' : false;
+                $pageresultsar[$id]->meta->unenrolallowed = ($unenrolallowed && $configunenrolallowed) ? '1' : false;
             }
             if (isset($pageresultsar[$id]->enrol_completetime) && !empty($pageresultsar[$id]->enrol_completetime)) {
                 $pageresultsar[$id]->enrol_completetime = userdate($pageresultsar[$id]->enrol_completetime, $dateformat);
