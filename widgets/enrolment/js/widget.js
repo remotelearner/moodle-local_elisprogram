@@ -1,6 +1,6 @@
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -321,13 +321,13 @@ var eliswidgetenrolmentexpandedlist = [];
                     unavailable: ''
                 };
                 var action = status2action[status];
-                if (action == 'enrol' && opts.enrolallowed != '1') {
+                if (action == 'enrol' && this.data.meta.enrolallowed != '1') {
                     action = '';
                 }
-                if (action == 'enterwaitlist' && opts.enrolallowed != '1') {
+                if (action == 'enterwaitlist' && this.data.meta.enrolallowed != '1') {
                     action = '';
                 }
-                if (action == 'unenrol' && opts.unenrolallowed != '1') {
+                if (action == 'unenrol' && this.data.meta.unenrolallowed != '1') {
                     action = '';
                 }
                 var statusele = $('<span id="'+main.generateid('status')+'" class="pmclassstatus"></span>');
@@ -452,7 +452,7 @@ var eliswidgetenrolmentexpandedlist = [];
                     }
                 } else if (this.data.waitlist_id != null) {
                     status = 'waitlist';
-                } else if (this.data.meta.enrolallowed) {
+                } else if (this.data.meta.enrolallowed == '1') {
                     status = (this.data.meta.limit > 0 && this.data.meta.total >= this.data.meta.limit) ? 'full' : 'available';
                 }
 
@@ -478,7 +478,8 @@ var eliswidgetenrolmentexpandedlist = [];
 
                 // Class status.
                 if ((typeof(main.datatable.newfilters) != 'undefined' && typeof(main.datatable.newfilters["classstatus"]) != 'undefined') ||
-                        opts.enrolallowed == '1' || opts.unenrolallowed == '1') {
+                        opts.enrolallowed == '1' || opts.unenrolallowed == '1' ||
+                        this.data.meta.enrolallowed == '1' || this.data.meta.unenrolallowed == '1') {
                     details.append(this.generateitem(opts.lang.data_status, main.renderstatus(status)));
                 }
                 if (status == 'passed' || status == 'failed') {
