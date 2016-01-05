@@ -182,7 +182,7 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
             }
             $result->header .= $crsset;
             $pageresultsar[$id] = $result;
-            if (isset($pageresultsar[$id]->completetime) && !empty($pageresultsar[$id]->completetime)) {
+            if (isset($pageresultsar[$id]->completetime) && !empty($pageresultsar[$id]->completetime) && $pageresultsar[$id]->completestatusid > \student::STUSTATUS_NOTCOMPLETE ){
                 $pageresultsar[$id]->completetime = userdate($pageresultsar[$id]->completetime, $dateformat);
             } else {
                 $pageresultsar[$id]->completetime = get_string('date_na', 'eliswidget_learningplan');
