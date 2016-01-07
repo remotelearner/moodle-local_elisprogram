@@ -897,7 +897,7 @@ function cluster_deassign_all_user($userid) {
         return false;
     }
 
-    return clusterassignment::delete(new field_filter('userid', $userid));
+    return clusterassignment::delete_records(new field_filter('userid', $userid));
 }
 
 /**

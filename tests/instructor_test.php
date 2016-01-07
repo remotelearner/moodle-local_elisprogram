@@ -156,12 +156,11 @@ class instructor_testcase extends elis_database_test {
         // Fixture.
         $datagenerator = new elis_program_datagenerator($DB);
         $user = $datagenerator->create_user();
-        $datagenerator->assign_instructor_to_class($user->id, 1);
+        $classid = 1;
+        $datagenerator->assign_instructor_to_class($user->id, $classid);
 
         // Test.
-        $instructor = new instructor;
-        $instructor->classid = 1;
-        $instructors = $instructor->get_instructors();
+        $instructors = instructor::get_instructors($classid);
 
         // Verify.
         $count = 0;

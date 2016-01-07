@@ -542,8 +542,7 @@ function certificate_get_course_entity_metadata($certsetting, $certissued, $stud
         // Check if the date issued is the same as the student's completion date
         if ($stuclass->completetime == $certissued->timeissued) {
             // Get the instructor information
-            $instructors = new instructor();
-            $instructors = $instructors->get_instructors($stuclass->id);
+            $instructors = instructor::get_instructors($stuclass->id);
 
             // Populate with metadata info
             $params['student_name']      = $student->firstname . ' ' . $student->lastname;

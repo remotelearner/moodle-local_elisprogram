@@ -385,25 +385,22 @@ class instructor extends elis_data_object {
 /////////////////////////////////////////////////////////////////////
 
     /**
-     * Get a list of the existing instructors for the supplied (or current)
-     * class.
+     * Get a list of the existing instructors for the supplied (or current) class.
      *
-     * @param int $cid A class ID (optional).
+     * @param instructor|int $cidorinstructor Either an (int) classid or instructor data object.
      * @uses $DB
      * @return recordset An array of user records.
      */
-    function get_instructors($cid = 0) {
+    public static function get_instructors($cidorinstructor) {
         global $DB;
-        if (!$cid) {
-            if (empty($this->classid)) {
-                return array();
-            }
-
-            $cid = $this->classid;
+        if ($cidorinstructor instanceof instructor) {
+            $cid = $cidorinstructor->classid;
+        } else if (is_numeric($cidorinstructor)) {
+            $cid = $cidorinstructor;
+        } else {
+            throw new coding_exception('Invalid parameter $cidorinstructor passed to instructor::get_instructors().');
         }
-
-        $uids  = array();
-
+        $uids = array();
         $instructors = $DB->get_recordset(instructor::TABLE, array('classid' => $cid));
         foreach ($instructors as $instructor) {
             $uids[] = $instructor->userid;
@@ -412,13 +409,22 @@ class instructor extends elis_data_object {
 
         if (!empty($uids)) {
             $sql = 'SELECT id, idnumber, username, firstname, lastname
-                    FROM {'. user::TABLE . '}
-                    WHERE id IN ( ' . implode(', ', $uids) . ' )
-                    ORDER BY lastname ASC, firstname ASC';
-
+                      FROM {'.user::TABLE.'}
+                     WHERE id IN ('.implode(', ', $uids).')
+                  ORDER BY lastname ASC, firstname ASC';
             return $DB->get_recordset_sql($sql);
         }
         return array();
+    }
+
+    /**
+     * Get a list of the existing instructors for the current class.
+     *
+     * @uses $DB
+     * @return recordset An array of user records.
+     */
+    public function _get_instructors() {
+        return static::get_instrutors($this->classid);
     }
 
     /**
@@ -486,7 +492,7 @@ class instructor extends elis_data_object {
         }
         unset($users);
 
-        if ($users = $this->get_instructors()) {
+        if ($users = $this->_get_instructors()) {
             foreach ($users as $user) {
                 $uids[] = $user->id;
             }
@@ -590,7 +596,7 @@ class instructor extends elis_data_object {
         }
         unset($users);
 
-        if ($users = $this->get_instructors()) {
+        if ($users = $this->_get_instructors()) {
             foreach ($users as $user) {
                 $uids[] = $user->id;
             }
