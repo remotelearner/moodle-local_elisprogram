@@ -722,7 +722,7 @@ class usersetpage extends managementpage {
      *
      * @param  object  $cm_entity  The CM entity added
      */
-    function after_cm_entity_add($cm_entity) {
+    public static function after_cm_entity_add($cm_entity) {
         global $USER, $DB;
 
         //make sure a valid role is set

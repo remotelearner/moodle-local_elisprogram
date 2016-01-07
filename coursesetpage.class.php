@@ -264,7 +264,7 @@ class coursesetpage extends managementpage {
      * @uses $DB
      * @uses $USER
      */
-    public function after_cm_entity_add($cmentity) {
+    public static function after_cm_entity_add($cmentity) {
     }
 
     /**
