@@ -350,7 +350,7 @@ abstract class managementpage extends pm_page {
             $obj = $this->get_new_data_object();
             $obj->set_from_data($data);
             $obj->save();
-            $this->after_cm_entity_add($obj);
+            static::after_cm_entity_add($obj);
 
             $params = array('action' => 'view', 'id' => $obj->id);
             if ($parentid) {
@@ -388,7 +388,7 @@ abstract class managementpage extends pm_page {
      *
      * @param  object  $obj  The CM entity added
      */
-    function after_cm_entity_add($obj) {
+    public static function after_cm_entity_add($obj) {
         //do nothing here, but allow subclass to override
     }
 

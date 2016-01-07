@@ -231,7 +231,7 @@ class curriculumpage extends managementpage {
      * @uses $DB
      * @uses $USER
      */
-    function after_cm_entity_add($cm_entity) {
+    public static function after_cm_entity_add($cm_entity) {
         global $DB, $USER;
 
         //make sure a valid role is set
