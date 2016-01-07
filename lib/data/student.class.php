@@ -1865,9 +1865,7 @@ class student extends elis_data_object {
             }
         }
         unset($users);
-
-        $ins = new instructor();
-        if ($users = $ins->get_instructors($this->classid)) {
+        if ($users = instructor::get_instructors($this->classid)) {
             foreach ($users as $user) {
                 $uids[] = $user->id;
             }
@@ -1965,9 +1963,7 @@ class student extends elis_data_object {
             }
         }
         unset($users);
-
-        $ins = new instructor();
-        if ($users = $ins->get_instructors($this->classid)) {
+        if ($users = instructor::get_instructors($this->classid)) {
             foreach ($users as $user) {
                 $uids[] = $user->id;
             }

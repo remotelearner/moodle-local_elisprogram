@@ -118,8 +118,7 @@ class pmentities_testcase extends elis_database_test {
         $obj->save();
 
         // Initialize a new program management page and invoke the code that handles default role assignments.
-        $page = new curriculumpage();
-        $page->after_cm_entity_add($obj);
+        curriculumpage::after_cm_entity_add($obj);
 
         $programctx = \local_elisprogram\context\program::instance($obj->id);
         $params = array('roleid' => $reid, 'userid' => $USER->id, 'contextid' => $programctx->id);
@@ -154,8 +153,7 @@ class pmentities_testcase extends elis_database_test {
         $obj->save();
 
         // Initialize a new track management page and invoke the code that handles default role assignments.
-        $page = new trackpage();
-        $page->after_cm_entity_add($obj);
+        trackpage::after_cm_entity_add($obj);
 
         $trackctx = \local_elisprogram\context\track::instance($obj->id);
         $params = array('roleid' => $reid, 'userid' => $USER->id, 'contextid' => $trackctx->id);
@@ -192,8 +190,7 @@ class pmentities_testcase extends elis_database_test {
         $obj->save();
 
         // Initialize a new course management page and invoke the code that handles default role assignments.
-        $page = new coursepage();
-        $page->after_cm_entity_add($obj);
+        coursepage::after_cm_entity_add($obj);
 
         $coursectx = \local_elisprogram\context\course::instance($obj->id);
         $params = array('roleid' => $reid, 'userid' => $USER->id, 'contextid' => $coursectx->id);
@@ -227,11 +224,9 @@ class pmentities_testcase extends elis_database_test {
         $obj = new pmclass($data);
         $obj->save();
 
-        // Initialize a new class management page and invoke the code that handles default role assignments.
-        $page = new pmclasspage();
-
         $sink = $this->redirectMessages();
-        $page->after_cm_entity_add($obj);
+        // Initialize a new class management page and invoke the code that handles default role assignments.
+        pmclasspage::after_cm_entity_add($obj);
 
         $classctx = \local_elisprogram\context\pmclass::instance($obj->id);
         $params = array('roleid' => $reid, 'userid' => $USER->id, 'contextid' => $classctx->id);
@@ -265,8 +260,7 @@ class pmentities_testcase extends elis_database_test {
         $obj->save();
 
         // Initialize a new userset management page and invoke the code that handles default role assignments.
-        $page = new usersetpage();
-        $page->after_cm_entity_add($obj);
+        usersetpage::after_cm_entity_add($obj);
 
         $usersetctx = \local_elisprogram\context\userset::instance($obj->id);
         $params = array('roleid' => $reid, 'userid' => $USER->id, 'contextid' => $usersetctx->id);
