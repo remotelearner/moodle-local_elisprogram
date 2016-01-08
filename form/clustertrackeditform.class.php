@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -30,7 +30,10 @@ class clustertrackeditform extends moodleform {
     var $cluster_fields = array();
     var $track_fields = array();
 
-    function clustertrackeditform($action=null, $customdata=null, $method='post', $target='', $attributes=null, $editable=true) {
+    /**
+     * Constructor
+     */
+    public function __construct($action=null, $customdata=null, $method='post', $target='', $attributes=null, $editable=true) {
         $this->cluster_fields = array('name'    => get_string('userset_name','local_elisprogram'),
                                       'display' => get_string('userset_description','local_elisprogram'),);
 

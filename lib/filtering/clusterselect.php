@@ -1,7 +1,7 @@
 <?php //$Id$
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later.
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -55,7 +54,7 @@ class generalized_filter_clusterselect extends generalized_filter_equalityselect
      * @param string $field user table filed name
      * @param array $options select options
      */
-    function generalized_filter_clusterselect($uniqueid, $alias, $name, $label, $advanced, $field, $options = array()) {
+    public function __construct($uniqueid, $alias, $name, $label, $advanced, $field, $options = array()) {
         global $USER;
 
         //figure out which capability to check
@@ -98,7 +97,7 @@ class generalized_filter_clusterselect extends generalized_filter_equalityselect
         $options['choices'] = $choices_array;
         $options['numeric'] = true;
 
-        parent::generalized_filter_equalityselect($uniqueid, $alias, $name, $label, $advanced, $field, $options);
+        parent::__construct($uniqueid, $alias, $name, $label, $advanced, $field, $options);
     }
 
     /**

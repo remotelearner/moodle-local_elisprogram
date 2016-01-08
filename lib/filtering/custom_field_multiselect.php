@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later.
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -53,9 +52,9 @@ class generalized_filter_custom_field_multiselect extends generalized_filter_typ
      * @param array $options select options <= in this case, this contains the list of selected custom fields
      * @return none
      */
-    function generalized_filter_custom_field_multiselect($uniqueid, $alias, $name, $label, $advanced, $field, $options = array()) {
-        parent::generalized_filter_type($uniqueid, $alias, $name, $label, $advanced);
+    public function __construct($uniqueid, $alias, $name, $label, $advanced, $field, $options = array()) {
         global $SESSION;
+        parent::__construct($uniqueid, $alias, $name, $label, $advanced);
 
         // Set up required class variables
         $this->_field = $field;
