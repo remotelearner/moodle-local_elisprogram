@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -47,7 +47,7 @@ class generalized_filter_courseclassselect extends generalized_filter_dependents
      * @param string $field user table filed name
      * @param array $options select options
      */
-    function generalized_filter_courseclassselect($uniqueid, $alias, $name, $label, $advanced, $field, $options = array()) {
+    public function __construct($uniqueid, $alias, $name, $label, $advanced, $field, $options = array()) {
         global $USER;
 
         $options['numeric'] = true;
@@ -64,7 +64,7 @@ class generalized_filter_courseclassselect extends generalized_filter_dependents
 
         $options['choices'] = $choices_array;
 
-        parent::generalized_filter_dependentselect($uniqueid, $alias, $name, $label, $advanced, $field, $options);
+        parent::__construct($uniqueid, $alias, $name, $label, $advanced, $field, $options);
     }
 
     /**

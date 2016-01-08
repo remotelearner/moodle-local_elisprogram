@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2011 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis
- * @subpackage programmanagement
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later.
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -36,7 +35,6 @@ require_once($CFG->dirroot.'/user/filters/lib.php');
  * columns to the display.
  *
  * @author Tyler Bannister <tyler.bannister@remote-learner.net>
- * @copyright  (C) 2008-2011 Remote Learner.net Inc http://www.remote-learner.net
  */
 class generalized_filter_display_table extends generalized_filter_type {
     protected $options;
@@ -55,8 +53,7 @@ class generalized_filter_display_table extends generalized_filter_type {
      * @param object $help     The help object
      * @param array  $options  An array of options
      */
-    function generalized_filter_display_table($uniqueid, $alias, $name, $label, $advanced,
-                                              $help = null, $options = array()) {
+    public function __construct($uniqueid, $alias, $name, $label, $advanced, $help = null, $options = array()) {
         $this->options = $options;
 
         if (array_key_exists('lang', $options)) {
@@ -67,7 +64,7 @@ class generalized_filter_display_table extends generalized_filter_type {
             $this->help = $options['help'];
         }
 
-        parent::generalized_filter_type($uniqueid, $alias, $name, $label, $advanced, $help);
+        parent::__construct($uniqueid, $alias, $name, $label, $advanced, $help);
     }
 
     /**

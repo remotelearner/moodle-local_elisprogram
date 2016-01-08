@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    elis-programmanagement
- * @subpackage filtering
+ * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later.
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -120,9 +119,8 @@ class generalized_filter_elisuserprofile extends generalized_filter_multifilter 
      * @param string $uniqueid Unique id for filter
      * @param string $label    Filter label
      * @param array  $options  Filter options (see above)
-     * @return array of sub-filters
      */
-    function generalized_filter_elisuserprofile($uniqueid, $label, $options = array()) {
+    public function __construct($uniqueid, $label, $options = array()) {
         parent::__construct($uniqueid, $label, $options);
 
         foreach ($this->tables as $key => $val) {

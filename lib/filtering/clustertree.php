@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -48,7 +48,7 @@ class checkbox_treerepresentationnode extends treerepresentationnode {
      * @param  treerepresentation  $parent  The containing treerepresentation
      *
      */
-    function checkbox_treerepresentationnode($name, &$parent) {
+    public function __construct($name, &$parent) {
         $this->name = $name;
         $this->parent =& $parent;
 
@@ -120,7 +120,7 @@ class checkbox_treerepresentation extends treerepresentation {
      * @param  menuitemlisting  $listing  The list of all menu items
      *
      */
-    function checkbox_treerepresentation($listing, $instanceid) {
+    public function __construct($listing, $instanceid) {
 
         $this->listing = $listing;
         $this->instanceid = $instanceid;
@@ -265,12 +265,12 @@ class generalized_filter_clustertree extends generalized_filter_type {
      * @param string $field user table filed name
      * @param array $options select options
      */
-    function generalized_filter_clustertree($uniqueid, $alias, $name, $label, $advanced, $field, $options = array()) {
+    public function __construct($uniqueid, $alias, $name, $label, $advanced, $field, $options = array()) {
         $this->options = $options;
         if (!array_key_exists('fieldset', $options)) {
             $this->options['fieldset'] = true;
         }
-        parent::generalized_filter_type($uniqueid, $alias, $name, $label, $advanced, $field);
+        parent::__construct($uniqueid, $alias, $name, $label, $advanced, $field);
     }
 
     function get_list_condition($fieldname, $list) {
