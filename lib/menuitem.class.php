@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -33,7 +33,10 @@ class menuitemlisting {
     //the actual array of menuitems
     var $listing;
 
-    function menuitemlisting($listing = array()) {
+    /**
+     * Constructor
+     */
+    public function __construct($listing = array()) {
         $this->listing = $listing;
 
         //expand the tree based on where you currently are
@@ -224,7 +227,7 @@ class menuitem {
      * @param  boolean       $js_sensitive  If true, hide when no js
      * @param  string        $parent_path   Path of parent curriculum elements in the tree
      */
-    function menuitem($name, $page = null, $parent = null, $title = '', $style = 'tree_icon', $link_target = '', $js_sensitive = false, $parent_path = '') {
+    public function __construct($name, $page = null, $parent = null, $title = '', $style = 'tree_icon', $link_target = '', $js_sensitive = false, $parent_path = '') {
 
         $this->name = $name;
         $this->page = $page;
@@ -326,7 +329,7 @@ class menuitempage {
      *                             (determined from page name when blank)
      * @param  array   $params     Additional page parameters
      */
-    function menuitempage($page, $classfile = '', $params = array()) {
+    public function __construct($page, $classfile = '', $params = array()) {
         global $CFG;
 
         $this->page = $page;
@@ -372,7 +375,7 @@ class generic_menuitempage extends menuitempage {
      * @param  string  $classfile  The name of the classfile, including the full path
      * @param  array   $params     Additional page parameters
      */
-    function generic_menuitempage($page, $classfile = '', $params = array()) {
+    public function __construct($page, $classfile = '', $params = array()) {
         global $CFG;
 
         $this->page = $page;
@@ -391,6 +394,9 @@ class generic_menuitempage extends menuitempage {
  * Fake page for linking to an arbitrary URL
  */
 class url_page {
+    /**
+     * Constructor
+     */
     public function __construct($url) {
         $this->url = new moodle_url($url);
     }
@@ -460,7 +466,7 @@ class treerepresentation {
      * @param  menuitemlisting  $listing  The list of all menu items
      *
      */
-    function treerepresentation($listing) {
+    public function __construct($listing) {
 
         $this->listing = $listing;
 
@@ -583,7 +589,7 @@ class treerepresentationnode {
      * @param  treerepresentation  $parent  The containing treerepresentation
      *
      */
-    function treerepresentationnode($name, &$parent) {
+    public function __construct($name, &$parent) {
 
         $this->name = $name;
         $this->parent =& $parent;

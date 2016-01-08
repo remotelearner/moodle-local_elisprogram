@@ -130,7 +130,7 @@ class filters_testcase extends elis_database_test {
     /**
      * Test the multifilter.
      */
-    public function test_multifilter() {
+    public function test_multifilter1() {
         $filter = new test_multifilter('test_multifilter', 'Test Multifilter', array());
         $filter->make_field_list(array());
         $sections = $filter->get_sections();

@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -742,8 +742,8 @@ class pm_show_inactive_filter extends user_filter_type {
      * @param string $field user table filed name
      * @param array $options select options
      */
-    function pm_show_inactive_filter($name, $label, $advanced, $field, $options) {
-        parent::user_filter_type($name, $label, $advanced);
+    public function __construct($name, $label, $advanced, $field, $options) {
+        parent::__construct($name, $label, $advanced);
         $this->_field   = $field;
         $this->_options = $options;
     }
@@ -829,8 +829,11 @@ class pm_custom_field_filter extends user_filter_type {
      */
     var $_field;
 
-    function pm_custom_field_filter($name, $label, $advanced, $field) {
-        parent::user_filter_type($name, $label, $advanced);
+    /**
+     * Constructor
+     */
+    public function __construct($name, $label, $advanced, $field) {
+        parent::__construct($name, $label, $advanced);
         $this->_field   = $field;
     }
 
@@ -908,8 +911,8 @@ class pm_user_filter_text_OR extends user_filter_text {
      * @param string $alias an alias to use for the form elements
      * @param array $fields an array of user table field names
      */
-    function pm_user_filter_text_OR($name, $label, $advanced, $alias, $fields) {
-        parent::user_filter_text($name, $label, $advanced, $alias);
+    public function __construct($name, $label, $advanced, $alias, $fields) {
+        parent::__construct($name, $label, $advanced, $alias);
         $this->_fields = $fields;
     }
 
@@ -1059,7 +1062,7 @@ class pm_user_filtering extends user_filtering {
      * @param string base url used for submission/return, null if the same of current page
      * @param array extra page parameters
      */
-    function pm_user_filtering($fieldnames=null, $baseurl=null, $extraparams=null) {
+    public function __construct($fieldnames=null, $baseurl=null, $extraparams=null) {
         if (empty($fieldnames)) {
             $fieldnames = array(
                 'realname' => 0,
@@ -1083,7 +1086,7 @@ class pm_user_filtering extends user_filtering {
             }
         }
 
-        parent::user_filtering($fieldnames, $baseurl, $extraparams);
+        parent::__construct($fieldnames, $baseurl, $extraparams);
     }
 
     /**
