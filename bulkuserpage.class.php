@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -271,7 +271,10 @@ class bulkusertable extends selection_table {
  * Moodle user.
  */
 class bulk_user_filtering extends pm_user_filtering {
-    function bulk_user_filtering($baseurl, $extraparams) {
+    /**
+     * Constructor
+     */
+    public function __construct($baseurl, $extraparams) {
         $fieldnames = array(
                 'realname' => 0,
                 'lastname' => 1,
@@ -288,7 +291,7 @@ class bulk_user_filtering extends pm_user_filtering {
                 'nomoodleuser' => 1,
             );
 
-        parent::pm_user_filtering($fieldnames, $baseurl, $extraparams);
+        parent::__construct($fieldnames, $baseurl, $extraparams);
     }
 
     function get_field($fieldname, $advanced) {
@@ -315,8 +318,8 @@ class no_moodle_user_filter extends user_filter_type {
      * @param string $field user table filed name
      * @param array $options select options
      */
-    function no_moodle_user_filter($name, $label, $advanced, $field) {
-        parent::user_filter_type($name, $label, $advanced);
+    public function __construct($name, $label, $advanced, $field) {
+        parent::__construct($name, $label, $advanced);
         $this->_field = $field;
     }
 

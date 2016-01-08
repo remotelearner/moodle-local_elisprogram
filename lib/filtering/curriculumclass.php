@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc http://www.remote-learner.net
  *
  */
 
@@ -120,9 +120,6 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @author Brent Boghosian <brent.boghosian@remote-learner.net>
  * @version $Id$
- * @package local/elisprogram/lib/filtering
- * @license  http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
  */
 
 require_once($CFG->dirroot .'/user/filters/lib.php'); // TBD
@@ -298,7 +295,7 @@ class generalized_filter_curriculumclass extends generalized_filter_multifilter 
      * @return array The sub-filters
      * @uses $PAGE
      */
-    function generalized_filter_curriculumclass($uniqueid, $label, $options = array()) {
+    public function __construct($uniqueid, $label, $options = array()) {
         global $PAGE;
 
         parent::__construct($uniqueid, $label, $options);
