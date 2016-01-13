@@ -87,6 +87,9 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
         $selectfields[] = 'stu.completestatusid AS completestatusid';
         $selectfields[] = 'stu.completetime AS completetime';
         $selectfields[] = 'waitlist.id AS waitlist_id';
+        $selectfields[] = 'waitlist.classid AS waitlist_classid';
+        $selectfields[] = 'waitlist.position AS waitlist_position';
+        $selectfields[] = 'cls.maxstudents AS maxstudents';
         return $selectfields;
     }
 
@@ -143,7 +146,10 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
      * @return array An array consisting of the SQL WHERE clause, and the parameters for the SQL.
      */
     protected function get_filter_sql(array $filters = array()) {
-        $filters[] = ['sql' => '(stu.id IS NOT NULL OR waitlist.id IS NOT NULL)'];
+        $display = get_config('eliswidget_learningplan', 'showunenrolledclasses');
+        if (empty($display)) {
+            $filters[] = ['sql' => '(stu.id IS NOT NULL OR waitlist.id IS NOT NULL)'];
+        }
         return parent::get_filter_sql($filters);
     }
 
@@ -182,10 +188,20 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
             }
             $result->header .= $crsset;
             $pageresultsar[$id] = $result;
-            if (isset($pageresultsar[$id]->completetime) && !empty($pageresultsar[$id]->completetime)) {
+            if (isset($pageresultsar[$id]->completetime) && !empty($pageresultsar[$id]->completetime) &&
+                    $pageresultsar[$id]->completestatusid > \student::STUSTATUS_NOTCOMPLETE) {
                 $pageresultsar[$id]->completetime = userdate($pageresultsar[$id]->completetime, $dateformat);
             } else {
                 $pageresultsar[$id]->completetime = get_string('date_na', 'eliswidget_learningplan');
+            }
+            if (!isset($pageresultsar[$id]->meta)) {
+                $pageresultsar[$id]->meta = new \stdClass;
+            }
+            $pageresultsar[$id]->meta->limit = $result->maxstudents;
+            if (!empty($pageresultsar[$id]->waitlist_classid)) {
+                $classfilter = new \field_filter('classid', $pageresultsar[$id]->waitlist_classid);
+                $pageresultsar[$id]->meta->waiting = \waitlist::count($classfilter);
+                $pageresultsar[$id]->meta->total = \student::count($classfilter);
             }
         }
         return [array_values($pageresultsar), $totalresultsamt];
