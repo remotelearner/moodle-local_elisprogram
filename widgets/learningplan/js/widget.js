@@ -277,8 +277,8 @@
                 var waitinfo = '';
                 if (status == 'full' || status == 'waitlist') {
                     waitinfo = ' (';
-                    if (this.data.meta.waitpos) {
-                        waitinfo += this.data.meta.waitpos+' '+opts.lang.of+' ';
+                    if (this.data.waitlist_position) {
+                        waitinfo += this.data.waitlist_position+' '+opts.lang.of+' ';
                         enrolinfo = '';
                     }
                     waitinfo += this.data.meta.waiting+' '+opts.lang.waiting;
@@ -307,6 +307,8 @@
                     }
                 } else if (this.data.waitlist_id != null) {
                     status = 'waitlist';
+                } else if (this.data.meta.limit > 0 && this.data.meta.total >= this.data.meta.limit) {
+                    status = 'full';
                 }
 
                 var completed = (status == 'passed' || status == 'failed');
