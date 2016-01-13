@@ -99,6 +99,6 @@ class programclasses extends moodleclass {
      * @return string A GROUP BY sql fragment, if desired.
      */
     protected function get_groupby_sql() {
-        return 'GROUP BY element.id';
+        return 'GROUP BY element.id, cls.id';
     }
 }

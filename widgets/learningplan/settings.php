@@ -34,6 +34,9 @@ if ($ADMIN->fulltree) {
     $settings->add(new \admin_setting_configcheckbox('eliswidget_learningplan/syncusergrades', get_string('setting_syncusergrades', 'eliswidget_learningplan'),
             get_string('setting_syncusergrades_description', 'eliswidget_learningplan'), 1));
 
+    $settings->add(new \admin_setting_configcheckbox('eliswidget_learningplan/showunenrolledclasses', get_string('setting_showunenrolledclasses', 'eliswidget_learningplan'),
+            get_string('setting_showunenrolledclasses_description', 'eliswidget_learningplan'), 0)); // Default: No (0).
+
     // Progress bar.
     $progressbarheader = get_string('setting_progressbar_heading', 'eliswidget_learningplan');
     $progressbarheaderdesc = get_string('setting_progressbar_heading_description', 'eliswidget_learningplan');

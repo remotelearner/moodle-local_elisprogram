@@ -41,6 +41,7 @@ class nonprogramclasses extends moodleclass {
      * @return array An array consisting of the SQL WHERE clause, and the parameters for the SQL.
      */
     protected function get_filter_sql(array $filters = array()) {
+        $filters[] = ['sql' => '(stu.id IS NOT NULL OR waitlist.id IS NOT NULL)'];
         $filters[] = ['sql' => 'NOT EXISTS (SELECT \'x\' FROM {'.\curriculumcourse::TABLE.'} pgmcrs
                                               JOIN {'.\curriculumstudent::TABLE.'} pgmstu ON pgmstu.curriculumid = pgmcrs.curriculumid
                                              WHERE pgmstu.userid = '.$this->userid.'
@@ -73,5 +74,14 @@ class nonprogramclasses extends moodleclass {
      */
     protected function get_sort_sql() {
         return 'ORDER BY element.idnumber ASC, stu.completestatusid DESC';
+    }
+
+    /**
+     * Get a GROUP BY sql fragment to be used in the get_search_results method.
+     *
+     * @return string A GROUP BY sql fragment, if desired.
+     */
+    protected function get_groupby_sql() {
+        return 'GROUP BY element.id, cls.id';
     }
 }
