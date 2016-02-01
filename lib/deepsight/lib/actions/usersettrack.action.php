@@ -348,17 +348,40 @@ class deepsight_action_usersettrack_unassign extends deepsight_action_standard {
      */
     protected function _respond_to_js(array $elements, $bulkaction) {
         global $DB;
-        $usersetid = required_param('id', PARAM_INT);
+        $usersetids = [required_param('id', PARAM_INT)];
         $recursive = optional_param('recursive', 0, PARAM_INT);
         if ($recursive) {
-            $userset = new userset($usersetid);
+            $userset = new userset($usersetids[0]);
             $subsets = $userset->get_all_subsets();
             foreach ($subsets as $subset) {
-                $elements[$subset->id] = '';
+                $usersetids[] = $subset->id;
             }
         }
         $assocclass = 'clustertrack';
         $assocparams = ['main' => 'clusterid', 'incoming' => 'trackid'];
-        return $this->attempt_unassociate($usersetid, $elements, $bulkaction, $assocclass, $assocparams);
+        $failed = [];
+        $results = null;
+        foreach ($usersetids as $usersetid) {
+            $assocparams['ignore_unassigned'] = ($usersetid != $usersetids[0]) ? true : false;
+            $results = $this->attempt_unassociate($usersetid, $elements, $bulkaction, $assocclass, $assocparams);
+            if (empty($results['result']) || $results['result'] != 'success') {
+                $failed[] = $usersetid;
+            }
+        }
+        if (count($usersetids) == 1) {
+            return $results;
+        } else if (count($failed) == count($usersetids)) {
+            return [
+                'result' => 'fail',
+                'msg' => get_string('not_permitted', 'local_elisprogram')
+            ];
+        } else if (count($failed) > 0) {
+            return [
+                'result' => 'partialsuccess',
+                'msg' => get_string($bulkaction ? 'ds_action_generic_bulkfail' : 'ds_action_usersets_recursive_unassign', 'local_elisprogram'),
+                'failedops' => $failed
+            ];
+        }
+        return ['result' => 'success', 'msg' => 'Success'];
     }
 }

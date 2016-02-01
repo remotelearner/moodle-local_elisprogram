@@ -520,7 +520,7 @@ abstract class deepsight_action_standard implements deepsight_action {
                             throw $e;
                         }
                     }
-                } else {
+                } else if (empty($assocparams['ignore_unassigned'])) {
                     $failedops[] = $incomingelementid;
                 }
             } else {
