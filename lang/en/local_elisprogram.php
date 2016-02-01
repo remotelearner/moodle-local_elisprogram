@@ -462,6 +462,7 @@ $string['ds_action_crssetprg_unassign_active'] = 'The Program you\'ve selected t
 $string['ds_action_crssetprg_bulkmaxexceeded'] = '<b>Some items couldn\'t be updated and have been left in the bulk list.</b><br /><br /> This happens when the entered required courses or credits exceeds the maximum. Please ensure required credits and courses don\'t exceed the maximum allowed for the courseset and try again.';
 $string['ds_action_generic_bulkfail'] = '<b>Some items couldn\'t be updated and have been left in the bulk list.</b><br /><br /> This can happen if there was an error processing these items. Please ensure you have the correct permissions and try again.';
 $string['ds_action_generic_recursive'] = '<b>Some recursive items couldn\'t be updated and have been place in the bulk list.</b><br /><br /> This happens when there is an error processing these items. Please ensure you have the correct permissions.';
+$string['ds_action_usersets_recursive_unassign'] = '<b>Some User Sets couldn\'t be updated.</b><br /><br /> This happens when there is an error processing these items. Please ensure you have the correct permissions.';
 $string['ds_action_instructor_assign'] = 'You are about to assign this user as an instructor, proceed?';
 $string['ds_action_instructor_assign_multi'] = 'You are about to assign these users as instructors, proceed?';
 $string['ds_action_instructor_unassign'] = 'You are about to unassign this user as an instructor, proceed?';
