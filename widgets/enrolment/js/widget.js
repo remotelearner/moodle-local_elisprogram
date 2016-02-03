@@ -321,12 +321,6 @@ var eliswidgetenrolmentexpandedlist = [];
                     unavailable: ''
                 };
                 var action = status2action[status];
-                if (action == 'enrol' && this.data.meta.enrolallowed != '1') {
-                    action = '';
-                }
-                if (action == 'enterwaitlist' && this.data.meta.enrolallowed != '1') {
-                    action = '';
-                }
                 if (action == 'unenrol' && this.data.meta.unenrolallowed != '1') {
                     action = '';
                 }
@@ -350,14 +344,20 @@ var eliswidgetenrolmentexpandedlist = [];
                     waitinfo += ')';
                 }
                 statusele.append('<span>'+opts.lang['status_'+status]+enrolinfo+'</span>');
+                if (action == 'enrol' && this.data.meta.enrolallowed != '1') {
+                    action = '';
+                }
+                if (action == 'enterwaitlist' && this.data.meta.enrolallowed != '1') {
+                    action = '';
+                }
                 if (action != '') {
                     statusele.append('<a href="javascript:;">'+opts.lang['action_'+action]+'</a>'+waitinfo);
+                    statusele.find('a').click(function(e) {
+                        main.changestatus(e, action);
+                    });
                 } else if (waitinfo != '') {
                     statusele.append(waitinfo);
                 }
-                statusele.find('a').click(function(e) {
-                    main.changestatus(e, action);
-                });
                 return statusele;
             }
 
@@ -452,7 +452,7 @@ var eliswidgetenrolmentexpandedlist = [];
                     }
                 } else if (this.data.waitlist_id != null) {
                     status = 'waitlist';
-                } else if (this.data.meta.enrolallowed == '1') {
+                } else if (this.data.meta.can_enrol) {
                     status = (this.data.meta.limit > 0 && this.data.meta.total >= this.data.meta.limit) ? 'full' : 'available';
                 }
 

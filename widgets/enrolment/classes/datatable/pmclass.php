@@ -282,6 +282,7 @@ class pmclass extends base {
             if (!isset($pageresultsar[$id]->meta)) {
                 $pageresultsar[$id]->meta = new \stdClass;
             }
+            $pageresultsar[$id]->meta->can_enrol = $globalenrolallowed;
             $pageresultsar[$id]->meta->limit = $result->maxstudents;
             $classfilter = new \field_filter('classid', $result->id);
             $unenrolallowed = $globalunenrolallowed && $result->enrol_completestatusid <= 0 && !\student_grade::exists([$classfilter, $userfilter]);
@@ -299,6 +300,7 @@ class pmclass extends base {
             if (isset($pageresultsar[$id]->element_enddate)) {
                 if ($pageresultsar[$id]->element_enddate > 0) {
                     if ($pageresultsar[$id]->element_enddate < $timenow) {
+                        $pageresultsar[$id]->meta->can_enrol = false;
                         $enrolallowed = false;
                     }
                     $pageresultsar[$id]->element_enddate = userdate($pageresultsar[$id]->element_enddate, $dateformat);
