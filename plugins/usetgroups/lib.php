@@ -157,6 +157,11 @@ function userset_groups_role_assigned_handler($roleassevent) {
     global $DB;
     $roleassignment = $DB->get_record('role_assignments', array('id' => $roleassevent->other['id']));
 
+    // If an event has unassigned the role before this handler is called than ignore the event.
+    if (empty($roleassignment)) {
+        return true;
+    }
+
     //update non-site courses for that user
     $result = userset_groups_update_groups(array('mdlusr.muserid' => $roleassignment->userid));
     //update site course for that user
