@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version = 2014082502;
-$plugin->release = '2.7.11.1 (Build: 20151216)';
+$plugin->release = '2.7.12.0 (Build: 20160224)';
 $plugin->component = 'eliswidget_learningplan';
 $plugin->dependencies = array(
     'eliswidget_enrolment' => 2014082500
