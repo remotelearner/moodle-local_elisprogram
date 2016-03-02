@@ -66,82 +66,6 @@ class deepsight_datatable_trackuserset_base extends deepsight_datatable_userset 
 }
 
 /**
- * A datatable for listing currently assigned usersets.
- */
-class deepsight_datatable_trackuserset_assigned extends deepsight_datatable_trackuserset_base {
-
-    /**
-     * Gets an array of available filters.
-     * @return array An array of deepsight_filter objects that will be available.
-     */
-    protected function get_filters() {
-        $langautoenrol = get_string('usersettrack_autoenrol', 'local_elisprogram');
-        $filters = parent::get_filters();
-        $fielddata = array('clsttrk.autoenrol' => $langautoenrol);
-        $autoenrol = new deepsight_filter_menuofchoices($this->DB, 'autoenrol', $langautoenrol, $fielddata, $this->endpoint);
-        $autoenrol->set_choices(array(
-            0 => get_string('no', 'moodle'),
-            1 => get_string('yes', 'moodle'),
-        ));
-        $filters[] = $autoenrol;
-        return $filters;
-    }
-
-    /**
-     * Gets an array of initial filters.
-     * @return array An array of deepsight_filter $name properties that will be present when the user first loads the page.
-     */
-    protected function get_initial_filters() {
-        $initialfilters = parent::get_initial_filters();
-        $initialfilters['autoenrol'] = [];
-        return $initialfilters;
-    }
-
-    /**
-     * Formats the autoenrol parameter.
-     * @param array $row An array for a single result.
-     * @return array The transformed result.
-     */
-    protected function results_row_transform(array $row) {
-        $row = parent::results_row_transform($row);
-        if (isset($row['clsttrk_autoenrol'])) {
-            // Save original autoenrol value for use by javascript, then convert value to language string.
-            $row['autoenrol'] = $row['clsttrk_autoenrol'];
-            $row['clsttrk_autoenrol'] = ($row['clsttrk_autoenrol'] == 1) ? get_string('yes', 'moodle') : get_string('no', 'moodle');
-        }
-        return $row;
-    }
-
-    /**
-     * Gets the edit and unassignment actions.
-     * @return array An array of deepsight_action objects that will be available for each element.
-     */
-    public function get_actions() {
-        $actions = parent::get_actions();
-        $editaction = new deepsight_action_trackuserset_edit($this->DB, 'trackusersetedit');
-        $editaction->endpoint = (strpos($this->endpoint, '?') !== false)
-                ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
-        $unassignaction = new deepsight_action_trackuserset_unassign($this->DB, 'trackusersetunassign');
-        $unassignaction->endpoint = (strpos($this->endpoint, '?') !== false)
-                ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
-        array_unshift($actions, $editaction, $unassignaction);
-        return $actions;
-    }
-
-    /**
-     * Adds the assignment table.
-     * @param array $filters An array of active filters to use to determne join sql.
-     * @return string A SQL string containing any JOINs needed for the full query.
-     */
-    protected function get_join_sql(array $filters=array()) {
-        $joinsql = parent::get_join_sql($filters);
-        $joinsql[] = 'JOIN {'.clustertrack::TABLE.'} clsttrk
-                           ON clsttrk.trackid='.$this->trackid.' AND clsttrk.clusterid = element.id';
-        return $joinsql;
-    }
-}
-
-/**
  * A datatable listing usersets that are available to assign to the track, and are not currently assigned.
  */
 class deepsight_datatable_trackuserset_available extends deepsight_datatable_trackuserset_base {
@@ -219,6 +143,15 @@ class deepsight_datatable_trackuserset_available extends deepsight_datatable_tra
     }
 
     /**
+     * Get condition to show clusters assigned.
+     * @return string Sql to show clusters assigned.
+     */
+    protected function get_assigned_filter() {
+        // Remove assigned users.
+        return 'clsttrk.id IS NULL';
+    }
+
+    /**
      * Removes assigned tracks, and limits results according to permissions.
      * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
      * @return array An array consisting of the SQL WHERE clause, and the parameters for the SQL.
@@ -230,8 +163,7 @@ class deepsight_datatable_trackuserset_available extends deepsight_datatable_tra
 
         $additionalfilters = array();
 
-        // Remove assigned users.
-        $additionalfilters[] = 'clsttrk.id IS NULL';
+        $additionalfilters[] = $this->get_assigned_filter();
 
         // Permissions.
         list($permadditionalfilters, $permadditionalparams) = $this->get_filter_sql_permissions();
@@ -245,5 +177,78 @@ class deepsight_datatable_trackuserset_available extends deepsight_datatable_tra
         }
 
         return array($filtersql, $filterparams);
+    }
+}
+
+/**
+ * A datatable for listing currently assigned usersets.
+ */
+class deepsight_datatable_trackuserset_assigned extends deepsight_datatable_trackuserset_available {
+
+    /**
+     * Gets an array of available filters.
+     * @return array An array of deepsight_filter objects that will be available.
+     */
+    protected function get_filters() {
+        $langautoenrol = get_string('usersettrack_autoenrol', 'local_elisprogram');
+        $filters = parent::get_filters();
+        $fielddata = array('clsttrk.autoenrol' => $langautoenrol);
+        $autoenrol = new deepsight_filter_menuofchoices($this->DB, 'autoenrol', $langautoenrol, $fielddata, $this->endpoint);
+        $autoenrol->set_choices(array(
+            0 => get_string('no', 'moodle'),
+            1 => get_string('yes', 'moodle'),
+        ));
+        $filters[] = $autoenrol;
+        return $filters;
+    }
+
+    /**
+     * Gets an array of initial filters.
+     * @return array An array of deepsight_filter $name properties that will be present when the user first loads the page.
+     */
+    protected function get_initial_filters() {
+        $initialfilters = parent::get_initial_filters();
+        $initialfilters[] = 'autoenrol';
+        return $initialfilters;
+    }
+
+    /**
+     * Formats the autoenrol parameter.
+     * @param array $row An array for a single result.
+     * @return array The transformed result.
+     */
+    protected function results_row_transform(array $row) {
+        $row = parent::results_row_transform($row);
+        if (isset($row['clsttrk_autoenrol'])) {
+            // Save original autoenrol value for use by javascript, then convert value to language string.
+            $row['autoenrol'] = $row['clsttrk_autoenrol'];
+            $row['clsttrk_autoenrol'] = ($row['clsttrk_autoenrol'] == 1) ? get_string('yes', 'moodle') : get_string('no', 'moodle');
+        }
+        return $row;
+    }
+
+    /**
+     * Gets the edit and unassignment actions.
+     * @return array An array of deepsight_action objects that will be available for each element.
+     */
+    public function get_actions() {
+        $actions = deepsight_datatable_trackuserset_base::get_actions();
+        $editaction = new deepsight_action_trackuserset_edit($this->DB, 'trackusersetedit');
+        $editaction->endpoint = (strpos($this->endpoint, '?') !== false)
+                ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
+        $unassignaction = new deepsight_action_trackuserset_unassign($this->DB, 'trackusersetunassign');
+        $unassignaction->endpoint = (strpos($this->endpoint, '?') !== false)
+                ? $this->endpoint.'&m=action' : $this->endpoint.'?m=action';
+        array_unshift($actions, $editaction, $unassignaction);
+        return $actions;
+    }
+
+    /**
+     * Get condition to show clusters not assigned.
+     * @return string Sql to show clusters not assigned.
+     */
+    protected function get_assigned_filter() {
+        // Show assigned users.
+        return 'clsttrk.id IS NOT NULL';
     }
 }
