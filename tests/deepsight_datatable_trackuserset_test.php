@@ -173,7 +173,7 @@ class deepsight_datatable_trackuserset_testcase extends deepsight_datatable_sear
      * @return array Array of test parameters.
      */
     public function dataprovider_assigned_shows_assigned_usersets() {
-        return array(
+        $data = array(
                 // 0: Test table shows nothing when no associations present.
                 array(
                         array(),
@@ -231,6 +231,16 @@ class deepsight_datatable_trackuserset_testcase extends deepsight_datatable_sear
                         2,
                 ),
         );
+        // Assign default custom field values.
+        for ($i = 0; $i < count($data); $i++) {
+            if (!empty($data[$i][2])) {
+                for ($j = 0; $j < count($data[$i][2]); $j++) {
+                    $data[$i][2][$j]['cf_userset_group_data'] = 'No';
+                    $data[$i][2][$j]['cf_userset_groupings_data'] = 'No';
+                }
+            }
+        }
+        return $data;
     }
 
     /**
@@ -243,7 +253,11 @@ class deepsight_datatable_trackuserset_testcase extends deepsight_datatable_sear
      * @param int $expectedtotal The expected number of total results.
      */
     public function test_assigned_shows_assigned_usersets($associations, $tabletrackid, $expectedresults, $expectedtotal) {
-        global $DB;
+        global $DB, $USER;
+
+        $USER = $this->setup_permissions_test();
+        $this->give_permission_for_context($USER->id, 'local/elisprogram:associate', context_system::instance());
+        $this->give_permission_for_context($USER->id, 'local/elisprogram:userset_associatetrack', context_system::instance());
 
         foreach ($associations as $association) {
             $clustertrack = new clustertrack($association);
