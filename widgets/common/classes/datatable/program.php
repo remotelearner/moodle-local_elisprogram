@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    eliswidget_trackenrol
+ * @package    eliswidget_common
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @copyright  (C) 2015 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
@@ -24,22 +24,26 @@
  *
  */
 
-namespace eliswidget_trackenrol\datatable;
+namespace eliswidget_common\datatable;
 
 /**
- * A datatable implementation for lists of tracks - top-level.
+ * A datatable implementation for lists of programs - top-level.
  */
-class track extends \eliswidget_common\datatable\base {
+abstract class program extends base {
     /** @var string The main table results are pulled from. This forms that FROM clause. */
-    protected $maintable = 'local_elisprogram_trk';
+    protected $maintable = 'local_elisprogram_pgm';
 
-    /**
-     * The number of results displayed per page of the table.
-     */
-    const RESULTSPERPAGE = 5;
+    /** @var int The ID of the course we're getting classes for. */
+    protected $courseid = null;
 
-    /** @var int The ID of the Track. */
-    protected $trackid = null;
+    /** @var int The ID of the program we're getting classes for. Optional. */
+    protected $programid = null;
+
+    /** @var bool The state of the program progressbar. */
+    protected $progressbarenabled = true;
+
+    /** @var string The widget's franken-style name. */
+    protected $pluginname = 'eliswidget_common';
 
     /**
      * Gets an array of available filters.
@@ -53,31 +57,27 @@ class track extends \eliswidget_common\datatable\base {
         require_once(\elispm::lib('deepsight/lib/filters/textsearch.filter.php'));
         require_once(\elispm::lib('deepsight/lib/filters/date.filter.php'));
 
-        $langidnumber = get_string('track_idnumber', 'eliswidget_trackenrol');
-        $langname = get_string('track_name', 'eliswidget_trackenrol');
-        $langdescription = get_string('track_description', 'eliswidget_trackenrol');
-        $langprogram = get_string('track_program', 'eliswidget_trackenrol');
-        $langstartdate = get_string('startdate', 'eliswidget_trackenrol');
-        $langenddate = get_string('enddate', 'eliswidget_trackenrol');
+        $langidnumber = get_string('curriculum_idnumber', 'local_elisprogram');
+        $langname = get_string('curriculum_name', 'local_elisprogram');
+        $langdescription = get_string('description', 'local_elisprogram');
+        $langreqcredits = get_string('curriculum_reqcredits', 'local_elisprogram');
 
         $filters = [
                 new \deepsight_filter_textsearch($DB, 'idnumber', $langidnumber, ['element.idnumber' => $langidnumber]),
                 new \deepsight_filter_textsearch($DB, 'name', $langname, ['element.name' => $langname]),
-                new \deepsight_filter_textsearch($DB, 'program', $langprogram, ['cur.name' => $langprogram]),
-                new \deepsight_filter_date($DB, 'startdate', $langstartdate, ['element.startdate' => $langstartdate]),
-                new \deepsight_filter_date($DB, 'enddate', $langenddate, ['element.enddate' => $langenddate]),
-                new \deepsight_filter_textsearch($DB, 'description', $langdescription, ['element.description' => $langdescription])
+                new \deepsight_filter_textsearch($DB, 'description', $langdescription, ['element.description' => $langdescription]),
+                new \deepsight_filter_textsearch($DB, 'reqcredits', $langreqcredits, ['element.reqcredits' => $langreqcredits])
         ];
 
         // Add custom fields.
-        $trackctxlevel = \local_eliscore\context\helper::get_level_from_name('track');
-        $customfieldfilters = $this->get_custom_field_info($trackctxlevel, ['table' => get_called_class()]);
+        $pgmctxlevel = \local_eliscore\context\helper::get_level_from_name('curriculum');
+        $customfieldfilters = $this->get_custom_field_info($pgmctxlevel, ['table' => get_called_class()]);
         $filters = array_merge($filters, $customfieldfilters);
 
         // Restrict to visible fields.
         foreach ($filters as $i => $filter) {
             $filtername = $filter->get_name();
-            $enabled = get_config('eliswidget_trackenrol', 'track_field_'.$filtername.'_radio');
+            $enabled = get_config($this->pluginname, 'curriculum_field_'.$filtername.'_radio');
             if ($enabled == 1 || ($enabled === false && strpos($filtername, 'cf_') === 0)) { // Hidden.
                 unset($filters[$i]);
             } else if ($enabled == 3) { // Locked.
@@ -94,13 +94,12 @@ class track extends \eliswidget_common\datatable\base {
      * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
      * @return array Array of fields to select.
      */
-    protected function get_select_fields(array $filters = array()) {
+    public function get_select_fields(array $filters = array()) {
         $selectfields = parent::get_select_fields($filters);
+        $selectfields[] = 'element.reqcredits AS reqcredits';
         $selectfields[] = 'element.idnumber AS idnumber';
         $selectfields[] = 'element.name AS name';
         $selectfields[] = 'element.description AS description';
-        $selectfields[] = 'cur.name AS programname';
-        $selectfields[] = 'cur.id AS curid';
         return $selectfields;
     }
 
@@ -110,16 +109,7 @@ class track extends \eliswidget_common\datatable\base {
      * @return array An array of fields that will always be selected.
      */
     public function get_fixed_select_fields() {
-        return [
-            'element.idnumber' => '',
-            'element.name' => '',
-            'element.curid' => '',
-            'element.description' => '',
-            'element.startdate' => '',
-            'element.enddate' => '',
-            'cur.name' => '',
-            'usertrack.id' => '',
-        ];
+        return ['element.idnumber' => '', 'element.name' => ''];
     }
 
     /**
@@ -128,7 +118,7 @@ class track extends \eliswidget_common\datatable\base {
      * @return array Array of filter aliases for fields that will always be visible.
      */
     public function get_fixed_visible_datafields() {
-        return ['program'];
+        return ['idnumber', 'name', 'description'];
     }
 
     /**
@@ -138,17 +128,6 @@ class track extends \eliswidget_common\datatable\base {
      * @return array An array consisting of the SQL WHERE clause, and the parameters for the SQL.
      */
     protected function get_filter_sql(array $filters = array()) {
-        global $DB, $USER;
-        $trackviewcapid = get_config('eliswidget_trackenrol', 'trackviewcap');
-        $trackviewcap = !empty($trackviewcapid) ? $DB->get_field('capabilities', 'name', ['id' => $trackviewcapid]) : null;
-        if (!empty($trackviewcap) && !has_capability($trackviewcap, \context_system::instance())) {
-            $trkctxs = \pm_context_set::for_user_with_capability('track', $trackviewcap, $USER->id);
-            $filterobj = $trkctxs->get_filter('element.id', 'track');
-            $trksql = $filterobj->get_sql();
-            if (!empty($trksql)) {
-                $filters[] = ['sql' => $trksql['where'], 'params' => $trksql['where_parameters']];
-            }
-        }
         return parent::get_filter_sql($filters);
     }
 
@@ -160,20 +139,19 @@ class track extends \eliswidget_common\datatable\base {
      *               the JOIN sql fragments.
      */
     protected function get_join_sql(array $filters = array()) {
-        global $CFG;
-        require_once(\elispm::lib('data/usertrack.class.php'));
+        global $CFG; // required by elispm::lib('data/curriculumstudent.class.php');
+        require_once(\elispm::lib('data/curriculumstudent.class.php'));
         list($sql, $params) = parent::get_join_sql($filters);
 
         // Custom field joins.
         $enabledcfields = array_intersect_key($this->customfields, $this->availablefilters);
-        $ctxlevel = \local_eliscore\context\helper::get_level_from_name('track');
+        $ctxlevel = \local_eliscore\context\helper::get_level_from_name('curriculum');
         // Get current user id.
         $euserid = \user::get_current_userid();
 
         $newsql = $this->get_active_filters_custom_field_joins($filters, $ctxlevel, $enabledcfields);
-        $newsql[] = 'JOIN {'.\curriculum::TABLE.'} cur ON cur.id = element.curid';
-        $newsql[] = 'LEFT JOIN {'.\usertrack::TABLE.'} usertrack ON usertrack.trackid = element.id AND usertrack.userid = ?';
         $newparams = [$euserid];
+        $newsql[] = 'JOIN {'.\curriculumstudent::TABLE.'} curstu ON curstu.curriculumid = element.id AND curstu.userid = ?';
         return [array_merge($sql, $newsql), array_merge($params, $newparams)];
     }
 
@@ -183,38 +161,15 @@ class track extends \eliswidget_common\datatable\base {
      * @return string An ORDER BY sql fragment, if desired.
      */
     protected function get_sort_sql() {
-        return 'ORDER BY element.idnumber ASC';
+        return 'ORDER BY element.priority ASC, element.idnumber ASC';
     }
 
     /**
-     * Get search results/
+     * Set the progressbar enabled.
      *
-     * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
-     * @param int $page The page being displayed.
-     * @return \moodle_recordset A recordset of program information.
+     * @param bool $progressbarenabled The state of the progress bar display.
      */
-    public function get_search_results(array $filters = array(), $page = 1) {
-        global $CFG;
-        require_once(\elispm::lib('data/usertrack.class.php'));
-        list($pageresults, $totalresultsamt) = parent::get_search_results($filters, $page);
-        $dateformat = get_string('strftimedate');
-        $pageresultsar = [];
-        foreach ($pageresults as $id => $result) {
-            $result->header = get_string('track_header', 'eliswidget_trackenrol', $result);
-            $result->program = $result->cur_name; // TBD.
-            $pageresultsar[$id] = $result;
-            if ($result->element_startdate > 0) {
-                $pageresultsar[$id]->element_startdate = userdate($result->element_startdate, $dateformat);
-            } else {
-                $pageresultsar[$id]->element_startdate = get_string('date_na', 'eliswidget_trackenrol');
-            }
-            if ($result->element_enddate > 0) {
-                $pageresultsar[$id]->element_enddate = userdate($result->element_enddate, $dateformat);
-            } else {
-                $pageresultsar[$id]->element_enddate = get_string('date_na', 'eliswidget_trackenrol');
-            }
-        }
-
-        return [array_values($pageresultsar), $totalresultsamt];
+    public function set_progressbar($progressbarenabled) {
+        $this->progressbarenabled = $progressbarenabled;
     }
 }

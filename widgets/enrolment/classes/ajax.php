@@ -257,11 +257,11 @@ class ajax {
     /**
      * Respond to a listing request for a given entity type.
      *
-     * @param \eliswidget_enrolment\datatable\base $datatable The datatable that handles the list.
+     * @param \eliswidget_common\datatable\base $datatable The datatable that handles the list.
      * @param array $data Received data. Includes 'filters', and 'page' keys.
      * @return array Array of JSON-able response information.
      */
-    protected function get_listing_response(\eliswidget_enrolment\datatable\base $datatable, $data) {
+    protected function get_listing_response(\eliswidget_common\datatable\base $datatable, $data) {
         if (!empty($data['filters'])) {
             $data['filters'] = @json_decode($data['filters'], true);
         }

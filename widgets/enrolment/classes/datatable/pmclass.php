@@ -29,7 +29,7 @@ namespace eliswidget_enrolment\datatable;
 /**
  * A datatable implementation for lists of classes within course.
  */
-class pmclass extends base {
+class pmclass extends \eliswidget_common\datatable\base {
     /** @var string The main table results are pulled from. This forms that FROM clause. */
     protected $maintable = 'local_elisprogram_cls';
 

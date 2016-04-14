@@ -62,9 +62,26 @@ class nonprogramclasses extends moodleclass {
      */
     protected function get_select_fields(array $filters = array()) {
         $selectfields = parent::get_select_fields($filters);
+        $selectfields[] = 'element.idnumber AS idnumber';
+        $selectfields[] = 'element.name AS name';
+        $selectfields[] = 'element.code AS code';
         $selectfields[] = '1 AS numenrol';
         $selectfields[] = 'stu.completestatusid AS higheststatus';
         return $selectfields;
+    }
+
+    /**
+     * Get a list of desired table joins to be used in the get_search_results method.
+     *
+     * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
+     * @return array Array with members: First item is an array of JOIN sql fragments, second is an array of parameters used by
+     *               the JOIN sql fragments.
+     */
+    protected function get_join_sql(array $filters = array()) {
+        list($sql, $params) = \eliswidget_common\datatable\base::get_join_sql($filters);
+        $newsql = ['JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = element.id'];
+        list($parentsql, $parentparams) = parent::get_join_sql($filters);
+        return [array_merge($sql, $newsql, $parentsql), array_merge($params, $parentparams)];
     }
 
     /**
