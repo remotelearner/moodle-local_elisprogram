@@ -56,6 +56,7 @@ $string['nonprogramcourses'] = 'Non-program courses';
 $string['of'] = 'of';
 $string['programs'] = 'Programs';
 $string['program_description'] = 'Description';
+$string['program_description_format'] = '{$a->description}';
 $string['program_header'] = '{$a->idnumber}: {$a->name}';
 $string['program_idnumber'] = 'ID Number';
 $string['program_name'] = 'Name';

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @package    eliswidget_enrolment
+ * @package    eliswidget_trackenrol
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @copyright  (C) 2014 Onwards Remote-Learner.net Inc (http://www.remote-learner.net)
@@ -177,11 +177,11 @@ class ajax {
     /**
      * Respond to a listing request for a given entity type.
      *
-     * @param \eliswidget_enrolment\datatable\base $datatable The datatable that handles the list.
+     * @param \eliswidget_common\datatable\base $datatable The datatable that handles the list.
      * @param array $data Received data. Includes 'filters', and 'page' keys.
      * @return array Array of JSON-able response information.
      */
-    protected function get_listing_response(\eliswidget_enrolment\datatable\base $datatable, $data) {
+    protected function get_listing_response(\eliswidget_common\datatable\base $datatable, $data) {
         if (!empty($data['filters'])) {
             $data['filters'] = @json_decode($data['filters'], true);
         }

@@ -29,7 +29,7 @@ namespace eliswidget_learningplan\datatable;
 /**
  * A datatable implementation for lists of classes.
  */
-class moodleclass extends \eliswidget_enrolment\datatable\base {
+class moodleclass extends \eliswidget_common\datatable\base {
     /** @var int The ID of the user we're getting classes for. */
     protected $userid = null;
 
@@ -69,15 +69,6 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
      */
     protected function get_select_fields(array $filters = array()) {
         $selectfields = parent::get_select_fields($filters);
-        if ($this->maintable == \course::TABLE) {
-            $selectfields[] = 'element.idnumber AS idnumber';
-            $selectfields[] = 'element.name AS name';
-            $selectfields[] = 'element.code AS code';
-        } else {
-            $selectfields[] = 'crs.idnumber AS idnumber';
-            $selectfields[] = 'crs.name AS name';
-            $selectfields[] = 'crs.code AS code';
-        }
         $selectfields[] = 'mdlcrs.id AS moodlecourseid';
         $selectfields[] = 'mdlcrs.fullname AS coursefullname';
         $selectfields[] = 'mdlcrs.shortname AS courseshortname';
@@ -110,33 +101,16 @@ class moodleclass extends \eliswidget_enrolment\datatable\base {
      *               the JOIN sql fragments.
      */
     protected function get_join_sql(array $filters = array()) {
-        list($sql, $params) = parent::get_join_sql($filters);
-        // error_log("classes/datatable/moodleclass.php::get_join_sql(): this->maintable = {$this->maintable}");
-        if ($this->maintable == \course::TABLE) {
-            $newsql = ['JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = element.id'];
-        } else if ($this->maintable == \curriculumcourse::TABLE) {
-            $newsql = [
-                    'JOIN {'.\course::TABLE.'} crs ON crs.id = element.courseid',
-                    'JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = crs.id'
-            ];
-        } else { // Main table is local_elisprogram_crssetcrs.
-            $newsql = [
-                    'JOIN {'.\programcrsset::TABLE.'} pgmcrsset ON pgmcrsset.crssetid = element.crssetid',
-                    'JOIN {'.\courseset::TABLE.'} crsset ON crsset.id = element.crssetid',
-                    'JOIN {'.\course::TABLE.'} crs ON crs.id = element.courseid',
-                    'JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = crs.id'
-            ];
-        }
-        $newsql = array_merge($newsql, [
+        $newsql = [
                 'LEFT JOIN {'.\classmoodlecourse::TABLE.'} clsmdl ON clsmdl.classid = cls.id',
                 'LEFT JOIN {course} mdlcrs ON mdlcrs.id = clsmdl.moodlecourseid',
                 'LEFT JOIN {'.\student::TABLE.'} stu ON stu.classid = cls.id
                            AND stu.userid = ?',
                 'LEFT JOIN {'.\waitlist::TABLE.'} waitlist ON waitlist.classid = cls.id
                            AND waitlist.userid = ?'
-        ]);
+        ];
         $newparams = [$this->userid, $this->userid];
-        return [array_merge($sql, $newsql), array_merge($params, $newparams)];
+        return [$newsql, $newparams];
     }
 
     /**
