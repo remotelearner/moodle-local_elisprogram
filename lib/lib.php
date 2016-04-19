@@ -343,22 +343,29 @@ function pm_migrate_moodle_users($setidnumber = false, $fromtime = 0, $mdluserid
     if ($setidnumber || elis::$config->local_elisprogram->auto_assign_user_idnumber) {
         // make sure we only set idnumbers if users' usernames don't point to
         // existing idnumbers
-        $sql = "UPDATE {user}
-                   SET idnumber = username
-                 WHERE idnumber = ''
+        $select = "idnumber = ''
                    AND username != 'guest'
                    AND deleted = 0
                    AND confirmed = 1
                    AND mnethostid = :hostid
-                   AND username NOT IN (SELECT idnumber
-                                        FROM (SELECT idnumber
-                                              FROM {user} inneru) innertable)";
+                   AND NOT EXISTS (SELECT 'x'
+                                     FROM {user} iu
+                                    WHERE iu.idnumber = {user}.username
+                                          AND deleted = 0)";
         $params = array('hostid' => $CFG->mnet_localhost_id);
         if ($mdluserid) {
-            $sql .= ' AND id = :userid';
+            $select .= ' AND id = :userid';
             $params['userid'] = $mdluserid;
         }
-        $result = $result && $DB->execute($sql, $params);
+        $rs = $DB->get_recordset_select('user', $select, $params);
+        if ($rs && $rs->valid()) {
+            foreach ($rs as $user) {
+                $user->idnumber = $user->username;
+                $DB->update_record('user', $user);
+                \core\event\user_updated::create_from_userid($user->id)->trigger();
+            }
+            $rs->close();
+        }
     }
 
     $select = "username != 'guest'
