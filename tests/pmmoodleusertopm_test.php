@@ -245,4 +245,34 @@ class pm_moodle_user_to_pm_testcase extends elis_database_test {
         $this->assertNotEmpty($cu);
         $this->assertEquals($mu->idnumber, $cu->idnumber);
     }
+
+    /**
+     * Test pm_moodle_user_to_pm function updates idnumber (ELIS-9373)
+     */
+    public function test_pm_moodle_user_to_pm_updates_idnumber() {
+        global $DB;
+
+        $fields = $this->set_up_custom_fields();
+        $mu = $this->set_up_muser($fields['m']);
+
+        $mu = $DB->get_record('user', array('id' => $mu->id));
+        $result = pm_moodle_user_to_pm($mu);
+        $this->assertTrue($result);
+
+        // Get ELIS user.
+        $cu = $DB->get_record('local_elisprogram_usr', array('username' => $mu->username));
+        $this->assertNotEmpty($cu);
+        $this->assertEquals($mu->idnumber, $cu->idnumber);
+
+        // Update Moodle user's idnumber
+        $mu->idnumber = 'new_idnumber';
+        $DB->update_record('user', $mu);
+        $result = pm_moodle_user_to_pm($mu);
+        $this->assertTrue($result);
+
+        // Get ELIS user.
+        $cu = $DB->get_record('local_elisprogram_usr', array('username' => $mu->username));
+        $this->assertNotEmpty($cu);
+        $this->assertEquals($mu->idnumber, $cu->idnumber);
+    }
 }
