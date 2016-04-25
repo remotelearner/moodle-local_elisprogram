@@ -378,8 +378,13 @@ class user extends data_object_with_custom_fields {
      * Function to synchronize the curriculum data with the Moodle data.
      *
      * @param boolean $tomoodle Optional direction to synchronize the data.
+     * @param boolean $createnew Option to create a new Moodle user.
      * @param boolean $strict_match Whether we should use the association table rather
-     *                               than just check idnumbers when comparing to Moodle users
+     *                              than just check idnumbers when comparing to Moodle users
+     * @return mixed Either the Moodle user id number (int > 0) on success,
+     *               OR true (if $createnew == false AND the Moodle user doesn't exist),
+     *               OR null on error.
+     *               Ensure to test a successful return value for === true.
      *
      */
     public function synchronize_moodle_user($tomoodle = true, $createnew = false, $strict_match = true) {
@@ -412,11 +417,11 @@ class user extends data_object_with_custom_fields {
             );
 
             // determine if the user is already noted as having been associated to a PM user
-            if ($um = usermoodle::find(new field_filter('cuserid', $this->id))) {
+            if ($um = usermoodle::find([new field_filter('cuserid', $this->id), new field_filter('muserid', $muserid)])) {
                 if ($um->valid()) {
                     $um = $um->current();
 
-           	        // determine if the PM user idnumber was updated
+                    // Determine if the PM user idnumber was updated
                     if ($um->idnumber != $this->idnumber) {
 
                         // update the Moodle user with the new idnumber
@@ -432,20 +437,20 @@ class user extends data_object_with_custom_fields {
                 }
             }
 
-            //try to update the idnumber of a matching Moodle user that
-            //doesn't have an idnumber set yet
+            // Try to update the idnumber of a matching Moodle user ...
             $exists_params = array('username' => $this->username,
                                    'mnethostid' => $CFG->mnet_localhost_id);
             if ($moodle_user = $this->_db->get_record('user', $exists_params)) {
-                if (empty($moodle_user->idnumber)) {
-                    //potentially old data, so set the idnumber
-                    $moodle_user->idnumber = $this->idnumber;
-                    $this->_db->update_record('user', $moodle_user);
-                    $muserid = $moodle_user->id;
-                } else if ($this->idnumber != $moodle_user->idnumber) {
-                    //the username points to a pre-existing Moodle user
-                    //with a non-matching idnumber, so something horrible
-                    //happened
+                if ($moodle_user->id == $muserid) {
+                    if (empty($moodle_user->idnumber) || $this->idnumber != $moodle_user->idnumber) {
+                        // Potentially old data, so set the idnumber OR idnumber updated in ELIS. (ELIS-9373)
+                        $moodle_user->idnumber = $this->idnumber;
+                        $this->_db->update_record('user', $moodle_user);
+                        $changed = true; // Signal to trigger user_updated event, below.
+                    }
+                } else {
+                    // The username points to a pre-existing Moodle user
+                    // with a non-matching id, so something horrible happened.
                     return;
                 }
             }
@@ -477,6 +482,7 @@ class user extends data_object_with_custom_fields {
                 }
                 $record->timemodified   = time();
                 $this->_db->update_record('user', $record);
+                $changed = true; // Signal to trigger user_updated event, below.
             } else {
                 return true;
             }

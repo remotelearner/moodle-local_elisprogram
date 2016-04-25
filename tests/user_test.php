@@ -316,4 +316,73 @@ class user_testcase extends elis_database_test {
         $mdluser = $DB->get_record('user', array('id' => $src->id));
         $this->assertEquals(fullname($mdluser), $retr->moodle_fullname());
     }
+
+    /**
+     * Data Provider for test_cancreaterecordandsynctomoodle
+     * @return array of arrays of parameters.
+     */
+    public function dataprovider_synchronizemoodleuser() {
+        return [
+            'syncmoodleuser1' => [
+            [   // ELIS User
+                'username' => '_____phpunit_test_',
+                'password' => 'pass',
+                'idnumber' => '_____phpunit_test_',
+                'firstname' => 'John',
+                'lastname' => 'Doe',
+                'mi' => 'F',
+                'email' => 'jdoe@phpunit.example.com',
+                'country' => 'CA'],
+            [   // New Moodle User
+                'username' => '_____phpunit_test_',
+                'password' => 'pass',
+                'idnumber' => '_____phpunit_test_',
+                'firstname' => 'John',
+                'lastname' => 'Doe',
+                'email' => 'jdoe@phpunit.example.com',
+                'country' => 'CA'],
+            'new_idnumber', true],
+        ];
+    }
+
+    /**
+     * Test that an ELIS User record can be created & updated in the database, and that a
+     * corresponding Moodle user is modified as well and both allow idnumber updating (ELIS-9373).
+     * @param array the initial ELIS User object to create.
+     * @param array the expected Moodle User object properties to verify.
+     * @param string $newidnumber if not empty, idnumber to update ELIS User with and sync to Moodle.
+     * @param bool $strictmatch whether we should use ELIs-Moodle user association table.
+     * @dataProvider dataprovider_synchronizemoodleuser
+     */
+    public function test_synchronizemoodleuser($euser, $muser, $newidnumber, $strictmatch) {
+        global $DB;
+        // Create a record.
+        $src = new user(false, null, array(), false, array());
+        foreach ($euser as $field => $val) {
+            $src->$field = $val;
+        }
+        $src->save($strictmatch);
+
+        // Read it back.
+        $euser = new user($src->id, null, array(), false, array());
+        foreach ($src as $field => $expected) {
+            $this->assertEquals($expected, $euser->$field);
+        }
+
+        // Check that a Moodle user record was created.
+        $retr = $DB->get_record('user', array('idnumber' => $src->idnumber), '*', MUST_EXIST);
+        foreach ($muser as $field => $mdlval) {
+            $this->assertEquals($mdlval, $retr->$field);
+        }
+
+        if (!empty($newidnumber)) {
+            // Modify ELIS User idnumber.
+            $src->idnumber = $newidnumber;
+            $src->save($strictmatch);
+            $euser = new user($src->id, null, array(), false, array());
+            $this->assertEquals($newidnumber, $euser->idnumber);
+            $retr = $DB->get_record('user', array('id' => $retr->id), '*', MUST_EXIST);
+            $this->assertEquals($newidnumber, $retr->idnumber);
+        }
+    }
 }
