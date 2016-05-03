@@ -49,7 +49,7 @@ if ($ADMIN->fulltree) {
     $settings->add(new \admin_setting_configcheckbox('eliswidget_teachingplan/maxstudents', get_string('column_maxstudents', 'eliswidget_teachingplan'),
             get_string('column_maxstudents_description', 'eliswidget_teachingplan'), 1));
 
-    $settings->add(new \admin_setting_configcheckbox('eliswidget_teachingplan/enrolledstudents', get_string('column_enrolledstudents', 'eliswidget_teachingplan'),
+    $settings->add(new \admin_setting_configcheckbox('eliswidget_teachingplan/enrolled', get_string('column_enrolledstudents', 'eliswidget_teachingplan'),
             get_string('column_enrolledstudents_description', 'eliswidget_teachingplan'), 1));
 
     $settings->add(new \admin_setting_configcheckbox('eliswidget_teachingplan/instructors', get_string('column_instructors', 'eliswidget_teachingplan'),
