@@ -1,0 +1,3 @@
+id,curriculumid,courseid,required
+100,101,101,1
+101,101,102,0

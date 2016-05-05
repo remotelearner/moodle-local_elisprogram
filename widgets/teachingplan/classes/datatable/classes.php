@@ -26,14 +26,13 @@
 
 namespace eliswidget_teachingplan\datatable;
 
-if (!defined('TESTING')) {
-    define('TESTING' , 1);
-}
-
 /**
  * A datatable implementation for lists of classes.
  */
 class classes extends \eliswidget_common\datatable\base {
+    /** @var string The main table results are pulled from. This forms that FROM clause. */
+    protected $maintable = 'local_elisprogram_cls';
+
     /** @var int The ID of the instructor we're getting classes for. */
     protected $userid = null;
 
@@ -60,18 +59,23 @@ class classes extends \eliswidget_common\datatable\base {
      */
     protected function get_select_fields(array $filters = array()) {
         $selectfields = parent::get_select_fields($filters);
+        $selectfields[] = 'element.idnumber AS idnumber';
+        $selectfields[] = 'element.startdate AS startdate';
+        $selectfields[] = 'element.enddate AS enddate';
+        $selectfields[] = 'element.starttimehour AS starttimehour';
+        $selectfields[] = 'element.starttimeminute AS starttimeminute';
+        $selectfields[] = 'element.endtimehour AS endtimehour';
+        $selectfields[] = 'element.endtimeminute AS endtimeminute';
+        $selectfields[] = 'element.maxstudents AS maxstudents';
         $selectfields[] = 'mdlcrs.id AS moodlecourseid';
-        $selectfields[] = 'mdlcrs.fullname AS coursefullname';
-        $selectfields[] = 'mdlcrs.shortname AS courseshortname';
-        $selectfields[] = 'mdlcrs.idnumber AS courseidnumber';
-        $selectfields[] = 'stu.id AS enrol_id';
-        $selectfields[] = 'stu.grade AS grade';
-        $selectfields[] = 'stu.completestatusid AS completestatusid';
-        $selectfields[] = 'stu.completetime AS completetime';
-        $selectfields[] = 'waitlist.id AS waitlist_id';
-        $selectfields[] = 'waitlist.classid AS waitlist_classid';
-        $selectfields[] = 'waitlist.position AS waitlist_position';
-        $selectfields[] = 'cls.maxstudents AS maxstudents';
+        $selectfields[] = 'mdlcrs.fullname AS moodlecoursefullname';
+        $selectfields[] = 'mdlcrs.shortname AS moodlecourseshortname';
+        $selectfields[] = 'mdlcrs.idnumber AS moodlecourseidnumber';
+        $selectfields[] = 'mdlcrs.summary AS moodlecoursesummary';
+        $selectfields[] = 'mdlcrs.startdate AS moodletime';
+        $selectfields[] = 'COUNT(DISTINCT stu.id) AS numenrol';
+        $selectfields[] = 'COUNT(DISTINCT stu2.id) AS inprogress';
+        $selectfields[] = 'COUNT(DISTINCT waitlist.id) AS waiting';
         return $selectfields;
     }
 
@@ -126,16 +130,32 @@ class classes extends \eliswidget_common\datatable\base {
      *               the JOIN sql fragments.
      */
     protected function get_join_sql(array $filters = array()) {
+        global $CFG;
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/instructor.class.php');
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/classmoodlecourse.class.php');
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/student.class.php');
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/waitlist.class.php');
+        list($sql, $params) = parent::get_join_sql($filters);
         $newsql = [
-                'LEFT JOIN {'.\classmoodlecourse::TABLE.'} clsmdl ON clsmdl.classid = cls.id',
+                'JOIN {'.\instructor::TABLE.'} ins ON ins.classid = element.id
+                      AND ins.userid = ?',
+                'LEFT JOIN {'.\classmoodlecourse::TABLE.'} clsmdl ON clsmdl.classid = element.id',
                 'LEFT JOIN {course} mdlcrs ON mdlcrs.id = clsmdl.moodlecourseid',
-                'LEFT JOIN {'.\student::TABLE.'} stu ON stu.classid = cls.id
-                           AND stu.userid = ?',
-                'LEFT JOIN {'.\waitlist::TABLE.'} waitlist ON waitlist.classid = cls.id
-                           AND waitlist.userid = ?'
+                'LEFT JOIN {'.\student::TABLE.'} stu ON stu.classid = element.id',
+                'LEFT JOIN {'.\student::TABLE.'} stu2 ON stu2.classid = element.id
+                           AND stu2.completestatusid = '.STUSTATUS_NOTCOMPLETE,
+                'LEFT JOIN {'.\waitlist::TABLE.'} waitlist ON waitlist.classid = element.id'
         ];
-        $newparams = [$this->userid, $this->userid];
-        return [$newsql, $newparams];
+        return [array_merge($sql, $newsql), array_merge($params, [$this->userid])];
+    }
+
+    /**
+     * Get a GROUP BY sql fragment to be used in the get_search_results method.
+     *
+     * @return string A GROUP BY sql fragment, if desired.
+     */
+    protected function get_groupby_sql() {
+        return 'GROUP BY element.id';
     }
 
     /**
@@ -145,6 +165,7 @@ class classes extends \eliswidget_common\datatable\base {
      * @return array An array consisting of the SQL WHERE clause, and the parameters for the SQL.
      */
     protected function get_filter_sql(array $filters = array()) {
+        $filters[] = ['sql' => 'element.courseid = ?', 'params' => [$this->courseid]];
         return parent::get_filter_sql($filters);
     }
 
@@ -158,6 +179,28 @@ class classes extends \eliswidget_common\datatable\base {
     }
 
     /**
+     * Get instructors for class.
+     *
+     * @param int $classid The classid to get instrictors.
+     * @return string  The list of instructors.
+     */
+    public static function get_instructors($classid) {
+        global $CFG;
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/instructor.class.php');
+        $ret = '';
+        $instructors = \instructor::find(new \field_filter('classid', $classid));
+        foreach ($instructors as $instructor) {
+            if (!empty($ret)) {
+                $ret .= ', ';
+            }
+            $user = new \user($instructor->userid);
+            $user->load();
+            $ret .= $user->moodle_fullname();
+        }
+        return $ret;
+    }
+
+    /**
      * Get search results/
      *
      * @param array $filters An array of requested filter data. Formatted like [filtername]=>[data].
@@ -165,56 +208,49 @@ class classes extends \eliswidget_common\datatable\base {
      * @return array An array of course information.
      */
     public function get_search_results(array $filters = array(), $page = 1) {
-        if (defined('TESTING')) {
-            $classes = [];
-            for ($i = 0; $i <= $this->courseid; ++$i) {
-                $cls = new \stdClass;
-                $cls->element_id = $i + 2;
-                $cls->class_header = '<a href="/" >CI-'.$this->courseid.'-10'.$cls->element_id.'</a><br/>Moodle Course: <a href="/">MC-1A</a>';
-                $cls->idnumber = 'CI-'.$this->courseid.'-10'.$cls->element_id;
-                $cls->maxstudents = '16';
-                $cls->enrolled = '17(3)';
-                $cls->startdate = 'Apr 1, 2016';
-                $cls->enddate = 'June 30, 2016';
-                $cls->classtime = '11:10am to 1:25pm';
-                $cls->moodletime = 'Apr 2, 2016';
-                $cls->instructors = 'James Dean, Jimmy Steward, Dave Smith, Hank Jones, Pete Jolly';
-                $classes[] = $cls;
-            }
-            return [$classes, 12];
-        }
+        global $CFG;
         list($pageresults, $totalresultsamt) = parent::get_search_results($filters, $page);
         $pageresultsar = [];
         $dateformat = get_string('date_format', 'eliswidget_teachingplan');
         foreach ($pageresults as $id => $result) {
-            $crsset = '';
-            if (!empty($result->courseset)) {
-                $crsset = get_string('courseset_format', 'eliswidget_teachingplan', $result->courseset);
+            $result->wwwroot = $CFG->wwwroot;
+            $result->conditional_moodlecourse = empty($result->moodlecourseid) ? '' : get_string('conditional_moodlecourse', 'eliswidget_teachingplan');
+            $result->class_header = get_string('class_table_class_cell', 'eliswidget_teachingplan', $result);
+            unset($result->wwwroot);
+            unset($result->conditional_moodlecourse);
+            if (empty($result->maxstudents)) {
+                $result->maxstudents = get_string('na', 'eliswidget_teachingplan');
             }
-            if (!empty($result->moodlecourseid)) {
-                $result->header = get_string('moodlecourse_header', 'eliswidget_teachingplan', $result);
-                // Change Moodle course header to link.
-                $mdlcrslink = new \moodle_url('/course/view.php', ['id' => $result->moodlecourseid]);
-                $result->header = \html_writer::link($mdlcrslink, $result->header);
-            } else {
-                $result->header = get_string('course_header', 'eliswidget_teachingplan', $result);
+            $result->enrolled = $result->numenrol.' / '. $result->inprogress;
+            if (!empty($result->waiting)) {
+                $result->enrolled .= ' ('.$result->waiting.')';
             }
-            $result->header .= $crsset;
+            $result->instructors = get_config('eliswidget_teachingplan', 'instructors') ? static::get_instructors($result->element_id) : '';
+            $result->classtime = get_string('date_na', 'eliswidget_teachingplan'); // TBD?
+            if (isset($result->starttimehour) && $result->starttimehour >= 0 && $result->starttimehour <= 23) {
+                 $result->classtime = sprintf('%02d:%02d', $result->starttimehour,
+                         (isset($result->starttimeminute) && $result->starttimeminute >= 0 && $result->starttimeminute <= 59) ? $result->starttimeminute : 0);
+            }
+            if (isset($result->endtimehour) && $result->endtimehour >= 0 && $result->endtimehour <= 23) {
+                 $result->classtime .= get_string('timerange', 'eliswidget_teachingplan');
+                 $result->classtime .= sprintf('%02d:%02d', $result->endtimehour,
+                         (isset($result->endtimeminute) && $result->endtimeminute >= 0 && $result->endtimeminute <= 59) ? $result->endtimeminute : 0);
+            }
             $pageresultsar[$id] = $result;
-            if (isset($pageresultsar[$id]->completetime) && !empty($pageresultsar[$id]->completetime) &&
-                    $pageresultsar[$id]->completestatusid > \student::STUSTATUS_NOTCOMPLETE) {
-                $pageresultsar[$id]->completetime = userdate($pageresultsar[$id]->completetime, $dateformat);
+            if (!empty($pageresultsar[$id]->startdate)) {
+                $pageresultsar[$id]->startdate = userdate($pageresultsar[$id]->startdate, $dateformat);
             } else {
-                $pageresultsar[$id]->completetime = get_string('date_na', 'eliswidget_teachingplan');
+                $pageresultsar[$id]->startdate = get_string('date_na', 'eliswidget_teachingplan');
             }
-            if (!isset($pageresultsar[$id]->meta)) {
-                $pageresultsar[$id]->meta = new \stdClass;
+            if (!empty($pageresultsar[$id]->enddate)) {
+                $pageresultsar[$id]->enddate = userdate($pageresultsar[$id]->enddate, $dateformat);
+            } else {
+                $pageresultsar[$id]->enddate = get_string('date_na', 'eliswidget_teachingplan');
             }
-            $pageresultsar[$id]->meta->limit = $result->maxstudents;
-            if (!empty($pageresultsar[$id]->waitlist_classid)) {
-                $classfilter = new \field_filter('classid', $pageresultsar[$id]->waitlist_classid);
-                $pageresultsar[$id]->meta->waiting = \waitlist::count($classfilter);
-                $pageresultsar[$id]->meta->total = \student::count($classfilter);
+            if (!empty($pageresultsar[$id]->moodletime)) {
+                $pageresultsar[$id]->moodletime = userdate($pageresultsar[$id]->moodletime, $dateformat);
+            } else {
+                $pageresultsar[$id]->moodletime = get_string('date_na', 'eliswidget_teachingplan');
             }
         }
         return [array_values($pageresultsar), $totalresultsamt];
