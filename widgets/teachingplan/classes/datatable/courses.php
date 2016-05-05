@@ -26,10 +26,6 @@
 
 namespace eliswidget_teachingplan\datatable;
 
-if (!defined('TESTING')) {
-    define('TESTING' , 1);
-}
-
 /**
  * A datatable implementation for lists of courses.
  */
@@ -91,6 +87,10 @@ class courses extends \eliswidget_common\datatable\base {
         $selectfields[] = 'element.completion_grade AS completiongrade';
         $selectfields[] = 'element.cost AS cost';
         $selectfields[] = 'element.version AS version';
+        if ($this->progressbarenabled) {
+            $selectfields[] = 'COUNT(DISTINCT stu.id) AS numenrol';
+            $selectfields[] = 'COUNT(DISTINCT stu2.id) AS completedusers';
+        }
         return $selectfields;
     }
 
@@ -120,12 +120,102 @@ class courses extends \eliswidget_common\datatable\base {
      *               the JOIN sql fragments.
      */
     protected function get_join_sql(array $filters = array()) {
+        global $CFG;
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/pmclass.class.php');
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/instructor.class.php');
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/student.class.php');
         list($sql, $params) = parent::get_join_sql($filters);
+        $newsql = [
+                'JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = element.id',
+                'JOIN {'.\instructor::TABLE.'} ins ON ins.classid = cls.id
+                      AND ins.userid = ?'
+        ];
+        if ($this->progressbarenabled) {
+             $newsql[] = 'LEFT JOIN {'.\student::TABLE.'} stu ON stu.classid = cls.id';
+             $newsql[] = 'LEFT JOIN {'.\student::TABLE.'} stu2 ON stu2.classid = cls.id
+                                    AND stu2.completestatusid > '.STUSTATUS_NOTCOMPLETE;
+        }
+        return [array_merge($sql, $newsql), array_merge($params, [$this->userid])];
+    }
 
-        $enabledcfields = array_intersect_key($this->customfields, $this->availablefilters);
-        $ctxlevel = \local_eliscore\context\helper::get_level_from_name('course');
-        $newsql = $this->get_active_filters_custom_field_joins($filters, $ctxlevel, $enabledcfields);
-        return [array_merge($sql, $newsql), $params];
+    /**
+     * Get a GROUP BY sql fragment to be used in the get_search_results method.
+     *
+     * @return string A GROUP BY sql fragment, if desired.
+     */
+    protected function get_groupby_sql() {
+        return 'GROUP BY element.id';
+    }
+
+    /**
+     * Get a list of Programs/CourseSets associated to the specified Course Description.
+     *
+     * @param int $courseid The ELIS Course Description id.
+     * @return string 'Pretty' list of Programs/CourseSets associated to the specified Course Description.
+     */
+    public static function get_course_programs($courseid) {
+        global $CFG, $DB;
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/curriculumcourse.class.php');
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/crssetcourse.class.php');
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/programcrsset.class.php');
+        $ret = '';
+        $programids = [];
+        $currcourses = \curriculumcourse::find(new \field_filter('courseid', $courseid));
+        if ($currcourses && $currcourses->valid()) {
+            foreach ($currcourses as $currcourse) {
+                $programids[$currcourse->curriculumid] = $currcourse->curriculumid;
+                if (!empty($ret)) {
+                    $ret .= ', ';
+                }
+                $prg = new \curriculum($currcourse->curriculumid);
+                $ret .= $prg->idnumber;
+                if ($currcourse->required) {
+                    $ret .= '*';
+                }
+            }
+            unset($currcourses);
+        }
+
+        // Now find CourseSets in Programs not already listed ...
+        $prgcrssets = [];
+        $crssetcourses = \crssetcourse::find(new \field_filter('courseid', $courseid));
+        if ($crssetcourses && $crssetcourses->valid()) {
+            foreach ($crssetcourses as $crssetcourse) {
+                $crssetprgs = \programcrsset::find(new \field_filter('crssetid', $crssetcourse->crssetid));
+                if ($crssetprgs && $crssetprgs->valid()) {
+                    foreach ($crssetprgs as $crssetprg) {
+                        if (!isset($programids[$crssetprg->prgid])) {
+                            if (!isset($prgcrssets[$crssetprg->prgid])) {
+                                $prgcrssets[$crssetprg->prgid] = [];
+                            }
+                            $prgcrssets[$crssetprg->prgid][] = $crssetcourse->crssetid;
+                        }
+                    }
+                    unset($crssetprgs);
+                }
+            }
+            unset($crssetcourses);
+        }
+
+        foreach ($prgcrssets as $prgid => $crssets) {
+            if (!empty($ret)) {
+                $ret .= ', ';
+            }
+            $prg = new \curriculum($prgid);
+            $ret .= $prg->idnumber.' ('.get_string('coursesets', 'eliswidget_teachingplan').' ';
+            $first = true;
+            foreach ($crssets as $crssetid) {
+                if (!$first) {
+                    $ret .= ', ';
+                }
+                $first = false;
+                $crsset = new \courseset($crssetid);
+                $ret .= $crsset->idnumber;
+            }
+            $ret .= ')';
+        }
+
+        return $ret;
     }
 
     /**
@@ -136,28 +226,18 @@ class courses extends \eliswidget_common\datatable\base {
      * @return array An array of course information.
      */
     public function get_search_results(array $filters = array(), $page = 1) {
-        if (defined('TESTING')) {
-            $courses = [];
-            $tot = ($page == 1) ? 10 : 12;
-            for ($i = ($page == 1) ? 0 : 10; $i < $tot; ++$i) {
-                $crs = new \stdClass;
-                $crs->element_id = $i + 2;
-                $crs->header = 'CD-'.$crs->element_id;
-                $crs->name = 'CD-'.$crs->element_id.' CourseName';
-                $crs->idnumber = 'CD-'.$crs->element_id;
-                $crs->programs = "PRG-{$i}*, PRG-1{$i} (CourseSets: CRSSET-{$crs->element_id})";
-                $crs->description = 'Some random description for Course CD-'.$i;
-                $crs->credits = '1.24';
-                $crs->completiongrade = '55.6789';
-                $crs->pctcomplete = empty($this->progressbarenabled) ? -1 : $i * 100.0 / 12.0;
-                $courses[] = $crs;
-            }
-            return [$courses, 12];
-        }
+        global $CFG;
         list($pageresults, $totalresultsamt) = parent::get_search_results($filters, $page);
         $pageresultsar = [];
         foreach ($pageresults as $id => $result) {
+            $result->wwwroot = $CFG->wwwroot;
             $result->header = get_string('course_header', 'eliswidget_teachingplan', $result);
+            unset($result->wwwroot);
+            $result->programs = static::get_course_programs($id);
+            $result->pctcomplete = -1;
+            if ($this->progressbarenabled && !empty($result->numenrol)) {
+                $result->pctcomplete = $result->completedusers * 100.0 / (float)$result->numenrol;
+            }
             $pageresultsar[$id] = $result;
         }
         return [array_values($pageresultsar), $totalresultsamt];

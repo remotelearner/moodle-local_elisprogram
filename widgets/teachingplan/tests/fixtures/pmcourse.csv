@@ -1,0 +1,6 @@
+id,name,code,idnumber,syllabus,lengthdescription,credits,completion_grade
+100,Test Course100,testcourse100,testcourse100,Test Syllabus,"Length Description 100",5.1,51
+101,Test Course101,testcourse101,testcourse101,Test Syllabus,"Length Description 101",10.2,52
+102,Test Course102,testcourse102,testcourse102,Test Syllabus,"Length Description 102",15.3,53
+103,Test Course103,testcourse103,testcourse103,Test Syllabus,"Length Description 103",20.4,54
+104,Test Course104,testcourse104,testcourse104,Test Syllabus,"Length Description 104",25.5,55
