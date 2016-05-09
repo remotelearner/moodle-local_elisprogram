@@ -27,7 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version = 2015010402;
-$plugin->release = '2.8.10.0 (Build: 20160224)';
+$plugin->release = '2.8.11.0 (Build: 20160509)';
 $plugin->component = 'eliswidget_learningplan';
 $plugin->dependencies = array(
     'eliswidget_common' => 2015010400
