@@ -303,6 +303,11 @@
     padding: 5px;
     vertical-align: middle;
 }
+.deepsight_actionpanel div.hasgradedata {
+  background-color: rgba(200, 200, 200, 0.8);
+  color: rgba(255, 0, 0, 1);
+  font-size: 1.2em;
+}
 .deepsight_actionpanel input[type="checkbox"].buttonset {
     display: none;
 }

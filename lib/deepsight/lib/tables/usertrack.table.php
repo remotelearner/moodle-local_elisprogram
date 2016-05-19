@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2013 Onwards Remote Learner.net Inc http://www.remote-learner.net
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -56,6 +56,8 @@ class deepsight_datatable_usertrack_base extends deepsight_datatable_track {
         $opts = parent::get_table_js_opts();
         $opts['dragdrop'] = true;
         $opts['multiselect'] = true;
+        $opts['langbulkconfirmhasgrades'] = get_string('ds_bulk_confirm_unenrol_track_hasgrades', 'local_elisprogram');
+        $opts['langconfirmhasgrades'] = get_string('confirm_unenrol_track_hasgrades', 'local_elisprogram');
         return $opts;
     }
 }
@@ -64,6 +66,16 @@ class deepsight_datatable_usertrack_base extends deepsight_datatable_track {
  * A datatable object for tracks assigned to this user.
  */
 class deepsight_datatable_usertrack_assigned extends deepsight_datatable_usertrack_base {
+
+    /**
+     * Gets an array of javascript files needed for operation.
+     * @see deepsight_datatable::get_js_dependencies()
+     */
+    public function get_js_dependencies() {
+        $deps = parent::get_js_dependencies();
+        $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_usertrack.js';
+        return $deps;
+    }
 
     /**
      * Gets the unassignment action.
@@ -87,6 +99,55 @@ class deepsight_datatable_usertrack_assigned extends deepsight_datatable_usertra
         $joinsql = parent::get_join_sql($filters);
         $joinsql[] = 'JOIN {'.usertrack::TABLE.'} trkass ON trkass.userid = '.$this->userid.' AND trkass.trackid = element.id';
         return $joinsql;
+    }
+
+    /**
+     * Formats the hasgrades params.
+     * @param array $row An array for a single result.
+     * @return array The transformed result.
+     */
+    protected function results_row_transform(array $row) {
+        global $DB;
+        $row = parent::results_row_transform($row);
+        $hasgrades = false;
+        $track = new track($row['element_id']);
+        foreach ($track->trackassignment as $trackass) {
+            if (($stu = student::get_userclass($this->userid, $trackass->classid)) && $stu->grade > 0) {
+                $hasgrades = true;
+                break;
+            }
+        }
+        $row['meta']['hasgrades'] = $hasgrades;
+        $row['meta']['inprogram'] = curriculumstudent::exists([new field_filter('curriculumid', $track->curriculum->id),
+                new field_filter('userid', $this->userid)]);
+        $sql = 'SELECT trkass.id
+                  FROM {'.trackassignment::TABLE.'} trkass
+                  JOIN {'.student::TABLE.'} stu ON stu.classid = trkass.classid
+                       AND stu.userid = ?
+                 WHERE trkass.trackid = ?';
+        $row['meta']['intrackclass'] = $DB->record_exists_sql($sql, [$this->userid, $row['element_id']]);
+        return $row;
+    }
+
+    /**
+     * Get an array of options to pass to the deepsight_datatable javascript object. Enables drag and drop, and multiselect.
+     * @return array An array of options, ready to be passed to $this->get_init_js()
+     */
+    public function get_table_js_opts() {
+        $opts = parent::get_table_js_opts();
+        $opts['rowfilter'] = 'function(row, rowdata) {
+                                  if (rowdata.meta.hasgrades) {
+                                      window.leptrackhasgradeslist.push(rowdata.element_id);
+                                  }
+                                  if (rowdata.meta.inprogram) {
+                                      window.leptrackuserinprogramlist.push(rowdata.element_id);
+                                  }
+                                  if (rowdata.meta.intrackclass) {
+                                      window.leptrackuserinclasslist.push(rowdata.element_id);
+                                  }
+                                  return row;
+                              }';
+        return $opts;
     }
 }
 
