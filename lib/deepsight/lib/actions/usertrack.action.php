@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2013 Onwards Remote Learner.net Inc http://www.remote-learner.net
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
@@ -37,6 +37,78 @@ trait deepsight_action_usertrack {
      */
     protected function can_manage_assoc($userid, $trackid) {
         return usertrack::can_manage_assoc($userid, $trackid);
+    }
+}
+
+/**
+ * Trait containing common methods for usertrack and trackuser unassign actions.
+ */
+trait deepsight_action_usertrack_trackuser {
+    /**
+     * Attempt an unenrolment of usertrack or trackuser.
+     *
+     * @param int $mainelementid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param array $elements An array of items to associate to the main element.
+     * @param bool $bulkaction Whether this is a bulk-action or not.
+     * @param string $assocclass The class used for this association.
+     * @param string $assocparams Parameters used to check for/create the association. Must contain keys:
+     *                                 'main' => The field name that corresponds to the main element's ID. Ex. 'courseid'
+     *                                 'incoming' => The field name that corresponds to incoming elements' IDs. Ex. 'programid'
+     *                                 'removefromprogram' => boolean flag to cascade unenrol track program.
+     *                                 'removefromclasses' => boolean flag to cascade unenrol track classes.
+     * @param string $faillang If there were elements that failed, use this string as an error message. If null, language string
+     *                         ds_action_generic_bulkfail from local_elisprogram will be used.
+     * @return array An array to format as JSON and return to the Javascript.
+     */
+    protected function attempt_unenrol($mainelementid, $elements, $bulkaction, $assocclass, $assocparams, $faillang = null) {
+        global $DB;
+        $failedops = [];
+        foreach ($elements as $incomingelementid => $label) {
+            if ($this->can_manage_assoc($mainelementid, $incomingelementid) === true) {
+                $assocqueryparams = [
+                    $assocparams['main'] => $mainelementid,
+                    $assocparams['incoming'] => $incomingelementid,
+                ];
+                $assignrec = $DB->get_record($assocclass::TABLE, $assocqueryparams);
+                if (!empty($assignrec)) {
+                    try {
+                        $association = new $assocclass($assignrec);
+                        $association->unenrol($assocparams['removefromprogram'], $assocparams['removefromclasses']);
+                    } catch (\Exception $e) {
+                        if ($bulkaction === true) {
+                            $failedops[] = $incomingelementid;
+                        } else {
+                            throw $e;
+                        }
+                    }
+                } else if (empty($assocparams['ignore_unassigned'])) {
+                    $failedops[] = $incomingelementid;
+                }
+            } else {
+                $failedops[] = $incomingelementid;
+            }
+        }
+
+        if ($bulkaction === true && !empty($failedops)) {
+            if ($faillang === null || !is_string($faillang)) {
+                $faillang = get_string('ds_action_generic_bulkfail', 'local_elisprogram');
+            }
+            return [
+                'result' => 'partialsuccess',
+                'msg' => $faillang,
+                'failedops' => $failedops,
+            ];
+        } else if (empty($failedops)) {
+            return [
+                'result' => 'success',
+                'msg' => 'Success',
+            ];
+        } else {
+            return [
+                'result' => 'fail',
+                'msg' => get_string('not_permitted', 'local_elisprogram')
+            ];
+        }
     }
 }
 
@@ -123,11 +195,29 @@ class deepsight_action_usertrack_assign extends deepsight_action_confirm {
 /**
  * An action to unassign tracks from a user.
  */
-class deepsight_action_usertrack_unassign extends deepsight_action_confirm {
+class deepsight_action_usertrack_unassign extends deepsight_action_standard {
     use deepsight_action_usertrack;
+    use deepsight_action_usertrack_trackuser;
 
+    /**
+     * The javascript class to use.
+     */
+    const TYPE = 'usertrack';
+
+    /**
+     * @var string The label for the action.
+     */
     public $label = 'Unassign';
+
+    /**
+     * @var string The icon for the action.
+     */
     public $icon = 'elisicon-unassoc';
+
+    /**
+     * @var string Mode indicating to the javascript how to operate.
+     */
+    public $mode = 'remove'; // TBD
 
     /**
      * Constructor.
@@ -154,17 +244,38 @@ class deepsight_action_usertrack_unassign extends deepsight_action_confirm {
     }
 
     /**
-     * Unassign the tracks from the user.
-     * @param array $elements An array containing information on tracks to unassign from the user.
+     * Provide options to the javascript.
+     * @return array An array of options.
+     */
+    public function get_js_opts() {
+        $opts = parent::get_js_opts();
+        $opts['condition'] = $this->condition;
+        $opts['opts']['actionurl'] = $this->endpoint;
+        $opts['opts']['desc_single'] = $this->descsingle;
+        $opts['opts']['desc_multiple'] = $this->descmultiple;
+        $opts['opts']['mode'] = 'delete'; // TBD
+        $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
+        $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
+        $opts['opts']['langrmprg'] = get_string('usertrack_removefromprogram', 'local_elisprogram');
+        $opts['opts']['langrmclasses'] = get_string('usertrack_removefromclasses', 'local_elisprogram');
+        $opts['opts']['langwarngrades'] = get_string('usertrack_warngrades', 'local_elisprogram');
+        $opts['opts']['langyes'] = get_string('yes', 'moodle');
+        $opts['opts']['langno'] = get_string('no', 'moodle');
+        return $opts;
+    }
+
+    /**
+     * Unenrol user from tracks
+     * @param array $elements An array of userset information to delete.
      * @param bool $bulkaction Whether this is a bulk-action or not.
      * @return array An array to format as JSON and return to the Javascript.
      */
     protected function _respond_to_js(array $elements, $bulkaction) {
-        global $DB;
         $userid = required_param('id', PARAM_INT);
-
+        $rmprg = optional_param('rmprg', 0, PARAM_INT);
+        $rmclasses = optional_param('rmclasses', 0, PARAM_INT);
         $assocclass = 'usertrack';
-        $assocparams = ['main' => 'userid', 'incoming' => 'trackid'];
-        return $this->attempt_unassociate($userid, $elements, $bulkaction, $assocclass, $assocparams);
+        $assocparams = ['main' => 'userid', 'incoming' => 'trackid', 'removefromprogram' => $rmprg, 'removefromclasses' => $rmclasses];
+        return $this->attempt_unenrol($userid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 }
