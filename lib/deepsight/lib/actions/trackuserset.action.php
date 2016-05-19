@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@
  * @author     James McQuillan <james.mcquillan@remote-learner.net>
  *
  */
+
+require_once(dirname(__FILE__).'/usersettrack.action.php');
 
 /**
  * Trait containing shared methods.
@@ -291,7 +293,9 @@ class deepsight_action_trackuserset_edit extends deepsight_action_standard {
  */
 class deepsight_action_trackuserset_unassign extends deepsight_action_standard {
     use deepsight_action_trackuserset;
-    const TYPE = 'usersettrack_unassign';
+    use deepsight_action_usersettrack_trackuserset;
+
+    const TYPE = 'trackuserset_unassign';
 
     public $label = 'Unassign';
     public $icon = 'elisicon-unassoc';
@@ -335,6 +339,9 @@ class deepsight_action_trackuserset_unassign extends deepsight_action_standard {
         $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
         $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
         $opts['opts']['langrecursive'] = get_string('usersettrack_recursive_unassign', 'local_elisprogram');
+        $opts['opts']['langremovefromprogram'] = get_string('track_removefromprogram', 'local_elisprogram');
+        $opts['opts']['langremovefromclasses'] = get_string('track_removefromclasses', 'local_elisprogram');
+        $opts['opts']['langhasgradedatawarning'] = get_string('usersettrack_warngrades', 'local_elisprogram');
         $opts['opts']['langyes'] = get_string('yes', 'moodle');
         $opts['opts']['langno'] = get_string('no', 'moodle');
         return $opts;
@@ -347,9 +354,10 @@ class deepsight_action_trackuserset_unassign extends deepsight_action_standard {
      * @return array An array to format as JSON and return to the Javascript.
      */
     protected function _respond_to_js(array $elements, $bulkaction) {
-        global $DB;
         $trackid = required_param('id', PARAM_INT);
         $recursive = optional_param('recursive', 0, PARAM_INT);
+        $rmfromprg = optional_param('removefromprogram', 0, PARAM_INT);
+        $rmfromclasses = optional_param('removefromclasses', 0, PARAM_INT);
         if ($recursive) {
             foreach ($elements as $usersetid => $label) {
                 $userset = new userset($usersetid);
@@ -360,7 +368,7 @@ class deepsight_action_trackuserset_unassign extends deepsight_action_standard {
             }
         }
         $assocclass = 'clustertrack';
-        $assocparams = ['main' => 'trackid', 'incoming' => 'clusterid'];
-        return $this->attempt_unassociate($trackid, $elements, $bulkaction, $assocclass, $assocparams);
+        $assocparams = ['main' => 'trackid', 'incoming' => 'clusterid', 'removefromprogram' => $rmfromprg, 'removefromclasses' => $rmfromclasses];
+        return $this->attempt_unassociate_clustertrack($trackid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 }
