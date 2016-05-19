@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -80,6 +80,11 @@ class userset extends data_object_with_custom_fields {
     public $deletesimple = false;
     public $deletesubs = false;
 
+    /** @var bool $removefromclasses whether to remove user(s) from track classes. */
+    public $removefromclasses = false;
+    /** @var bool $removefromprogram whether to remove user(s) from track program. */
+    public $removefromprogram = false;
+
     /**
      * Method to return all nested subsets of the current userset.
      *
@@ -90,6 +95,20 @@ class userset extends data_object_with_custom_fields {
         return userset::find(new join_filter('id', 'context', 'instanceid',
                 new AND_filter(array(new field_filter('path', "{$contextinst->path}/%", field_filter::LIKE),
                 new field_filter('contextlevel', CONTEXT_ELIS_USERSET)))), array('depth' => 'ASC'), 0, 0, $this->_db);
+    }
+
+    /**
+     * Set delete options
+     * @param array $options Associative array of option keys with boolean value to enable/disable.
+     * @return array Invalid options - empty on success.
+     */
+    public function set_delete_options(array $options) {
+        static $allowed = ['deletesubs', 'removefromprogram', 'removefromclasses'];
+        foreach ($allowed as $option) {
+            $this->$option = !empty($options[$option]);
+            unset($options[$option]);
+        }
+        return $options;
     }
 
     /**
@@ -109,7 +128,10 @@ class userset extends data_object_with_custom_fields {
             $filter = new field_filter('clusterid', $this->id);
 
             clustercurriculum::delete_records($filter, $this->_db);
-            clustertrack::delete_records($filter, $this->_db);
+            $usersettracks = clustertrack::find($filter, [], 0, 0, $this->_db);
+            foreach ($usersettracks as $usersettrack) {
+                $usersettrack->unassociate($this->removefromprogram, $this->removefromclasses);
+            }
             clusterassignment::delete_records($filter, $this->_db);
 
             //cluster plugin cleanup

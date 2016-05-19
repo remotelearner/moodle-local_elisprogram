@@ -273,6 +273,7 @@ $string['confirm_edit_active_courseset'] = '<b>This Course Set has active enrolm
 Are you sure you still want to save changes to the Course Set?';
 $string['confirm_edit_active_courseset_program'] = '<b>This Course Set has active enrolments! Changing this Program/Course Set association could change completion criteria for those enrolled users!</b><br/>
 Are you sure you still want to save changes to the Program/Course Set association?';
+$string['confirm_unenrol_track_hasgrades'] = 'Track contains grade data for user(s) - Are you sure to delete student grades too?';
 $string['context_level_user'] = 'Program Management User';
 $string['corequisites'] = 'Corequisite';
 $string['cost'] = 'Cost';
@@ -508,6 +509,7 @@ $string['ds_bulk_confirm_edit_crsset_active'] = 'Some selected Program/Course-Se
 Are you sure to save changes to selected Program/Course Set assocation(s)?';
 $string['ds_bulk_confirm_prg_active'] = 'Some selected Program(s) have active enrolments. Deleting them from the Course Set will change Program completion criteria for those enrolled users.<br/>
 Are you sure to remove selected Program(s) from the Course Set?';
+$string['ds_bulk_confirm_unenrol_track_hasgrades'] = 'Some track(s) contain graded data for user - Are you sure to delete grade data too?';
 $string['ds_bulk_defaultstatus'] = 'To perform bulk actions, drag rows here.';
 $string['ds_bulk_unloadconfirm'] = 'You have pending bulk actions, if you leave your selections will be lost.';
 $string['ds_changes'] = 'Please confirm the following changes before they are applied:';
@@ -1344,6 +1346,7 @@ $string['top_curricula_help'] = 'This setting controls whether existing programs
 When changing the value of this setting, please navigate to another page to determine whether this functionality is working as expected.';
 $string['top_curricula_setting'] = 'Display Programs at the Top Level';
 $string['track'] = 'Track';
+$string['trackform:confirm_unenrol_track_hasgrades'] = 'Track Class Instances contain grade data for user(s) - Confirm deletion of student grades?';
 $string['trackform:curriculum_curid'] = 'Program';
 $string['trackform:curriculum_curid_help'] = '<p>The program this track is an instance or replica of.</p>';;
 $string['trackform:curriculum_curidstatic'] = 'Program';
@@ -1355,6 +1358,10 @@ $string['trackform:curriculum_curid'] = 'Program';
 $string['trackform:curriculum_curid_help'] = '<p>The program this track is an instance or replica of.</p>';
 $string['trackform:curriculum_curidstatic'] = 'Program';
 $string['trackform:curriculum_curidstatic_help'] = '<p>The program this track is an instance or replica of.</p>';
+$string['trackform:track_removefromclasses'] = 'Remove Track users from Track Classes';
+$string['trackform:track_removefromclasses_help'] = 'If checked, all Track users will also be unenrolled from the Track\'s Classes (this cannot be undone)';
+$string['trackform:track_removefromprogram'] = 'Remove Track users from Track Program';
+$string['trackform:track_removefromprogram_help'] = 'If checked, all Track users will also be unenrolled from the Track\'s Program (this cannot be undone)';
 $string['trackform:track_autocreate'] = 'Create all class instances';
 $string['trackform:track_autocreate_help'] = '<p>Selecting this box automatically creates class instances of the course descriptions in the program as well as Moodle courses where templates were entered in the ELIS course setup. This should only be used if all of the course descriptions in the program are included in the track.</p>';
 $string['trackform:track_description'] = 'Description';
@@ -1385,6 +1392,8 @@ $string['track_name'] = 'Name';
 $string['track_no_matching_users'] = 'No matching users.';
 $string['track_num_classes'] = 'Number of class instances';
 $string['track_parcur'] = 'Parent program';
+$string['track_removefromprogram'] = 'Unenrol all users from associated Track Program too?';
+$string['track_removefromclasses'] = 'Unenrol all users from associated Track Class Instances too?';
 $string['track_role_help'] = 'This is the default role to assign to a Program Management user in any tracks they create.
 This type of role assignment will not take place for a particular track if that user is already permitted to edit that track.
 To disable this functionality, select "N/A" from the list.';
@@ -1487,7 +1496,10 @@ $string['usersettrack_recursive_edit'] = 'Apply Track association change to all 
 $string['usersettrack_recursive_unassign'] = 'Apply Track unassociation to all User Subsets';
 $string['usersfound'] = '{$a} users found';
 $string['usersubsets'] = 'User Subsets';
-
+$string['usertrack_removefromprogram'] = 'Unenrol from associated Track Program too?';
+$string['usertrack_removefromclasses'] = 'Unenrol from all associated Track Class Instances too?';
+$string['usertrack_warngrades'] = 'Warning: User has grade data that will be deleted! Are you sure?';
+$string['usersettrack_warngrades'] = 'Warning: User(s) have grade data that will be deleted! Are you sure?';
 $string['waiting'] = 'Waitlist';
 $string['waitinglistform_title'] = 'Class Instance is full';
 $string['waitlist'] = 'waitlist';
