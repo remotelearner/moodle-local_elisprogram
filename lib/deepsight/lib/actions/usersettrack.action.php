@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,6 +51,78 @@ trait deepsight_action_usersettrack {
             }
         }
         return true;
+    }
+}
+
+/**
+ * Trait containing shared methods for usersettrack and trackuserset unassign.
+ */
+trait deepsight_action_usersettrack_trackuserset {
+    /**
+     * Attempt an unassociation of clustertrack.
+     *
+     * @param int $mainelementid The ID of the main element. The is the ID of the 'one', in a 'many-to-one' association.
+     * @param array $elements An array of items to associate to the main element.
+     * @param bool $bulkaction Whether this is a bulk-action or not.
+     * @param string $assocclass The class used for this association.
+     * @param string $assocparams Parameters used to check for/create the association. Must contain keys:
+     *                                 'main' => The field name that corresponds to the main element's ID. Ex. 'courseid'
+     *                                 'incoming' => The field name that corresponds to incoming elements' IDs. Ex. 'programid'
+     *                                 'removefromprogram' => boolean flag to cascade unenrol track program.
+     *                                 'removefromclasses' => boolean flag to cascade unenrol track classes.
+     * @param string $faillang If there were elements that failed, use this string as an error message. If null, language string
+     *                         ds_action_generic_bulkfail from local_elisprogram will be used.
+     * @return array An array to format as JSON and return to the Javascript.
+     */
+    protected function attempt_unassociate_clustertrack($mainelementid, $elements, $bulkaction, $assocclass, $assocparams, $faillang = null) {
+        global $DB;
+        $failedops = [];
+        foreach ($elements as $incomingelementid => $label) {
+            if ($this->can_manage_assoc($mainelementid, $incomingelementid) === true) {
+                $assocqueryparams = [
+                    $assocparams['main'] => $mainelementid,
+                    $assocparams['incoming'] => $incomingelementid,
+                ];
+                $assignrec = $DB->get_record($assocclass::TABLE, $assocqueryparams);
+                if (!empty($assignrec)) {
+                    try {
+                        $association = new $assocclass($assignrec);
+                        $association->unassociate($assocparams['removefromprogram'], $assocparams['removefromclasses']);
+                    } catch (\Exception $e) {
+                        if ($bulkaction === true) {
+                            $failedops[] = $incomingelementid;
+                        } else {
+                            throw $e;
+                        }
+                    }
+                } else if (empty($assocparams['ignore_unassigned'])) {
+                    $failedops[] = $incomingelementid;
+                }
+            } else {
+                $failedops[] = $incomingelementid;
+            }
+        }
+
+        if ($bulkaction === true && !empty($failedops)) {
+            if ($faillang === null || !is_string($faillang)) {
+                $faillang = get_string('ds_action_generic_bulkfail', 'local_elisprogram');
+            }
+            return [
+                'result' => 'partialsuccess',
+                'msg' => $faillang,
+                'failedops' => $failedops,
+            ];
+        } else if (empty($failedops)) {
+            return [
+                'result' => 'success',
+                'msg' => 'Success',
+            ];
+        } else {
+            return [
+                'result' => 'fail',
+                'msg' => get_string('not_permitted', 'local_elisprogram')
+            ];
+        }
     }
 }
 
@@ -291,7 +363,9 @@ class deepsight_action_usersettrack_edit extends deepsight_action_standard {
  */
 class deepsight_action_usersettrack_unassign extends deepsight_action_standard {
     use deepsight_action_usersettrack;
-    const TYPE = 'usersettrack_unassign';
+    use deepsight_action_usersettrack_trackuserset;
+
+    const TYPE = 'trackuserset_unassign';
 
     public $label = 'Unassign';
     public $icon = 'elisicon-unassoc';
@@ -335,6 +409,9 @@ class deepsight_action_usersettrack_unassign extends deepsight_action_standard {
         $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
         $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
         $opts['opts']['langrecursive'] = get_string('usersettrack_recursive_unassign', 'local_elisprogram');
+        $opts['opts']['langremovefromprogram'] = get_string('track_removefromprogram', 'local_elisprogram');
+        $opts['opts']['langremovefromclasses'] = get_string('track_removefromclasses', 'local_elisprogram');
+        $opts['opts']['langhasgradedatawarning'] = get_string('usersettrack_warngrades', 'local_elisprogram');
         $opts['opts']['langyes'] = get_string('yes', 'moodle');
         $opts['opts']['langno'] = get_string('no', 'moodle');
         return $opts;
@@ -350,6 +427,8 @@ class deepsight_action_usersettrack_unassign extends deepsight_action_standard {
         global $DB;
         $usersetids = [required_param('id', PARAM_INT)];
         $recursive = optional_param('recursive', 0, PARAM_INT);
+        $rmfromprg = optional_param('removefromprogram', 0, PARAM_INT);
+        $rmfromclasses = optional_param('removefromclasses', 0, PARAM_INT);
         if ($recursive) {
             $userset = new userset($usersetids[0]);
             $subsets = $userset->get_all_subsets();
@@ -358,12 +437,12 @@ class deepsight_action_usersettrack_unassign extends deepsight_action_standard {
             }
         }
         $assocclass = 'clustertrack';
-        $assocparams = ['main' => 'clusterid', 'incoming' => 'trackid'];
+        $assocparams = ['main' => 'clusterid', 'incoming' => 'trackid', 'removefromprogram' => $rmfromprg, 'removefromclasses' => $rmfromclasses];
         $failed = [];
         $results = null;
         foreach ($usersetids as $usersetid) {
             $assocparams['ignore_unassigned'] = ($usersetid != $usersetids[0]) ? true : false;
-            $results = $this->attempt_unassociate($usersetid, $elements, $bulkaction, $assocclass, $assocparams);
+            $results = $this->attempt_unassociate_clustertrack($usersetid, $elements, $bulkaction, $assocclass, $assocparams);
             if (empty($results['result']) || $results['result'] != 'success') {
                 $failed[] = $usersetid;
             }

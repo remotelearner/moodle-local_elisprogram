@@ -49,7 +49,7 @@ class deepsight_datatable_trackuserset_base extends deepsight_datatable_userset 
         $deps = parent::get_js_dependencies();
         $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_confirm.js';
         $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_usersettrack.js';
-        $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_usersettrack_unassign.js';
+        $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_trackuserset_unassign.js';
         return $deps;
     }
 
@@ -101,13 +101,73 @@ class deepsight_datatable_trackuserset_available extends deepsight_datatable_tra
      * @return array The transformed result.
      */
     protected function results_row_transform(array $row) {
+        global $DB;
         $row = parent::results_row_transform($row);
 
         // Get autoenrol default for the current userset.
         $usersetclassification = usersetclassification::get_for_cluster($row['element_id']);
         $autoenroldefault = (!empty($usersetclassification->param_autoenrol_tracks)) ? 1 : 0;
         $row['autoenroldefault'] = $autoenroldefault;
+        $sql = 'SELECT usass.id
+                  FROM {'.clusterassignment::TABLE.'} usass
+                  JOIN {'.usertrack::TABLE.'} ut ON ut.userid = usass.userid
+                       AND ut.trackid = ?
+                  JOIN {'.trackassignment::TABLE.'} trkass ON trkass.trackid = ut.trackid
+                  JOIN {'.student::TABLE.'} stu ON stu.userid = ut.userid
+                       AND stu.classid = trkass.classid
+                 WHERE usass.clusterid = ?
+                       AND stu.grade > 0';
+        $row['meta']['hasgrades'] = $DB->record_exists_sql($sql, [$this->trackid, $row['element_id']]);
+        $sql = 'SELECT us.id
+                  FROM {'.userset::TABLE.'} us
+                  JOIN {'.clusterassignment::TABLE.'} usass ON usass.clusterid = us.id
+                  JOIN {'.usertrack::TABLE.'} ut ON ut.userid = usass.userid
+                       AND ut.trackid = ?
+                  JOIN {'.trackassignment::TABLE.'} trkass ON trkass.trackid = ut.trackid
+                  JOIN {'.clustertrack::TABLE.'} ustrk ON ustrk.trackid = ut.trackid
+                       AND ustrk.clusterid = us.id
+                  JOIN {'.student::TABLE.'} stu ON stu.userid = ut.userid
+                       AND stu.classid = trkass.classid
+                 WHERE us.parent = ?
+                       AND stu.grade > 0';
+        $row['meta']['subsethasgrades'] = $DB->record_exists_sql($sql, [$this->trackid, $row['element_id']]);
+        // Provide count of users in parent userset and all children.
+        $sql = 'SELECT COUNT(usass.id)
+                  FROM {'.userset::TABLE.'} us
+                  JOIN {'.clusterassignment::TABLE.'} usass ON usass.clusterid = us.id
+                  JOIN {'.clustertrack::TABLE.'} ustrk ON ustrk.trackid = ?
+                       AND ustrk.clusterid = us.id
+                 WHERE us.id = ? OR us.parent = ?';
+        $row['meta']['usercount'] = $DB->count_records_sql($sql, [$this->trackid, $row['element_id'], $row['element_id']]);
+        $sql = 'SELECT us.id
+                  FROM {'.userset::TABLE.'} us
+                  JOIN {'.clustertrack::TABLE.'} ustrk ON ustrk.trackid = ?
+                       AND ustrk.clusterid = us.id
+                 WHERE us.parent = ?';
+        $row['meta']['subsets'] = $DB->record_exists_sql($sql, [$this->trackid, $row['element_id']]);
         return $row;
+    }
+
+    /**
+     * Get an array of options to pass to the deepsight_datatable javascript object. Enables drag and drop, and multiselect.
+     * @return array An array of options, ready to be passed to $this->get_init_js()
+     */
+    public function get_table_js_opts() {
+        $opts = parent::get_table_js_opts();
+        $opts['rowfilter'] = 'function(row, rowdata) {
+                                  if (rowdata.meta.hasgrades) {
+                                      window.leptrackushasgradeslist.push(rowdata.element_id);
+                                  }
+                                  if (rowdata.meta.subsethasgrades) {
+                                      window.leptracksubsethasgradeslist.push(rowdata.element_id);
+                                  }
+                                  if (rowdata.meta.subsets) {
+                                      window.leptrackussubsetslist.push(rowdata.element_id);
+                                  }
+                                  window.leptrackusercountlist[rowdata.element_id] = rowdata.meta.usercount;
+                                  return row;
+                              }';
+        return $opts;
     }
 
     /**
