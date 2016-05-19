@@ -3,7 +3,7 @@
  * General class for displaying pages in the curriculum management system.
  *
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * Copyright (C) 2008-2016 Remote Learner.net Inc http://www.remote-learner.net
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
  * @package    elis
  * @subpackage curriculummanagement
  * @author     Remote-Learner.net Inc
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL
- * @copyright  (C) 2008-2012 Remote Learner.net Inc http://www.remote-learner.net
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -496,5 +496,84 @@ class trackpage extends managementpage {
         }
 
         return NULL;
+    }
+
+    /**
+     * Prints a deletion confirmation form.
+     * @param $obj record whose deletion is being confirmed
+     */
+    public function print_delete_form($obj) {
+        global $DB;
+        // Track has users?
+        if (($usertracks = usertrack::find(new field_filter('trackid', $obj->id))) && $usertracks->valid()) {
+            // Any Track users have grades?
+            $hasgradedata = false;
+            foreach ($usertracks as $usertrack) {
+                $sql = 'SELECT ta.id
+                          FROM {'.trackassignment::TABLE.'} ta
+                          JOIN {'.student::TABLE.'} stu ON ta.classid = stu.classid
+                               AND stu.userid = ?
+                         WHERE ta.trackid = ?
+                               AND stu.grade > 0';
+                if ($DB->record_exists_sql($sql, [$usertrack->userid, $obj->id])) {
+                    $hasgradedata = true;
+                    break;
+                }
+            }
+            $a = new stdClass;
+            $a->idnumber = $obj->name;
+            print_string('confirm_delete_track', 'local_elisprogram', $a);
+            $target = $this->get_new_page(array('action' => 'delete', 'confirm'=> '1'));
+            $form = new trackdeleteform($target->url, array('obj' => $obj, 'hasgradedata' => $hasgradedata));
+            $form->display();
+        } else {
+            parent::print_delete_form($obj);
+        }
+    }
+
+    /**
+     * Handler for the delete action.  Deletes the record identified by the
+     * 'id' parameter, if the confirm parameter is set.
+     *
+     * Modified from the default handler to pass in whether or not Track Programs
+     * and/or Track Classes should be deleted.
+     */
+    public function do_delete() {
+        global $CFG;
+
+        if (!optional_param('confirm', 0, PARAM_INT)) {
+            return $this->display('delete');
+        }
+
+        $removefromclasses = optional_param('removefromclasses', 0, PARAM_INT);
+        $removefromprogram = optional_param('removefromprogram', 0, PARAM_INT);
+        $hasgradedata = optional_param('hasgradedata', 0, PARAM_INT);
+        $hasgradedataconfirm = optional_param('hasgradedataconfirm', 0, PARAM_INT);
+
+        require_sesskey();
+
+        $id = required_param('id', PARAM_INT);
+
+        $targetpage = $this->get_new_page(['id' => $id, 'action' => 'view']);
+        $form = new trackdeleteform();
+
+        if ($form->is_cancelled() || ($removefromclasses && $hasgradedata && !$hasgradedataconfirm)) {
+            redirect($targetpage->url, get_string('delete_cancelled', 'local_elisprogram'));
+        }
+
+        $obj = $this->get_new_data_object($id);
+        $obj->load();
+        $obj->set_delete_options(['removefromclasses' => $removefromclasses, 'removefromprogram' => $removefromprogram]);
+        $obj->delete();
+
+        $returnurl = optional_param('return_url', null, PARAM_URL);
+        if ($returnurl === null) {
+            $targetpage = $this->get_new_page([], true);
+            $returnurl = $targetpage->url;
+        } else {
+            $returnurl = $CFG->wwwroot.$returnurl;
+        }
+
+        redirect($returnurl, get_string('notice_'.get_class($obj).'_deleted', 'local_elisprogram', $obj->to_object()));
     }
 }

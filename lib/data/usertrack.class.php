@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -209,10 +209,46 @@ class usertrack extends elis_data_object {
 
     /**
      * Unenrols a user from a track.
+     * @param bool $rmfromprg set true to remove user from assocaited track program too.
+     * @param bool $rmfromclasses set true to remove user from associated track classes too.
+     * @return array array of classids with unenrol errors due to being in other TrackClasses or Programs.
      */
-    function unenrol() {
-        //return $this->data_delete_record();
+    public function unenrol($rmfromprg = false, $rmfromclasses = false) {
+        global $DB;
+        $errors = [];
+        $curid = $this->track->curid;
+        if ($rmfromclasses) {
+            foreach ($this->track->trackassignment as $trackass) {
+                if (($stu = student::get_userclass($this->userid, $trackass->classid))) {
+                    // Ensure the user in not in another track that has the same class assignment,
+                    // or another program with this class' course assigned.
+                    $sql1 = 'SELECT usrtrk.id
+                               FROM {'.self::TABLE.'} usrtrk
+                               JOIN {'.trackassignment::TABLE.'} trackass ON trackass.trackid = usrtrk.trackid
+                                    AND trackass.classid = ?
+                              WHERE usrtrk.trackid != ?
+                                    AND usrtrk.userid = ?';
+                    $sql2 =  'SELECT curcrs.id
+                                FROM {'.curriculumcourse::TABLE.'} curcrs
+                                JOIN {'.curriculumstudent::TABLE.'} curstu ON curstu.curriculumid = curcrs.curriculumid
+                                     AND curstu.userid = ?
+                               WHERE curcrs.courseid = ?
+                                     AND curcrs.curriculumid != ?';
+                    if (!$DB->record_exists_sql($sql1, [$trackass->classid, $this->trackid, $this->userid]) &&
+                            !$DB->record_exists_sql($sql2, [$this->userid, $DB->get_field(pmclass::TABLE, 'courseid', ['id' => $trackass->classid]), $curid])) {
+                        $stu->delete();
+                    } else {
+                        $errors[] = $trackass->classid;
+                    }
+                }
+            }
+        }
+        if ($rmfromprg) {
+            $filters = array(new field_filter('curriculumid', $curid), new field_filter('userid', $this->userid));
+            curriculumstudent::delete_records($filters, $this->_db);
+        }
         parent::delete();
+        return $errors;
     }
 
     static $validation_rules = array(
@@ -347,7 +383,7 @@ class usertrack extends elis_data_object {
         global $USER, $DB;
 
         // TODO: Ugly, this needs to be overhauled
-        $tpage = new trackpage(array('id' => $trackid, 'action' => 'view'));
+        $tpage = new trackpage();
         if (!trackpage::can_enrol_into_track($trackid)) {
             //the users who satisfty this condition are a superset of those who can manage associations
             return false;

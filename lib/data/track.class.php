@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2015 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -65,6 +65,11 @@ class track extends data_object_with_custom_fields {
 
     private $location;
     private $templateclass;
+
+    /** @var bool $removefromclasses whether to remove user(s) from track classes. */
+    private $removefromclasses = false;
+    /** @var bool $removefromprogram whether to remove user(s) from track program. */
+    private $removefromprogram = false;
 
     static $associations = array(
         'clustertrack' => array(
@@ -357,17 +362,33 @@ class track extends data_object_with_custom_fields {
     }
 
     /**
+     * Set delete options
+     * @param array $options Associative array of option keys with boolean value to enable/disable.
+     * @return array Invalid options - empty on success.
+     */
+    public function set_delete_options(array $options) {
+        static $allowed = ['removefromprogram', 'removefromclasses'];
+        foreach ($allowed as $option) {
+            $this->$option = !empty($options[$option]);
+            unset($options[$option]);
+        }
+        return $options;
+    }
+
+    /**
      * Removes all associations with a track, this entails removing
      * user track, cluster track and class track associations
      * @param none
      * @return none
      */
     function delete() {
-        // Cascade
-        //clean make the delete cascade into association records
         $filter = new field_filter('trackid', $this->id);
 
-        usertrack::delete_records($filter, $this->_db);
+        // Cascade to Track program & class enrolments if desired.
+        $usertracks = usertrack::find($filter, [], 0, 0, $this->_db);
+        foreach ($usertracks as $usertrack) {
+            $usertrack->unenrol($this->removefromprogram, $this->removefromclasses);
+        }
         clustertrack::delete_records($filter, $this->_db);
         trackassignment::delete_records($filter, $this->_db);
 
