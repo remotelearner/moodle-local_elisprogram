@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -186,5 +186,43 @@ class trackform extends cmform {
             $this->_form->removeElement('autocreate');
         }
         parent::freeze();
+    }
+}
+
+/**
+ * Confirm Track unenrolment of users in Programs and/or Track Classes.
+ */
+class trackdeleteform extends cmform {
+    public function definition() {
+        global $CFG;
+
+        parent::definition();
+
+        $mform = &$this->_form;
+        $hasgradedata = !empty($this->_customdata['hasgradedata']);
+
+        $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
+        $mform->addElement('hidden', 'confirm');
+        $mform->setDefault('confirm', 1);
+        $mform->setType('confirm', PARAM_INT);
+        $mform->addElement('hidden', 'hasgradedata');
+        $mform->setDefault('hasgradedata', $hasgradedata);
+        $mform->setType('hasgradedata', PARAM_INT);
+
+        $mform->addElement('advcheckbox', 'removefromprogram', get_string('track_removefromprogram', 'local_elisprogram').':');
+        $mform->addHelpButton('removefromprogram', 'trackform:track_removefromprogram', 'local_elisprogram');
+        $mform->setDefault('removefromprogram', 0);
+
+        $mform->addElement('advcheckbox', 'removefromclasses', get_string('track_removefromclasses', 'local_elisprogram').':');
+        $mform->addHelpButton('removefromclasses', 'trackform:track_removefromclasses', 'local_elisprogram');
+        $mform->setDefault('removefromclasses', 0);
+
+        if ($hasgradedata) {
+            $mform->addElement('advcheckbox', 'hasgradedataconfirm', get_string('trackform:confirm_unenrol_track_hasgrades', 'local_elisprogram'));
+            $mform->setDefault('hasgradedataconfirm', 0);
+        }
+
+        $this->add_action_buttons(true, get_string('yes'));
     }
 }

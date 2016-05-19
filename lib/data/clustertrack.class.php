@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2014 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * @copyright  (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -55,6 +55,11 @@ class clustertrack extends elis_data_object {
 
     private $location;
     private $templateclass;
+
+    /** @var bool $removefromclasses whether to remove user(s) from track classes. */
+    private $removefromclasses = false;
+    /** @var bool $removefromprogram whether to remove user(s) from track program. */
+    private $removefromprogram = false;
 
     static $associations = array(
         'track' => array(
@@ -150,10 +155,12 @@ class clustertrack extends elis_data_object {
             // a(nother) cluster associated with the track.  We will left-join
             // with it, and only select non-matching records.
             $params = array();
-            $filter = 'SELECT u.userid '
-                . 'FROM {' . clusterassignment::TABLE . '} u '
-                . 'INNER JOIN {' . usertrack::TABLE . '} ut ON u.userid = ut.userid '
-                . 'WHERE ut.trackid = :trackid AND u.autoenrol=\'1\'';
+            $filter = 'SELECT u.userid
+                         FROM {'.clusterassignment::TABLE.'} u
+                   INNER JOIN {'. usertrack::TABLE.'} ut ON u.userid = ut.userid
+                        WHERE ut.trackid = :trackid
+                              AND u.clusterid != :clusterid2
+                              AND u.autoenrol = \'1\'';
             $params['trackid'] = $this->trackid;
 
             $sql = 'SELECT usrtrk.id '
@@ -162,16 +169,28 @@ class clustertrack extends elis_data_object {
                 . 'LEFT OUTER JOIN (' . $filter . ') f ON f.userid = cu.userid '
                 . 'WHERE cu.clusterid = :clusterid AND cu.autoenrol=\'1\' AND f.userid IS NULL';
             $params['clusterid'] = $this->clusterid;
+            $params['clusterid2'] = $this->clusterid;
 
             $usertracks = $this->_db->get_recordset_sql($sql, $params);
             foreach ($usertracks as $usertrack) {
                 $ut = new usertrack($usertrack->id);
-                $ut->unenrol();
+                $ut->unenrol($this->removefromprogram, $this->removefromclasses);
             }
             unset($usertracks);
         }
 
         parent::delete();
+    }
+
+    /**
+     * Unassociate cluster from a track with options.
+     * @param bool $rmfromprg set true to remove user from assocaited track program too.
+     * @param bool $rmfromclasses set true to remove user from associated track classes too.
+     */
+    public function unassociate($rmfromprg = false, $rmfromclasses = false) {
+        $this->removefromprogram = $rmfromprg;
+        $this->removefromclasses = $rmfromclasses;
+        $this->delete();
     }
 
     /// collection functions. (These may be able to replaced by a generic container/listing class)
