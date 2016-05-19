@@ -75,6 +75,15 @@ class deepsight_datatable_trackuser_base extends deepsight_datatable_user {
  * A datatable object for users assigned to the track.
  */
 class deepsight_datatable_trackuser_assigned extends deepsight_datatable_trackuser_base {
+    /**
+     * Gets an array of javascript files needed for operation.
+     * @see deepsight_datatable::get_js_dependencies()
+     */
+    public function get_js_dependencies() {
+        $deps = parent::get_js_dependencies();
+        $deps[] = '/local/elisprogram/lib/deepsight/js/actions/deepsight_action_usertrack.js';
+        return $deps;
+    }
 
     /**
      * Gets the unassignment action.
@@ -122,6 +131,55 @@ class deepsight_datatable_trackuser_assigned extends deepsight_datatable_trackus
         }
 
         return array($filtersql, $filterparams);
+    }
+
+    /**
+     * Formats the hasgrades params.
+     * @param array $row An array for a single result.
+     * @return array The transformed result.
+     */
+    protected function results_row_transform(array $row) {
+        global $DB;
+        $row = parent::results_row_transform($row);
+        $hasgrades = false;
+        $track = new track($this->trackid);
+        foreach ($track->trackassignment as $trackass) {
+            if (($stu = student::get_userclass($row['element_id'], $trackass->classid)) && $stu->grade > 0) {
+                $hasgrades = true;
+                break;
+            }
+        }
+        $row['meta']['hasgrades'] = $hasgrades;
+        $row['meta']['inprogram'] = curriculumstudent::exists([new field_filter('curriculumid', $track->curriculum->id),
+                new field_filter('userid', $row['element_id'])]);
+        $sql = 'SELECT trkass.id
+                  FROM {'.trackassignment::TABLE.'} trkass
+                  JOIN {'.student::TABLE.'} stu ON stu.classid = trkass.classid
+                       AND stu.userid = ?
+                 WHERE trkass.trackid = ?';
+        $row['meta']['intrackclass'] = $DB->record_exists_sql($sql, [$row['element_id'], $this->trackid]);
+        return $row;
+    }
+
+    /**
+     * Get an array of options to pass to the deepsight_datatable javascript object. Enables drag and drop, and multiselect.
+     * @return array An array of options, ready to be passed to $this->get_init_js()
+     */
+    public function get_table_js_opts() {
+        $opts = parent::get_table_js_opts();
+        $opts['rowfilter'] = 'function(row, rowdata) {
+                                  if (rowdata.meta.hasgrades) {
+                                      window.leptrackhasgradeslist.push(rowdata.element_id);
+                                  }
+                                  if (rowdata.meta.inprogram) {
+                                      window.leptrackuserinprogramlist.push(rowdata.element_id);
+                                  }
+                                  if (rowdata.meta.intrackclass) {
+                                      window.leptrackuserinclasslist.push(rowdata.element_id);
+                                  }
+                                  return row;
+                              }';
+        return $opts;
     }
 }
 

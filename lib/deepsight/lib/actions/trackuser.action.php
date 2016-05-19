@@ -24,6 +24,8 @@
  *
  */
 
+require_once(dirname(__FILE__).'/usertrack.action.php'); // For class deepsight_action_usertrack_confirm.
+
 /**
  * Trait containing shared methods.
  */
@@ -130,11 +132,22 @@ class deepsight_action_trackuser_assign extends deepsight_action_confirm {
 /**
  * An action to unassign users from a track.
  */
-class deepsight_action_trackuser_unassign extends deepsight_action_confirm {
+class deepsight_action_trackuser_unassign extends deepsight_action_standard {
     use deepsight_action_trackuser;
+    use deepsight_action_usertrack_trackuser;
+
+    /**
+     * The javascript class to use.
+     */
+    const TYPE = 'usertrack';
 
     public $label = 'Unassign';
     public $icon = 'elisicon-unassoc';
+
+    /**
+     * @var string Mode indicating to the javascript how to operate.
+     */
+    public $mode = 'remove'; // TBD
 
     /**
      * Constructor.
@@ -161,6 +174,27 @@ class deepsight_action_trackuser_unassign extends deepsight_action_confirm {
     }
 
     /**
+     * Provide options to the javascript.
+     * @return array An array of options.
+     */
+    public function get_js_opts() {
+        $opts = parent::get_js_opts();
+        $opts['condition'] = $this->condition;
+        $opts['opts']['actionurl'] = $this->endpoint;
+        $opts['opts']['desc_single'] = $this->descsingle;
+        $opts['opts']['desc_multiple'] = $this->descmultiple;
+        $opts['opts']['mode'] = 'delete'; // TBD
+        $opts['opts']['lang_bulk_confirm'] = get_string('ds_bulk_confirm', 'local_elisprogram');
+        $opts['opts']['lang_working'] = get_string('ds_working', 'local_elisprogram');
+        $opts['opts']['langrmprg'] = get_string('usertrack_removefromprogram', 'local_elisprogram');
+        $opts['opts']['langrmclasses'] = get_string('usertrack_removefromclasses', 'local_elisprogram');
+        $opts['opts']['langwarngrades'] = get_string('usertrack_warngrades', 'local_elisprogram');
+        $opts['opts']['langyes'] = get_string('yes', 'moodle');
+        $opts['opts']['langno'] = get_string('no', 'moodle');
+        return $opts;
+    }
+
+    /**
      * Unassign the users from the track.
      *
      * @param array $elements An array of user informatio to unassign from the track.
@@ -168,8 +202,9 @@ class deepsight_action_trackuser_unassign extends deepsight_action_confirm {
      * @return array An array to format as JSON and return to the Javascript.
      */
     protected function _respond_to_js(array $elements, $bulkaction) {
-        global $DB;
         $trackid = required_param('id', PARAM_INT);
+        $rmprg = optional_param('rmprg', 0, PARAM_INT);
+        $rmclasses = optional_param('rmclasses', 0, PARAM_INT);
 
         // Permissions.
         $tpage = new trackpage();
@@ -178,7 +213,7 @@ class deepsight_action_trackuser_unassign extends deepsight_action_confirm {
         }
 
         $assocclass = 'usertrack';
-        $assocparams = ['main' => 'trackid', 'incoming' => 'userid'];
-        return $this->attempt_unassociate($trackid, $elements, $bulkaction, $assocclass, $assocparams);
+        $assocparams = ['main' => 'trackid', 'incoming' => 'userid', 'removefromprogram' => $rmprg, 'removefromclasses' => $rmclasses];
+        return $this->attempt_unenrol($trackid, $elements, $bulkaction, $assocclass, $assocparams);
     }
 }
