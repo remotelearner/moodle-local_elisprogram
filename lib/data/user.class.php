@@ -836,22 +836,74 @@ class pm_custom_field_filter extends user_filter_type {
     var $_field;
 
     /**
+     * string $control The field control type.
+     */
+    protected $control = '';
+
+    /**
+     * object $customfieldfilter The custom field filter object.
+     */
+    protected $customfieldfilter = null;
+
+    /**
      * Constructor
      */
     public function __construct($name, $label, $advanced, $field) {
+        global $CFG;
         parent::__construct($name, $label, $advanced);
         $this->_field   = $field;
-    }
-
-    function setupForm(&$mform) {
-        $fieldname = "field_{$this->_field->shortname}";
-
+        $manual = null;
         if (isset($this->_field->owners['manual'])) {
             $manual = new field_owner($this->_field->owners['manual']);
             if (isset($manual->param_control)) {
-                $control = $manual->param_control;
+                $this->control = $manual->param_control;
             }
         }
+        $filtertype = '';
+        switch ($this->control) {
+            case 'menu':
+            case 'checkbox':
+                $filtertype = 'select';
+                break;
+            case 'text':
+            case 'textarea':
+                $filtertype = 'text';
+                break;
+            default:
+                $filtertype = $this->control;
+                break;
+        }
+        if (!empty($filtertype)) {
+            $filterfile = $CFG->dirroot.'/local/eliscore/lib/filtering/custom_field_'.$filtertype.'.php';
+            if (file_exists($filterfile)) {
+                require_once($filterfile);
+                $filterclass = 'generalized_filter_custom_field_'.$filtertype;
+                if (class_exists($filterclass)) {
+                    $options = ['fieldid' => $field->id, 'datatype' => $field->datatype, 'contextlevel' => CONTEXT_ELIS_USER];
+                    if ($filtertype == 'select') {
+                        if ($this->control == 'checkbox') {
+                            $options['choices'] = [0 => get_string('no'), 1 => get_string('yes')];
+                        } else {
+                            if (empty($manual)) {
+                                return;
+                            }
+                            $options['choices'] = $manual->get_menu_options();
+                            // Note: Moodle user_filtering cannot handle multiple values.
+                        }
+                    }
+                    $this->customfieldfilter = new $filterclass('ex_elisfield_'.$field->shortname, '{'.user::TABLE.'}', $name, $field->name,
+                            $advanced, $field, $options);
+                }
+            }
+        }
+    }
+
+    function setupForm(&$mform) {
+        if (!is_null($this->customfieldfilter)) {
+            return $this->customfieldfilter->setupForm($mform);
+        }
+        $fieldname = "field_{$this->_field->shortname}";
+        $control = $this->control;
         if (!isset($control)) {
             $control = 'text';
         }
@@ -862,6 +914,9 @@ class pm_custom_field_filter extends user_filter_type {
     }
 
     function check_data($formdata) {
+        if (!is_null($this->customfieldfilter)) {
+            return $this->customfieldfilter->check_data($formdata);
+        }
         $field = "field_{$this->_field->shortname}";
 
         if (!empty($formdata->$field)) {
@@ -875,6 +930,11 @@ class pm_custom_field_filter extends user_filter_type {
         global $DB;
 
         static $counter = 0;
+        if (!is_null($this->customfieldfilter)) {
+            $ret = $this->customfieldfilter->get_sql_filter($data);
+            // Moodle's user_filtering class requires valid return values.
+            return (is_array($ret) && count($ret) == 2) ? $ret : ['TRUE', []];
+        }
         $name = 'ex_elisfield'.$counter++;
         $sql = 'EXISTS (SELECT * FROM {'. $this->_field->data_table() ."} data
                         JOIN {context} ctx ON ctx.id = data.contextid
@@ -888,6 +948,9 @@ class pm_custom_field_filter extends user_filter_type {
     }
 
     function get_label($data) {
+        if (!is_null($this->customfieldfilter)) {
+            return $this->customfieldfilter->get_label($data);
+        }
         $retval = '';
 
         if (!empty($data['value'])) {
