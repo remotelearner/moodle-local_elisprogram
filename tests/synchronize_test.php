@@ -1705,8 +1705,9 @@ class synchronize_testcase extends \elis_database_test {
             $compelements[$i]->save();
         }
 
+        $hascmpeles = (!empty($compelements)) ? true : false;
         $sync = new \local_elisprogram\moodle\synchronize();
-        $sync->sync_coursegrade($sturec, $coursegradeitem, $coursegradegrade, $compelements, $completiongrade, $credits, $timenow);
+        $sync->sync_coursegrade($sturec, $coursegradeitem, $coursegradegrade, $hascmpeles, $completiongrade, $credits, $timenow);
 
         $syncedsturec = $DB->get_record(\student::TABLE, array('id' => $sturec->id));
         $expectedrec = array(
