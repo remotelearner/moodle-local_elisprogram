@@ -50,18 +50,20 @@ class synchronize {
     /**
      * Get syncable users.
      *
-     * @param int $muserid (Optional) If a valid moodle userid, only get information for this user.
+     * @param array $muserids (Optional) An array of moodle userids to limit syncing to.
      * @return moodle_recordset|array An iterable of syncable user information.
      */
-    public function get_syncable_users($muserid = 0) {
+    public function get_syncable_users($muserids = null) {
         global $DB, $CFG;
 
         // If we are filtering for a specific user, add the necessary SQL fragment.
-        $userparams = array();
         $gbr = explode(',', $CFG->gradebookroles);
         list($gbrsql1, $gbrparams1) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'param1');
         $gbrparams2 = array();
-        if (empty($muserid)) {
+        if (is_int($muserids) || (is_scalar($muserids) && (string)(int)$muserids === (string)$muserids)) {
+            $muserids = [$muserids];
+        }
+        if ($muserids === null || !is_array($muserids)) {
             list($gbrsql2, $gbrparams2) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'param2');
             // Get all users (or specified user) that are enroled in any Moodle course that is linked to an ELIS class.
             // The first query locates enrolments by role assignments to a course.
@@ -112,8 +114,12 @@ class synchronize {
                      WHERE ra.roleid $gbrsql2
                            AND u.deleted = 0
                   GROUP BY muid, pmclassid";
-         } else {
-            $userparams['userid'] = $muserid;
+            $params = array_merge($gbrparams1, $gbrparams2);
+        } else {
+            if (empty($muserids)) {
+                return [];
+            }
+            list($museridsql, $museridparams) = $DB->get_in_or_equal($muserids, SQL_PARAMS_NAMED);
             // Retrieve a single user.
             $sql = "SELECT u.id AS muid,
                            umdl.cuserid AS cmid,
@@ -135,11 +141,11 @@ class synchronize {
                       JOIN {".\pmclass::TABLE."} cls ON cls.id = cmc.classid
                       JOIN {".\course::TABLE."} ecrs ON ecrs.id = cls.courseid
                  LEFT JOIN {".\student::TABLE."} stu ON stu.userid = umdl.cuserid AND stu.classid = cls.id
-                     WHERE u.id = :userid
+                     WHERE u.id {$museridsql}
                            AND (ra.roleid {$gbrsql1})
-                  GROUP BY pmclassid";
+                  GROUP BY muid, pmclassid";
+            $params = array_merge($museridparams, $gbrparams1);
         }
-        $params = array_merge($gbrparams1, $userparams, $gbrparams2);
         $users = $DB->get_recordset_sql($sql, $params);
         if (!empty($users) && $users->valid() === true) {
             return $users;
@@ -277,17 +283,25 @@ class synchronize {
      *
      * This returns a list of moodle course ids which are only linked to one ELIS class.
      *
+     * @param array $courseids If supplied, limit results to these course ids.
      * @return array Array of moodle courses we would create ELIS class enrolments for, if they did not exist.
      */
-    public function get_courses_to_create_enrolments() {
+    public function get_courses_to_create_enrolments($courseids = []) {
         global $DB;
+
+        $courseidssql = '';
+        $courseidsparams = [];
+        if (!empty($courseids)) {
+            list($courseidssql, $courseidsparams) = $DB->get_in_or_equal($courseids);
+            $courseidssql = ' AND moodlecourseid '.$courseidssql;
+        }
 
         $sql = 'SELECT moodlecourseid, count(moodlecourseid) as numentries
                   FROM {'.\classmoodlecourse::TABLE.'}
-                 WHERE moodlecourseid > 0
+                 WHERE moodlecourseid > 0 '.$courseidssql.'
               GROUP BY moodlecourseid';
-        $recs = $DB->get_recordset_sql($sql);
-        $doenrol = array();
+        $recs = $DB->get_recordset_sql($sql, $courseidsparams);
+        $doenrol = [];
         foreach ($recs as $rec) {
             if ($rec->numentries == 1) {
                 $doenrol[$rec->moodlecourseid] = $rec->moodlecourseid;
@@ -354,11 +368,21 @@ class synchronize {
 
     /**
      * Get grade items and completion elements for elis and moodle courses that are linked together.
+     *
+     * @param array $courseids Array of course IDs to limit results to. If empty, does not limit.
      * @return array An array of grade items (index 0) and elis completion elements (index 1).
      *               Each are arrays of grade item/course completions, sorted by moodle course id, and pm course id.
      */
-    public function get_grade_and_completion_elements() {
+    public function get_grade_and_completion_elements($courseids = []) {
         global $DB;
+
+        $courseidssql = '';
+        $courseidsparams = [];
+        if (!empty($courseids)) {
+            list($courseidssql, $courseidsparams) = $DB->get_in_or_equal($courseids);
+            $courseidssql = ' AND cmc.moodlecourseid '.$courseidssql;
+        }
+
         $sql = 'SELECT cmp.id as cmpid,
                        cmp.courseid AS pmcourseid,
                        cmp.completion_grade cmpcompletiongrade,
@@ -369,12 +393,12 @@ class synchronize {
                   FROM {'.\coursecompletion::TABLE.'} cmp
                   JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = cmp.courseid
                   JOIN {'.\classmoodlecourse::TABLE.'} cmc ON cmc.classid = cls.id
-                       AND cmc.moodlecourseid > 0
+                       AND cmc.moodlecourseid > 0 '.$courseidssql.'
              LEFT JOIN {course_modules} crsmod ON crsmod.idnumber = cmp.idnumber
              LEFT JOIN {grade_items} gi
                            ON gi.courseid = cmc.moodlecourseid
                            AND (gi.idnumber = cmp.idnumber OR gi.idnumber = crsmod.id)';
-        $data = $DB->get_recordset_sql($sql);
+        $data = $DB->get_recordset_sql($sql, $courseidsparams);
         $gis = array();
         $linkedcompelems = array();
         $compelems = array();
@@ -405,12 +429,13 @@ class synchronize {
      * @param object $sturec The ELIS student record.
      * @param grade_item $coursegradeitem The Moodle course grade_item object.
      * @param grade_grade $coursegradegrade The Moodle user's grade data for the course grade item.
-     * @param array $compelements Array of ELIS course completion elements.
+     * @param bool $hascompelements true if item has completion elements, false otherwise.
      * @param int $completiongrade The completion grade for this course.
      * @param int $credits The number of credits for this course.
      * @param int $timenow The time to set the student complete time to if they are passed and don't have one set already.
      */
-    public function sync_coursegrade($sturec, $coursegradeitem, $coursegradegrade, $compelements, $completiongrade, $credits, $timenow) {
+    public function sync_coursegrade($sturec, $coursegradeitem, $coursegradegrade, $hascompelements, $completiongrade, $credits,
+            $timenow) {
         global $DB;
 
         if (isset($sturec->id) && !$sturec->locked && $coursegradegrade->finalgrade !== null) {
@@ -420,7 +445,7 @@ class synchronize {
             $sturec->grade = $this->get_scaled_grade($coursegradegrade, $coursegradeitem->grademax);
 
             // Update completion status if all that is required is a course grade.
-            if (empty($compelements) && $sturec->grade >= $completiongrade) {
+            if ($hascompelements === false && $sturec->grade >= $completiongrade) {
                 $sturec->completetime = $coursegradegrade->get_dategraded();
                 $sturec->completestatusid = \student::STUSTATUS_PASSED;
                 $sturec->credits = floatval($credits);
@@ -489,7 +514,7 @@ class synchronize {
         global $DB;
 
         foreach ($compelements as $giid => $coursecompletion) {
-            if (!isset($moodlegrades[$giid]->finalgrade) || !isset($gis[$giid])) {
+            if (!isset($moodlegrades[$giid]) || !isset($moodlegrades[$giid]->finalgrade) || !isset($gis[$giid])) {
                 continue;
             }
             // Calculate Moodle grade as a percentage.
@@ -593,16 +618,81 @@ class synchronize {
         require_once(\elispm::lib('data/classmoodlecourse.class.php'));
 
         set_time_limit(0);
+        $start = microtime(true);
         $timenow = time();
 
-        // error_log("synchronize.php::synchronize_moodle_class_grades({$requestedmuserid}) > ENTER!");
-        $causers = $this->get_syncable_users($requestedmuserid);
+        $lastrun = null;
+        $useincgsync = false;
+
+        // We only use incremental sync when running for all users. Otherwise running for a single user would record
+        // a new lastrun time and prevent other users from syncing.
+        if (empty($requestedmuserid)) {
+            $useincgsync = get_config('local_elisprogram', 'incrementalgradesync');
+            $useincgsync = (!empty($useincgsync)) ? true : false;
+            if ($useincgsync === true) {
+                $lastrun = get_config('local_elisprogram', 'incrementalgradesync_lastrun');
+                $lastrun = (!empty($lastrun)) ? (int)$lastrun : 0;
+            }
+        }
+
+        if ($useincgsync === true) {
+            if (in_cron()) {
+                mtrace('Using incremental grade sync.');
+                mtrace('Syncing grades and enrolments newer than '.date('r', $lastrun));
+            }
+        }
+
+        $syncableuserids = null;
+        if (!empty($requestedmuserid)) {
+            $syncableuserids = [$requestedmuserid];
+        } else {
+            if ($useincgsync === true) {
+                // Get a list of users that have at least one updated record since our last sync.
+                $sql = 'SELECT DISTINCT userid FROM {grade_grades} WHERE timemodified >= ?';
+                $newgradeuserids = $DB->get_records_sql($sql, [$lastrun]);
+                $newgradeuserids = array_keys($newgradeuserids);
+
+                $sql = 'SELECT DISTINCT userid FROM {user_enrolments} WHERE timecreated >= ?';
+                $newenrolmentuserids = $DB->get_records_sql($sql, [$lastrun]);
+                $newenrolmentuserids = array_keys($newenrolmentuserids);
+                $syncableuserids = array_unique(array_merge($newgradeuserids, $newenrolmentuserids));
+            }
+        }
+
+        $causers = $this->get_syncable_users($syncableuserids);
         if (empty($causers)) {
+            if (in_cron() && $useincgsync === true) {
+                mtrace('No new data.');
+            }
             return false;
         }
 
+        $syncablecourseids = [];
+        if ($useincgsync === true) {
+            $sql = 'SELECT DISTINCT gi.courseid
+                               FROM {grade_grades} gg
+                               JOIN {grade_items} gi ON gi.id = gg.itemid
+                              WHERE gg.timemodified >= ?';
+            $newgradecourseids = $DB->get_records_sql($sql, [$lastrun]);
+            $newgradecourseids = array_keys($newgradecourseids);
+
+            $sql = 'SELECT DISTINCT e.courseid
+                               FROM {user_enrolments} ue
+                               JOIN {enrol} e ON e.id = ue.enrolid
+                              WHERE ue.timecreated >= ?';
+            $newenrolmentcourseids = $DB->get_records_sql($sql, [$lastrun]);
+            $newenrolmentcourseids = array_keys($newenrolmentcourseids);
+            $syncablecourseids = array_unique(array_merge($newgradecourseids, $newenrolmentcourseids));
+        }
+
         // Get moodle course ids.
-        $moodlecourseidsorig = $DB->get_recordset_select(\classmoodlecourse::TABLE, 'moodlecourseid > 0'); // TBD: ELIS-9067.
+        if (!empty($syncablecourseids)) {
+            list($mcourseidselect, $mcourseidparams) = $DB->get_in_or_equal($syncablecourseids);
+            $mcourseidselect = 'moodlecourseid '.$mcourseidselect;
+            $moodlecourseidsorig = $DB->get_recordset_select(\classmoodlecourse::TABLE, $mcourseidselect, $mcourseidparams);
+        } else {
+            $moodlecourseidsorig = $DB->get_recordset_select(\classmoodlecourse::TABLE, 'moodlecourseid > 0');
+        }
         $moodlecourseids = array();
         foreach ($moodlecourseidsorig as $i => $rec) {
             if (empty($requestedmuserid) || is_enrolled(\context_course::instance($rec->moodlecourseid), $requestedmuserid)) {
@@ -624,14 +714,19 @@ class synchronize {
             unset($coursegradeitemsorig[$i]);
         }
 
-        $doenrol = $this->get_courses_to_create_enrolments();
+        $doenrol = $this->get_courses_to_create_enrolments($moodlecourseids);
 
-        list($allgis, $alllinkedcompelements, $allcompelements) = $this->get_grade_and_completion_elements();
+        list($allgis, $alllinkedcompelements, $allcompelements) = $this->get_grade_and_completion_elements($moodlecourseids);
 
         foreach ($causers as $causer) {
             $gis = (isset($allgis[$causer->moodlecourseid])) ? $allgis[$causer->moodlecourseid] : array();
             $linkedcompelements = (isset($alllinkedcompelements[$causer->pmcourseid])) ? $alllinkedcompelements[$causer->pmcourseid] : array();
+
             $compelements = (isset($allcompelements[$causer->pmcourseid])) ? $allcompelements[$causer->pmcourseid] : array();
+
+            if (!isset($coursegradeitems[$causer->moodlecourseid])) {
+                continue;
+            }
 
             $coursegradeitem = $coursegradeitems[$causer->moodlecourseid];
             $gis[$coursegradeitem->id] = $coursegradeitem;
@@ -663,7 +758,8 @@ class synchronize {
 
             // Handle the course grade.
             if (isset($moodlegrades[$coursegradeitem->id])) {
-                $this->sync_coursegrade($causer, $coursegradeitem, $moodlegrades[$coursegradeitem->id], $compelements,
+                $coursehascompelements = (!empty($compelements)) ? true : false;
+                $this->sync_coursegrade($causer, $coursegradeitem, $moodlegrades[$coursegradeitem->id], $coursehascompelements,
                         $causer->pmcoursecompletiongrade, $causer->pmcoursecredits, $timenow);
             }
 
@@ -674,6 +770,11 @@ class synchronize {
 
         if ($this->completionelementrecset !== null) {
             $this->completionelementrecset->close();
+        }
+        $end = microtime(true);
+
+        if ($useincgsync === true) {
+            set_config('incrementalgradesync_lastrun', $timenow, 'local_elisprogram');
         }
         // error_log("synchronize.php::synchronize_moodle_class_grades({$requestedmuserid}) > EXIT!");
     }

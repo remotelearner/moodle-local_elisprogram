@@ -183,6 +183,10 @@ if ($ADMIN->fulltree) {
                            get_string('force_unenrol_in_moodle_setting', 'local_elisprogram'),
                            get_string('force_unenrol_in_moodle_help', 'local_elisprogram'), 0));
 
+    $strincgsync = get_string('incrementalgradesync_setting', 'local_elisprogram');
+    $strincgsyncdesc = get_string('incrementalgradesync_help', 'local_elisprogram');
+    $settings->add(new \admin_setting_configcheckbox('local_elisprogram/incrementalgradesync', $strincgsync, $strincgsyncdesc, 0));
+
     // ***Curriculum Administration Block Settings
     $settings->add(new admin_setting_heading('crlm_admin_blk_settings', get_string('crlm_admin_blk_settings', 'local_elisprogram'), '' /* get_string('crlm_admin_blk_settings_info', 'local_elisprogram') */));
 
