@@ -37,6 +37,11 @@ if ($ADMIN->fulltree) {
     $settings->add(new \admin_setting_configcheckbox('eliswidget_learningplan/showunenrolledclasses', get_string('setting_showunenrolledclasses', 'eliswidget_learningplan'),
             get_string('setting_showunenrolledclasses_description', 'eliswidget_learningplan'), 0)); // Default: No (0).
 
+    $cfgincompletegrades = 'eliswidget_learningplan/showincompletegrades';
+    $strincompletegrades = get_string('setting_showincompletegrades', 'eliswidget_learningplan');
+    $descincompletegrades = get_string('setting_showincompletegrades_description', 'eliswidget_learningplan');
+    $settings->add(new \admin_setting_configcheckbox($cfgincompletegrades, $strincompletegrades, $descincompletegrades, 0));
+
     // Progress bar.
     $progressbarheader = get_string('setting_progressbar_heading', 'eliswidget_learningplan');
     $progressbarheaderdesc = get_string('setting_progressbar_heading_description', 'eliswidget_learningplan');
