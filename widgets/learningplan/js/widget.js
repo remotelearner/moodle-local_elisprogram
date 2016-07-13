@@ -253,6 +253,9 @@
             /** @var object The datatable object */
             this.datatable = datatable;
 
+            /** @var bool Whether to show grades for incomplete courses/classes. */
+            this.showincompletegrades = (typeof opts.showincompletegrades != 'undefined') ? opts.showincompletegrades : false;
+
             var main = this;
 
             /**
@@ -312,10 +315,11 @@
                 }
 
                 var completed = (status == 'passed' || status == 'failed');
+                var showgrade = (completed || main.showincompletegrades);
                 parenttr.append('<td align="left">'+main.data.header+'</td>');
                 parenttr.append('<td align="left">'+main.renderstatus(status).html()+'</td>');
                 parenttr.append('<td align="center">'+this.data.completetime+'</td>');
-                parenttr.append('<td align="center">'+(completed ? parseFloat(this.data.grade).toFixed(2) : '-')+'</td>');
+                parenttr.append('<td align="center">'+(showgrade ? parseFloat(this.data.grade).toFixed(2) : '-')+'</td>');
                 parenttr.addClass(completed ? 'completed' : 'notcompleted');
             }
 

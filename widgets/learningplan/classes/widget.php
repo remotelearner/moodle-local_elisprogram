@@ -95,6 +95,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
                 'show_completed' => get_string('show_completed', 'eliswidget_learningplan'),
                 'show_all' => get_string('show_all', 'eliswidget_learningplan'),
             ],
+            'showincompletegrades' => (bool)get_config('eliswidget_learningplan', 'showincompletegrades'),
         ];
         $initjs = "\n(function($) {"."\n";
         $initjs .= "$(function() { ";
