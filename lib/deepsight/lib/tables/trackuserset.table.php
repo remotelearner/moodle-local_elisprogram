@@ -311,4 +311,22 @@ class deepsight_datatable_trackuserset_assigned extends deepsight_datatable_trac
         // Show assigned users.
         return 'clsttrk.id IS NOT NULL';
     }
+
+    /**
+     * Gets an array of fields to include in the search SQL's SELECT clause. Adds in autoenrol to ensure auto enrol
+     * data is passed to deepsight.
+     *
+     * Pulls information from $this->fixed_columns, and each filter's get_select_fields() function.
+     *
+     * @uses deepsight_filter::get_select_fields();
+     * @uses deepsight_datatable_standard::$fixed_columns
+     * @uses deepsight_datatable_standard::$available_filters
+     * @param array $filters An Array of active filters to use to determine the needed select fields.
+     * @return array An array of fields for the SELECT clause.
+     */
+    protected function get_select_fields(array $filters) {
+        $selectfields = parent::get_select_fields($filters);
+        $selectfields[] = 'autoenrol AS autoenrol';
+        return  $selectfields;
+    }
 }
