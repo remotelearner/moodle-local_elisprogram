@@ -25,11 +25,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2015102205;
-$plugin->release = '3.0.4.2 (Build: 20160718)';
+$plugin->version = 2016052300;
+$plugin->release = '3.1.0.0 (Build: 20160720)';
 $plugin->component = 'local_elisprogram';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->dependencies = array(
-    'enrol_elis' => 2015102200,
-    'local_eliscore' => 2015102200
+    'enrol_elis' => 2016052300,
+    'local_eliscore' => 2016052300
 );
