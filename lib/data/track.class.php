@@ -530,7 +530,7 @@ class track extends data_object_with_custom_fields {
                     $status = $newenrolment->save();
                 } catch (pmclass_enrolment_limit_validation_exception $e) {
                     // autoenrol into waitlist
-                    $wait_record = new object();
+                    $wait_record = new stdClass;
                     $wait_record->userid = $userid;
                     $wait_record->classid = $trkcls->classid;
                     $wait_record->enrolmenttime = $now;
@@ -805,7 +805,7 @@ class trackassignment extends elis_data_object {
                     continue;
                 }
                 $now = time();
-                $stu_record = new object();
+                $stu_record = new stdClass;
                 $stu_record->userid = $user->userid;
                 $stu_record->user_idnumber = $user->idnumber;
                 $stu_record->classid = $this->classid;
@@ -817,7 +817,7 @@ class trackassignment extends elis_data_object {
                     $enrolment->save();
                 } catch (pmclass_enrolment_limit_validation_exception $e) {
                     // autoenrol into waitlist
-                    $wait_record = new object();
+                    $wait_record = new stdClass;
                     $wait_record->userid = $user->userid;
                     $wait_record->classid = $this->classid;
                     $wait_record->enrolmenttime = $now;

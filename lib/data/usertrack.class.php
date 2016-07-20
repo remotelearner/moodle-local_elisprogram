@@ -177,7 +177,7 @@ class usertrack extends elis_data_object {
             }
             $now = time();
             // enrol user in each autoenrolable class
-            $stu_record = new object();
+            $stu_record = new stdClass;
             $stu_record->userid = $userid;
             $stu_record->classid = $class->classid;
             $stu_record->enrolmenttime = $now;
@@ -188,7 +188,7 @@ class usertrack extends elis_data_object {
                 $status = $enrolment->save();
             } catch (pmclass_enrolment_limit_validation_exception $e) {
                 // autoenrol into waitlist
-                $wait_record = new object();
+                $wait_record = new stdClass;
                 $wait_record->userid = $userid;
                 $wait_record->classid = $class->classid;
                 $wait_record->enrolmenttime = $now;

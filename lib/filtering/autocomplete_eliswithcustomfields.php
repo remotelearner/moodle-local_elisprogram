@@ -517,7 +517,7 @@ class generalized_filter_autocomplete_eliswithcustomfields extends generalized_f
         } else {
             $value = $data['value'];
 
-            $a = new object();
+            $a = new stdClass;
             $a->label = $this->_label;
             if ($cmuser = new user($value)) {
                 $cmuser->load();

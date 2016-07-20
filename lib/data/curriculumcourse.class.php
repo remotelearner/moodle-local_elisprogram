@@ -400,7 +400,7 @@ class curriculumcourse extends elis_data_object {
         $result = !empty($cp->id);
 
         if ($result && $add_to_curriculum) {
-            $data = new object();
+            $data = new stdClass;
             $data->curriculumid = $this->curriculumid;
             $data->courseid = $cid;
             $data->timeperiod = 'year';
@@ -513,7 +513,7 @@ class curriculumcourse extends elis_data_object {
         $result = !empty($cp->id);
 
         if ($result && $add_to_curriculum) {
-            $data = new object();
+            $data = new stdClass;
             $data->curriculumid = $this->curriculumid;
             $data->courseid = $cid;
             $data->timeperiod = 'year';
