@@ -2034,6 +2034,11 @@ class synchronize_testcase extends \elis_database_test {
 
         $sync = new \local_elisprogram\moodle\synchronize();
 
+        if (isset($gradeitem['courseid'])) {
+            $mcoursecat = $this->getDataGenerator()->create_category();
+            $gradeitem['courseid'] = $this->getDataGenerator()->create_course(['category' => $mcoursecat->id])->id;
+        }
+
         // Test data setup.
         $crs = new \course(array(
             'idnumber' => 'CRS1',
