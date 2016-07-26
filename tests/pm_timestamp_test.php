@@ -81,8 +81,8 @@ class pm_timestamp_testcase extends basic_testcase {
         );
         return array(
                 array($datetimeparts1, 0, $today101gmt),
-                array($datetimeparts2, 14, array(2, 3, 4, 1, 1, 2013)),
-                array($datetimeparts2, 13.1, array(2, 3, 4, 1, 1, 2013)),
+                array($datetimeparts2, -1, 1357009384),
+                array($datetimeparts2, 13, 1356958984),
                 array($datetimeparts2, 12, 1356962584),
                 array($datetimeparts2, -12, 1357048984),
                 array($datetimeparts2, 12.5, 1356960784),
