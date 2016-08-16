@@ -155,7 +155,14 @@ function userset_groups_pm_userset_created_handler($clusterevent) {
  */
 function userset_groups_role_assigned_handler($roleassevent) {
     global $DB;
-    $roleassignment = $DB->get_record('role_assignments', array('id' => $roleassevent->other['id']));
+    if (!empty($roleassevent->other)) {
+        $roleassid = $roleassevent->other['id'];
+    } else if (!empty($roleassevent->roleid) && !empty($roleassevent->id)) {
+        $roleassid = $roleassevent->id;
+    } else {
+        return true;
+    }
+    $roleassignment = $DB->get_record('role_assignments', array('id' => $roleassid));
 
     // If an event has unassigned the role before this handler is called than ignore the event.
     if (empty($roleassignment)) {
