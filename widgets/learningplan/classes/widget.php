@@ -94,6 +94,7 @@ class widget extends \local_elisprogram\lib\widgetbase {
                 'show_classes' => get_string('show_classes', 'eliswidget_learningplan'),
                 'show_completed' => get_string('show_completed', 'eliswidget_learningplan'),
                 'show_all' => get_string('show_all', 'eliswidget_learningplan'),
+                'track_filtered' => get_string('track_filtered', 'eliswidget_learningplan'),
             ],
             'showincompletegrades' => (bool)get_config('eliswidget_learningplan', 'showincompletegrades'),
         ];
