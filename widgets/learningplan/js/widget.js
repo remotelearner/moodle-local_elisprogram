@@ -326,6 +326,9 @@
             jqthis.attr({id: 'pmclass_'+this.classid, class: 'pmclass'});
             jqthis.data('id', this.classid);
             this.render((jqthis.prop('tagName') == 'TR') ? jqthis : jqthis.parents('tr:first'));
+            if (typeof(this.data.trackid) != 'undefined' && this.data.trackid && this.data.enrol_id == null && this.data.waitlist_id == null) {
+                $('#program_'+this.programid).find('div.trackfiltered').html(opts.lang.track_filtered);
+            }
         });
     }
 
@@ -468,6 +471,8 @@
                     courselist.append('<th class="tableheaderrow">'+opts.lang.data_grade+'&nbsp;</th>');
                     coursetable.append(courselist);
                     coursewrapper.append(coursetable);
+                    var trackfiltered = $('<div></div>').addClass('trackfiltered');
+                    coursewrapper.append(trackfiltered);
                     var coursepagination = $('<div id="'+main.generateid('coursepagination')+'" class="ds_pagelinks"></div>');
                     coursewrapper.append(coursepagination);
                     childrenlist.append(coursewrapper);
@@ -502,14 +507,21 @@
             jqthis.children('.showhide').click(this.updatetable);
             var crsdatatable = this.updatetable();
             statusfilter.click(function() {
+                var trackfiltered = $('#program_'+main.programid).find('div.trackfiltered');
                 if (typeof(crsdatatable.filters['coursestatus']) !== 'undefined') {
                    delete crsdatatable.filters['coursestatus'];
                    statusfilter.html(opts.lang.show_completed);
+                   if (trackfiltered) {
+                       trackfiltered.css('display', 'block');
+                   }
                 } else {
                    crsdatatable.filters['coursestatus'] = [];
                    crsdatatable.filters['coursestatus'].push('completed');
                    crsdatatable.page = 1;
                    statusfilter.html(opts.lang.show_all);
+                   if (trackfiltered) {
+                       trackfiltered.css('display', 'none');
+                   }
                 }
                 crsdatatable.doupdatetable();
             });
