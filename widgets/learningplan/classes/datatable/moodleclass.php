@@ -81,6 +81,10 @@ class moodleclass extends \eliswidget_common\datatable\base {
         $selectfields[] = 'waitlist.classid AS waitlist_classid';
         $selectfields[] = 'waitlist.position AS waitlist_position';
         $selectfields[] = 'cls.maxstudents AS maxstudents';
+        if (property_exists($this, 'programid')) {
+            // ELIS-9423: Add track field.
+            $selectfields[] = 'usrtrk.trackid AS trackid';
+        }
         return $selectfields;
     }
 
@@ -101,15 +105,29 @@ class moodleclass extends \eliswidget_common\datatable\base {
      *               the JOIN sql fragments.
      */
     protected function get_join_sql(array $filters = array()) {
-        $newsql = [
+        $newsql = [];
+        $newparams = [];
+        // ELIS-9423: Add track table joins if applicable.
+        $programid = property_exists($this, 'programid') ? $this->programid : false;
+        if ($programid) {
+            $newsql = [
+                    'LEFT JOIN {'.\track::TABLE.'} trk ON trk.curid = ?',
+                    'LEFT JOIN {'.\usertrack::TABLE.'} usrtrk ON usrtrk.trackid = trk.id
+                               AND usrtrk.userid = ?',
+                    'LEFT JOIN {'.\trackassignment::TABLE.'} trkass ON trkass.trackid = usrtrk.trackid
+                               AND trkass.courseid = cls.courseid'
+            ];
+            $newparams = [$programid, $this->userid];
+        }
+        $newsql = array_merge($newsql, [
                 'LEFT JOIN {'.\classmoodlecourse::TABLE.'} clsmdl ON clsmdl.classid = cls.id',
                 'LEFT JOIN {course} mdlcrs ON mdlcrs.id = clsmdl.moodlecourseid',
                 'LEFT JOIN {'.\student::TABLE.'} stu ON stu.classid = cls.id
                            AND stu.userid = ?',
                 'LEFT JOIN {'.\waitlist::TABLE.'} waitlist ON waitlist.classid = cls.id
                            AND waitlist.userid = ?'
-        ];
-        $newparams = [$this->userid, $this->userid];
+        ]);
+        $newparams = array_merge($newparams, [$this->userid, $this->userid]);
         return [$newsql, $newparams];
     }
 
@@ -122,7 +140,20 @@ class moodleclass extends \eliswidget_common\datatable\base {
     protected function get_filter_sql(array $filters = array()) {
         $display = get_config('eliswidget_learningplan', 'showunenrolledclasses');
         if (empty($display)) {
-            $filters[] = ['sql' => '(stu.id IS NOT NULL OR waitlist.id IS NOT NULL)'];
+            // ELIS-9423: Add track filters for unenrolled classes.
+            $trackfilter = property_exists($this, 'programid') ? 'AND (usrtrk.id IS NULL OR cls.id = trkass.classid OR
+                    NOT EXISTS (SELECT \'x\'
+                                  FROM {'.\trackassignment::TABLE.'} trkass2
+                                 WHERE trkass2.trackid = usrtrk.trackid
+                                       AND trkass2.courseid = cls.courseid))' : '';
+            $filters[] = ['sql' => '((stu.id IS NOT NULL OR waitlist.id IS NOT NULL)'.$trackfilter.')'];
+        } else if (property_exists($this, 'programid')) {
+            // ELIS-9423: Add track filters for unenrolled classes.
+            $filters[] = ['sql' => '(usrtrk.id IS NULL OR cls.id = trkass.classid OR ((stu.id IS NOT NULL OR waitlist.id IS NOT NULL) AND
+                NOT EXISTS (SELECT \'x\'
+                              FROM {'.\trackassignment::TABLE.'} trkass2
+                             WHERE trkass2.trackid = usrtrk.trackid
+                                   AND trkass2.courseid = cls.courseid)))'];
         }
         return parent::get_filter_sql($filters);
     }

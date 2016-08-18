@@ -93,5 +93,6 @@ $string['status_failed'] = 'Failed';
 $string['status_full'] = 'Full';
 $string['status_unavailable'] = 'Unavailable';
 $string['status_waitlist'] = 'On the waitlist';
+$string['track_filtered'] = '* Note: Only showing unenrolled classes in Track!';
 $string['waiting'] = 'waiting';
 $string['working'] = 'Working...';
