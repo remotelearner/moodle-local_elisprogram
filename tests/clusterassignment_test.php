@@ -1,7 +1,7 @@
 <?php
 /**
  * ELIS(TM): Enterprise Learning Intelligence Suite
- * Copyright (C) 2008-2013 Remote-Learner.net Inc (http://www.remote-learner.net)
+ * Copyright (C) 2008-2016 Remote-Learner.net Inc (http://www.remote-learner.net)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * @package    local_elisprogram
  * @author     Remote-Learner.net Inc
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @copyright  (C) 2008-2013 Remote Learner.net Inc http://www.remote-learner.net
+ * @copyright  (C) 2008-2016 Remote Learner.net Inc (http://www.remote-learner.net)
  *
  */
 
@@ -32,6 +32,8 @@ require_once(elispm::lib('data/clusterassignment.class.php'));
 require_once(elispm::lib('data/usertrack.class.php'));
 require_once(elispm::lib('data/curriculumstudent.class.php'));
 require_once(elispm::lib('data/student.class.php'));
+
+require_once(elispm::file('tests/other/datagenerator.php'));
 
 /**
  * Test the clusterassignment data object.
@@ -69,4 +71,24 @@ class clusterassignment_testcase extends elis_database_test {
         $clusterassignment->save();
         $this->assertEquals(1, 1);
     }
+
+    /**
+     * Test clusterassignment deletion triggers correct cluster_deassigned event.
+     */
+    public function test_cluaterassignment_deletetriggersdeassignedevent() {
+        global $DB;
+        set_config('enabled_stores', 'logstore_standard', 'tool_log');
+        set_config('logguests', 1, 'logstore_standard');
+        set_config('buffersize', 0, 'logstore_standard');
+        $elisgen = new elis_program_datagenerator($DB);
+        $user1 = $elisgen->create_user();
+        $user2 = $elisgen->create_user();
+        $manager = get_log_manager(true);
+        $this->load_csv_data();
+        $clusterassignment = new clusterassignment(array('clusterid' => 1, 'userid' => $user2->id, 'plugin' => 'manual'));
+        $clusterassignment->save();
+        $clusterassignment->delete();
+        $this->assertTrue($DB->record_exists('logstore_standard_log', ['eventname' => '\\local_elisprogram\\event\\cluster_deassigned']));
+    }
+
 }
