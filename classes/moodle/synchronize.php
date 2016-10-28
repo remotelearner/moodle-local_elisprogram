@@ -58,13 +58,13 @@ class synchronize {
 
         // If we are filtering for a specific user, add the necessary SQL fragment.
         $gbr = explode(',', $CFG->gradebookroles);
-        list($gbrsql1, $gbrparams1) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'param1');
+        list($gbrsql1, $gbrparams1) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'gbr1param');
         $gbrparams2 = array();
         if (is_int($muserids) || (is_scalar($muserids) && (string)(int)$muserids === (string)$muserids)) {
             $muserids = [$muserids];
         }
         if ($muserids === null || !is_array($muserids)) {
-            list($gbrsql2, $gbrparams2) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'param2');
+            list($gbrsql2, $gbrparams2) = $DB->get_in_or_equal($gbr, SQL_PARAMS_NAMED, 'gbr2param');
             // Get all users (or specified user) that are enroled in any Moodle course that is linked to an ELIS class.
             // The first query locates enrolments by role assignments to a course.
             // The second query locates enrolments by role assignments to a course category.
