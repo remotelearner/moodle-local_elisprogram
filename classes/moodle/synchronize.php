@@ -36,6 +36,8 @@ require_once(__DIR__.'/../../../../lib/grade/grade_category.php');
 require_once(__DIR__.'/../../../../lib/grade/grade_item.php');
 require_once(__DIR__.'/../../../../lib/grade/grade_grade.php');
 
+define('DEFAULT_USER_CHUNK', 15000);
+
 /**
  * Handles Moodle - ELIS synchronization.
  */
@@ -631,7 +633,14 @@ class synchronize {
             $useincgsync = (!empty($useincgsync)) ? true : false;
             if ($useincgsync === true) {
                 $lastrun = get_config('local_elisprogram', 'incrementalgradesync_lastrun');
-                $lastrun = (!empty($lastrun)) ? (int)$lastrun : 0;
+                $origlastrun = $lastrun = (!empty($lastrun)) ? (int)$lastrun : 0;
+                $nextuser = get_config('local_elisprogram', 'incrementalgradesync_nextuser');
+                $syncstartuser = !empty($nextuser) ? (int)$nextuser : 0;
+                if ($syncstartuser) {
+                    $prevrun = get_config('local_elisprogram', 'incrementalgradesync_prevrun');
+                    $prevrun = !empty($prevrun) ? (int)$prevrun : 0;
+                    $lastrun = $prevrun;
+                }
             }
         }
 
@@ -647,15 +656,42 @@ class synchronize {
             $syncableuserids = [$requestedmuserid];
         } else {
             if ($useincgsync === true) {
+                $maxuserchunk = get_config('local_elisprogram', 'incrementalgradesync_maxuserchunk');
+                $limitnum = !empty($maxuserchunk) ? $maxuserchunk : DEFAULT_USER_CHUNK;
+
                 // Get a list of users that have at least one updated record since our last sync.
                 $sql = 'SELECT DISTINCT userid FROM {grade_grades} WHERE timemodified >= ?';
-                $newgradeuserids = $DB->get_records_sql($sql, [$lastrun]);
+                $params = [$lastrun];
+                if ($origlastrun != $lastrun) {
+                    $sql .= ' AND timemodified <= ?';
+                    $params[] = $origlastrun;
+                }
+                $sql .= ' ORDER BY id ASC';
+                $newgradeuserids = $DB->get_records_sql($sql, $params);
                 $newgradeuserids = array_keys($newgradeuserids);
 
                 $sql = 'SELECT DISTINCT userid FROM {user_enrolments} WHERE timecreated >= ?';
-                $newenrolmentuserids = $DB->get_records_sql($sql, [$lastrun]);
+                if ($origlastrun != $lastrun) {
+                    $sql .= ' AND timecreated <= ?';
+                }
+                $sql .= ' ORDER BY id ASC';
+                $newenrolmentuserids = $DB->get_records_sql($sql, $params);
                 $newenrolmentuserids = array_keys($newenrolmentuserids);
                 $syncableuserids = array_unique(array_merge($newgradeuserids, $newenrolmentuserids));
+                $nextsyncuser = 0;
+                if ($syncstartuser || count($syncableuserids) > $limitnum) {
+                    $limitfrom = 0;
+                    if ($syncstartuser) {
+                        if (($limitfrom = array_search($syncstartuser, $syncableuserids)) === false) {
+                            $limitfrom = 0;
+                        }
+                    }
+                    $syncableuserids = array_slice($syncableuserids, $limitfrom);
+                    if (count($syncableuserids) > $limitnum) {
+                        $nextsyncuser = $syncableuserids[$limitnum];
+                        $syncableuserids = array_slice($syncableuserids, 0, $limitnum);
+                    }
+                }
             }
         }
 
@@ -673,14 +709,24 @@ class synchronize {
                                FROM {grade_grades} gg
                                JOIN {grade_items} gi ON gi.id = gg.itemid
                               WHERE gg.timemodified >= ?';
-            $newgradecourseids = $DB->get_records_sql($sql, [$lastrun]);
+            $params = [$lastrun];
+            if ($origlastrun != $lastrun) {
+                $sql .= ' AND gg.timemodified <= ?';
+                $params[] = $origlastrun;
+            }
+            $sql .= ' ORDER BY gg.id ASC';
+            $newgradecourseids = $DB->get_records_sql($sql, $params);
             $newgradecourseids = array_keys($newgradecourseids);
 
             $sql = 'SELECT DISTINCT e.courseid
                                FROM {user_enrolments} ue
                                JOIN {enrol} e ON e.id = ue.enrolid
                               WHERE ue.timecreated >= ?';
-            $newenrolmentcourseids = $DB->get_records_sql($sql, [$lastrun]);
+            if ($origlastrun != $lastrun) {
+                $sql .= ' AND ue.timecreated <= ?';
+            }
+            $sql .= ' ORDER BY ue.id ASC';
+            $newenrolmentcourseids = $DB->get_records_sql($sql, $params);
             $newenrolmentcourseids = array_keys($newenrolmentcourseids);
             $syncablecourseids = array_unique(array_merge($newgradecourseids, $newenrolmentcourseids));
         }
@@ -774,7 +820,13 @@ class synchronize {
         $end = microtime(true);
 
         if ($useincgsync === true) {
-            set_config('incrementalgradesync_lastrun', $timenow, 'local_elisprogram');
+            set_config('incrementalgradesync_nextuser', $nextsyncuser, 'local_elisprogram');
+            if (!$syncstartuser) {
+                set_config('incrementalgradesync_lastrun', $timenow, 'local_elisprogram');
+            }
+            if (!$nextsyncuser) {
+                set_config('incrementalgradesync_prevrun', $origlastrun, 'local_elisprogram');
+            }
         }
         // error_log("synchronize.php::synchronize_moodle_class_grades({$requestedmuserid}) > EXIT!");
     }

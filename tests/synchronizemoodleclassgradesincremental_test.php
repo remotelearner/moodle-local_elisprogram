@@ -2468,4 +2468,88 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
             $CFG->debugdisplay = $olddebugdisplay;
         }
     }
+
+    /**
+     * Stress test the grade synchronisation when there are many userids passed to get_syncable_users();
+     */
+    public function test_maximum_syncable_users() {
+        // Set up environment.
+        set_config('incrementalgradesync', 1, 'local_elisprogram');
+        set_config('incrementalgradesync_maxuserchunk', 100, 'local_elisprogram');
+
+        // Set up enrolments.
+        $this->load_csv_data();
+        $this->make_course_enrollable();
+
+        // Create LO and Moodle grade.
+        $gradeitem = $this->create_grade_item();
+        $completionid = $this->create_course_completion('manualitem', 50);
+        $moodleuserids = [];
+        for ($i = 1; $i < 400; ++$i) {
+            $elisuser = new user(['username' => 'user'.$i, 'idnumber' => 'user'.$i, 'firstname' => 'Test', 'lastname' => 'User'.$i,
+                'email' => "testuser{$i}@noreply.com", 'country' => 'CA']);
+            $elisuser->save();
+            $moodleuserids[] = $mu = $elisuser->get_moodleuser(false)->id;
+            enrol_try_internal_enrol(2, $mu, 1);
+            $rndgrade = rand(42, 99);
+            $this->create_grade_grade($gradeitem->id, $mu, $rndgrade, 100, 12347);
+            // Enrol in PM class.
+            $studentgrade = new \student_grade([
+                'userid' => $elisuser->id,
+                'classid' => 100,
+                'completionid' => $completionid,
+                'grade' => $rndgrade,
+                'locked' => 0,
+                'timegraded' => 12346,
+            ]);
+            $studentgrade->save();
+        }
+        $sync = new \local_elisprogram\moodle\synchronize;
+        $timenow = time();
+        $sync->synchronize_moodle_class_grades();
+        $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_lastrun'));
+        $this->assertEquals(0, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));
+        $this->assertEquals($moodleuserids[100], get_config('local_elisprogram', 'incrementalgradesync_nextuser'));
+
+        $sync->synchronize_moodle_class_grades();
+        $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_lastrun'));
+        $this->assertEquals(0, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));
+        $this->assertEquals($moodleuserids[200], get_config('local_elisprogram', 'incrementalgradesync_nextuser'));
+
+        $newgradetime = time();
+        for ($i = 1; $i <= 101; ++$i) {
+            $elisuser = new user(['username' => 'userx'.$i, 'idnumber' => 'userx'.$i, 'firstname' => 'Test', 'lastname' => 'UserX'.$i,
+                'email' => "testuserx{$i}@noreply.com", 'country' => 'CA']);
+            $elisuser->save();
+            $mu = $elisuser->get_moodleuser(false)->id;
+            enrol_try_internal_enrol(2, $mu, 1);
+            $rndgrade = rand(42, 99);
+            $this->create_grade_grade($gradeitem->id, $mu, $rndgrade, 100, $newgradetime);
+            // Enrol in PM class.
+            $studentgrade = new \student_grade([
+                'userid' => $elisuser->id,
+                'classid' => 100,
+                'completionid' => $completionid,
+                'grade' => $rndgrade,
+                'locked' => 0,
+                'timegraded' => $newgradetime - 1,
+            ]);
+            $studentgrade->save();
+        }
+
+        $sync->synchronize_moodle_class_grades();
+        $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_lastrun'));
+        $this->assertEquals(0, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));
+        $this->assertEquals($moodleuserids[300], get_config('local_elisprogram', 'incrementalgradesync_nextuser'));
+
+        $sync->synchronize_moodle_class_grades();
+        $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_lastrun'));
+        $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));
+        $this->assertEquals(0, get_config('local_elisprogram', 'incrementalgradesync_nextuser'));
+
+        $sync->synchronize_moodle_class_grades();
+        $this->assertNotEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_lastrun'));
+        $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));
+        $this->assertGreaterThan(0, get_config('local_elisprogram', 'incrementalgradesync_nextuser'));
+    }
 }
