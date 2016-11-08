@@ -2477,6 +2477,7 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
         // Set up environment.
         set_config('incrementalgradesync', 1, 'local_elisprogram');
         set_config('incrementalgradesync_maxuserchunk', 100, 'local_elisprogram');
+        set_config('incrementalgradesync_maxsyncsecs', 10000, 'local_elisprogram');
 
         // Set up enrolments.
         $this->load_csv_data();
@@ -2512,6 +2513,7 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
         $this->assertEquals(0, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));
         $this->assertEquals($moodleuserids[100], get_config('local_elisprogram', 'incrementalgradesync_nextuser'));
 
+        set_config('incrementalgradesync_maxuserchunk', 100, 'local_elisprogram');
         $sync->synchronize_moodle_class_grades();
         $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_lastrun'));
         $this->assertEquals(0, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));
@@ -2538,16 +2540,19 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
             $studentgrade->save();
         }
 
+        set_config('incrementalgradesync_maxuserchunk', 100, 'local_elisprogram');
         $sync->synchronize_moodle_class_grades();
         $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_lastrun'));
         $this->assertEquals(0, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));
         $this->assertEquals($moodleuserids[300], get_config('local_elisprogram', 'incrementalgradesync_nextuser'));
 
+        set_config('incrementalgradesync_maxuserchunk', 100, 'local_elisprogram');
         $sync->synchronize_moodle_class_grades();
         $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_lastrun'));
         $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));
         $this->assertEquals(0, get_config('local_elisprogram', 'incrementalgradesync_nextuser'));
 
+        set_config('incrementalgradesync_maxuserchunk', 100, 'local_elisprogram');
         $sync->synchronize_moodle_class_grades();
         $this->assertNotEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_lastrun'));
         $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));

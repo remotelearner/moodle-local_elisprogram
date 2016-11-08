@@ -36,7 +36,11 @@ require_once(__DIR__.'/../../../../lib/grade/grade_category.php');
 require_once(__DIR__.'/../../../../lib/grade/grade_item.php');
 require_once(__DIR__.'/../../../../lib/grade/grade_grade.php');
 
-define('DEFAULT_USER_CHUNK', 15000);
+define('MIN_AUTOCHUNK_SECS', 45);
+define('MIN_USER_CHUNK', 100);
+define('MAX_USER_CHUNK', 2500);
+define('DEFAULT_USER_CHUNK', 250);
+define('DEFAULT_SYNC_SECS', 200);
 
 /**
  * Handles Moodle - ELIS synchronization.
@@ -53,9 +57,10 @@ class synchronize {
      * Get syncable users.
      *
      * @param array $muserids (Optional) An array of moodle userids to limit syncing to.
+     * @param array $mcourseids (Optional) An array of moodle courseids to limit syncing to.
      * @return moodle_recordset|array An iterable of syncable user information.
      */
-    public function get_syncable_users($muserids = null) {
+    public function get_syncable_users($muserids = null, $mcourseids = null) {
         global $DB, $CFG;
 
         // If we are filtering for a specific user, add the necessary SQL fragment.
@@ -74,9 +79,7 @@ class synchronize {
                            cu.id AS cmid,
                            crs.id AS moodlecourseid,
                            cls.id AS pmclassid,
-                           ecrs.id AS pmcourseid,
-                           ecrs.completion_grade AS pmcoursecompletiongrade,
-                           ecrs.credits AS pmcoursecredits,
+                           cls.courseid AS pmcourseid,
                            stu.*
                       FROM {user} u
                       JOIN {role_assignments} ra ON u.id = ra.userid
@@ -87,7 +90,6 @@ class synchronize {
                       JOIN {course} crs ON crs.id = ctx.instanceid
                       JOIN {".\classmoodlecourse::TABLE."} cmc ON cmc.moodlecourseid = crs.id
                       JOIN {".\pmclass::TABLE."} cls ON cls.id = cmc.classid
-                      JOIN {".\course::TABLE."} ecrs ON ecrs.id = cls.courseid
                  LEFT JOIN {".\student::TABLE."} stu ON stu.userid = cu.id AND stu.classid = cls.id
                      WHERE ra.roleid $gbrsql1
                            AND u.deleted = 0
@@ -97,9 +99,7 @@ class synchronize {
                            cu.id AS cmid,
                            crs.id AS moodlecourseid,
                            cls.id AS pmclassid,
-                           ecrs.id AS pmcourseid,
-                           ecrs.completion_grade AS pmcoursecompletiongrade,
-                           ecrs.credits AS pmcoursecredits,
+                           cls.courseid AS pmcourseid,
                            stu.*
                       FROM {user} u
                       JOIN {role_assignments} ra ON u.id = ra.userid
@@ -111,7 +111,6 @@ class synchronize {
                       JOIN {course} crs ON crs.id = ctx2.instanceid
                       JOIN {".\classmoodlecourse::TABLE."} cmc ON cmc.moodlecourseid = crs.id
                       JOIN {".\pmclass::TABLE."} cls ON cls.id = cmc.classid
-                      JOIN {".\course::TABLE."} ecrs ON ecrs.id = cls.courseid
                  LEFT JOIN {".\student::TABLE."} stu ON stu.userid = cu.id AND stu.classid = cls.id
                      WHERE ra.roleid $gbrsql2
                            AND u.deleted = 0
@@ -122,29 +121,34 @@ class synchronize {
                 return [];
             }
             list($museridsql, $museridparams) = $DB->get_in_or_equal($muserids, SQL_PARAMS_NAMED);
+            if (false && !empty($mcourseids) && count($mcourseids) < 500) { // Not implemented.
+                list($mcourseidsql, $mcourseidparams) = $DB->get_in_or_equal($mcourseids, SQL_PARAMS_NAMED);
+            } else {
+                $mcourseidsql = '';
+                $mcourseidparams = [];
+            }
             // Retrieve a single user.
-            $sql = "SELECT u.id AS muid,
+            $sql = "SELECT umdl.muserid AS muid,
                            umdl.cuserid AS cmid,
-                           crs.id AS moodlecourseid,
+                           cmc.moodlecourseid AS moodlecourseid,
                            cls.id AS pmclassid,
-                           ecrs.id AS pmcourseid,
-                           ecrs.completion_grade AS pmcoursecompletiongrade,
-                           ecrs.credits AS pmcoursecredits,
+                           cls.courseid AS pmcourseid,
                            stu.*
-                      FROM {user} u
-                      JOIN {role_assignments} ra ON u.id = ra.userid
-                      JOIN {context} ctx ON ctx.id = ra.contextid
-                           AND (ctx.contextlevel = ".CONTEXT_COURSECAT." OR ctx.contextlevel = ".CONTEXT_COURSE.")
-                      JOIN {context} ctx2 ON (ctx2.path LIKE concat('%/',ctx.id,'/%') OR ctx2.path LIKE concat('%/',ctx.id))
-                           AND ctx2.contextlevel = ".CONTEXT_COURSE."
-                      JOIN {".\usermoodle::TABLE."} umdl ON umdl.muserid = u.id
-                      JOIN {course} crs ON (crs.id = ctx2.instanceid OR (ctx.contextlevel = ".CONTEXT_COURSE." AND crs.id = ctx.instanceid))
-                      JOIN {".\classmoodlecourse::TABLE."} cmc ON cmc.moodlecourseid = crs.id
+                      FROM {".\classmoodlecourse::TABLE."} cmc
+                      JOIN {".\usermoodle::TABLE."} umdl ON umdl.muserid {$museridsql}
                       JOIN {".\pmclass::TABLE."} cls ON cls.id = cmc.classid
-                      JOIN {".\course::TABLE."} ecrs ON ecrs.id = cls.courseid
                  LEFT JOIN {".\student::TABLE."} stu ON stu.userid = umdl.cuserid AND stu.classid = cls.id
-                     WHERE u.id {$museridsql}
-                           AND (ra.roleid {$gbrsql1})
+                     WHERE cmc.moodlecourseid IN
+                           (SELECT crs.id
+                              FROM {role_assignments} ra
+                              JOIN {context} ctx ON ctx.id = ra.contextid
+                                   AND (ctx.contextlevel = ".CONTEXT_COURSECAT." OR ctx.contextlevel = ".CONTEXT_COURSE.")
+                              JOIN {context} ctx2 ON ctx2.contextlevel = ".CONTEXT_COURSE."
+                                   AND (ctx2.path LIKE concat('%/',ctx.id,'/%') OR ctx2.path LIKE concat('%/',ctx.id))
+                              JOIN {course} crs ON (crs.id = ctx2.instanceid
+                                   OR (ctx.contextlevel = ".CONTEXT_COURSE." AND crs.id = ctx.instanceid))
+                             WHERE ra.userid = umdl.muserid
+                                   AND ra.roleid {$gbrsql1})
                   GROUP BY muid, pmclassid";
             $params = array_merge($museridparams, $gbrparams1);
         }
@@ -622,6 +626,7 @@ class synchronize {
         set_time_limit(0);
         $start = microtime(true);
         $timenow = time();
+        $maxtime = 0;
 
         $lastrun = null;
         $useincgsync = false;
@@ -632,6 +637,9 @@ class synchronize {
             $useincgsync = get_config('local_elisprogram', 'incrementalgradesync');
             $useincgsync = (!empty($useincgsync)) ? true : false;
             if ($useincgsync === true) {
+                $maxsyncsecs = get_config('local_elisprogram', 'incrementalgradesync_maxsyncsecs');
+                $maxsyncsecs = !empty($maxsyncsecs) ? $maxsyncsecs : DEFAULT_SYNC_SECS;
+                $maxtime = $timenow + $maxsyncsecs;
                 $lastrun = get_config('local_elisprogram', 'incrementalgradesync_lastrun');
                 $origlastrun = $lastrun = (!empty($lastrun)) ? (int)$lastrun : 0;
                 $nextuser = get_config('local_elisprogram', 'incrementalgradesync_nextuser');
@@ -695,14 +703,6 @@ class synchronize {
             }
         }
 
-        $causers = $this->get_syncable_users($syncableuserids);
-        if (empty($causers)) {
-            if (in_cron() && $useincgsync === true) {
-                mtrace('No new data.');
-            }
-            return false;
-        }
-
         $syncablecourseids = [];
         if ($useincgsync === true) {
             $sql = 'SELECT DISTINCT gi.courseid
@@ -729,6 +729,23 @@ class synchronize {
             $newenrolmentcourseids = $DB->get_records_sql($sql, $params);
             $newenrolmentcourseids = array_keys($newenrolmentcourseids);
             $syncablecourseids = array_unique(array_merge($newgradecourseids, $newenrolmentcourseids));
+        }
+
+        $causers = $this->get_syncable_users($syncableuserids, $syncablecourseids);
+        if (empty($causers)) {
+            if ($useincgsync === true) {
+                set_config('incrementalgradesync_nextuser', $nextsyncuser, 'local_elisprogram');
+                if (!$nextsyncuser) {
+                    if (in_cron()) {
+                        mtrace('No new data.');
+                    }
+                    set_config('incrementalgradesync_prevrun', $origlastrun, 'local_elisprogram');
+                }
+                if (!$syncstartuser) {
+                    set_config('incrementalgradesync_lastrun', $timenow, 'local_elisprogram');
+                }
+            }
+            return false;
         }
 
         // Get moodle course ids.
@@ -763,8 +780,23 @@ class synchronize {
         $doenrol = $this->get_courses_to_create_enrolments($moodlecourseids);
 
         list($allgis, $alllinkedcompelements, $allcompelements) = $this->get_grade_and_completion_elements($moodlecourseids);
-
+        $ecrs = [];
+        $lastuser = 0;
+        $cnt = 0;
         foreach ($causers as $causer) {
+            if ($maxtime && $lastuser != $causer->muid) {
+                // Finished syncing a user, check for over time limit.
+                ++$cnt;
+                if ($lastuser && time() > $maxtime) {
+                    if (in_cron()) {
+                        mtrace("Over time limit - exiting.");
+                    }
+                    $nextsyncuser = $causer->muid;
+                    break;
+                }
+                $lastuser = $causer->muid;
+            }
+
             $gis = (isset($allgis[$causer->moodlecourseid])) ? $allgis[$causer->moodlecourseid] : array();
             $linkedcompelements = (isset($alllinkedcompelements[$causer->pmcourseid])) ? $alllinkedcompelements[$causer->pmcourseid] : array();
 
@@ -804,9 +836,19 @@ class synchronize {
 
             // Handle the course grade.
             if (isset($moodlegrades[$coursegradeitem->id])) {
+                if (!isset($ecrs[$causer->pmcourseid])) { // Cache as required.
+                    if (($credits = $DB->get_field(\course::TABLE, 'credits', ['id' => $causer->pmcourseid])) === false) {
+                        // Orphaned class.
+                        continue;
+                    }
+                    $ecrs[$causer->pmcourseid] = new \stdClass;
+                    $ecrs[$causer->pmcourseid]->pmcoursecredits = $credits;
+                    $ecrs[$causer->pmcourseid]->pmcoursecompletiongrade = $DB->get_field(\course::TABLE, 'completion_grade',
+                            ['id' => $causer->pmcourseid]);
+                }
                 $coursehascompelements = (!empty($compelements)) ? true : false;
                 $this->sync_coursegrade($causer, $coursegradeitem, $moodlegrades[$coursegradeitem->id], $coursehascompelements,
-                        $causer->pmcoursecompletiongrade, $causer->pmcoursecredits, $timenow);
+                        $ecrs[$causer->pmcourseid]->pmcoursecompletiongrade, $ecrs[$causer->pmcourseid]->pmcoursecredits, $timenow);
             }
 
             // Handle completion elements.
@@ -820,6 +862,9 @@ class synchronize {
         $end = microtime(true);
 
         if ($useincgsync === true) {
+            if (in_cron()) {
+                mtrace("{$cnt} user(s) processed.");
+            }
             set_config('incrementalgradesync_nextuser', $nextsyncuser, 'local_elisprogram');
             if (!$syncstartuser) {
                 set_config('incrementalgradesync_lastrun', $timenow, 'local_elisprogram');
@@ -827,6 +872,17 @@ class synchronize {
             if (!$nextsyncuser) {
                 set_config('incrementalgradesync_prevrun', $origlastrun, 'local_elisprogram');
             }
+            if (time() > $maxtime) {
+                $limitnum = $cnt;
+            } else if ($cnt >= ($limitnum - 1) && ($maxtime - time()) >= MIN_AUTOCHUNK_SECS) {
+                $limitnum *= 2;
+            }
+            if ($limitnum < MIN_USER_CHUNK) {
+                $limitnum = MIN_USER_CHUNK;
+            } else if ($limitnum > MAX_USER_CHUNK) {
+                $limitnum = MAX_USER_CHUNK;
+            }
+            set_config('incrementalgradesync_maxuserchunk', $limitnum, 'local_elisprogram');
         }
         // error_log("synchronize.php::synchronize_moodle_class_grades({$requestedmuserid}) > EXIT!");
     }
