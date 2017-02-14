@@ -47,6 +47,7 @@ define('CERTIFICATE_ENTITY_TYPE_CLASS',       'CLASS');
 
 /**
  * Outputs a certificate for some sort of completion element
+ * @deprecated Use the newer certificate_output_entity_completion() function - below.
  *
  * @param string $person_fullname:      The full name of the certificate recipient
  * @param string $entity_name:          The name of the entity that is compelted
@@ -60,63 +61,18 @@ define('CERTIFICATE_ENTITY_TYPE_CLASS',       'CLASS');
  */
 function certificate_output_completion($person_fullname, $entity_name, $certificatecode = '', $date_string, $expirydate = '',
                                        $curriculum_frequency = '', $border = '', $seal = '', $template = '') {
-    global $CFG;
+    debugging('certificate_output_completion() has been deprecated, please rewrite your code to use the newer '.
+            'certificate_output_entity_completion() function.', DEBUG_DEVELOPER);
 
-    // use the TCPDF library
-    require_once($CFG->libdir.'/pdflib.php');
-
-//     error_log("/local/elisprogram/lib/certificate.php::certificate_output_completion('{$person_fullname}', '{$entity_name}',
-//               '{$certificatecode}', '{$date_string}', '{$expirydate}', '{$curriculum_frequency}', '{$border}', '{$seal}', '{$template}')");
-
-    // global settings
-    $borders = 0;
-    $font = 'FreeSerif';
-    $largefontsize = 30;
-    $smallfontsize = 16;
-
-    // create pdf
-    $pdf = new pdf('L', 'in', 'Letter');
-
-    // Prevent the pdf from printing black bars.
-    $pdf->setPrintHeader(false);
-    $pdf->setPrintFooter(false);
-    $pdf->SetAutoPageBreak(false);
-    $pdf->SetMargins(0, 0, 0, false);
-
-    $pdf->AddPage();
-
-    // Draw the border.
-    $pagewidth = $pdf->getPageWidth();
-    $pageheight = $pdf->getPageHeight();
-    cm_certificate_check_data_path('borders');
-    if (!empty($border)) {
-        if (file_exists($CFG->dirroot.'/local/elisprogram/pix/certificate/borders/'.$border)) {
-            $pdf->Image($CFG->dirroot.'/local/elisprogram/pix/certificate/borders/'.$border, 0, 0, $pagewidth, $pageheight);
-        } else if (file_exists($CFG->dataroot.'/local/elisprogram/pix/certificate/borders/'.$border)) {
-            $pdf->Image($CFG->dataroot.'/local/elisprogram/pix/certificate/borders/'.$border, 0, 0, $pagewidth, $pageheight);
-        }
-    }
-
-    // draw the seal
-    cm_certificate_check_data_path('seals');
-    if (!empty($seal)) {
-        if (file_exists($CFG->dirroot .'/local/elisprogram/pix/certificate/seals/'. $seal)) {
-            $pdf->Image($CFG->dirroot .'/local/elisprogram/pix/certificate/seals/'. $seal, 8.0, 5.8);
-        } else if (file_exists($CFG->dataroot .'/local/elisprogram/pix/certificate/seals/' . $seal)) {
-            $pdf->Image($CFG->dataroot .'/local/elisprogram/pix/certificate/seals/'. $seal, 8.0, 5.8);
-        }
-    }
-
-    // Include the certificate template
-    cm_certificate_check_data_path('templates');
-
-    if (file_exists($CFG->dirroot.'/local/elisprogram/pix/certificate/templates/'.$template)) {
-        include($CFG->dirroot.'/local/elisprogram/pix/certificate/templates/'.$template);
-    } else if (file_exists($CFG->dataroot.'/local/elisprogram/pix/certificate/templates/'.$template)) {
-        include($CFG->dataroot.'/local/elisprogram/pix/certificate/templates/'.$template);
-    }
-
-    $pdf->Output();
+    $params = [
+        'person_fullname' => $person_fullname,
+        'entity_name' => $entity_name,
+        'certificatecode' => $certificatecode,
+        'date_string' => $date_string,
+        'expirydate' => $expirydate,
+        'curriculum_frequency' => $curriculum_frequency
+    ];
+    certificate_output_entity_completion($params, $border, $seal, $template);
 }
 
 /**
@@ -183,6 +139,11 @@ function certificate_output_entity_completion($params, $border = '', $seal = '',
 
     // Include the certificate template.
     cm_certificate_check_data_path('templates');
+
+    // Setup all template parameters from passed params array.
+    foreach ($params as $key => $val) {
+        $$key = $val;
+    }
 
     if (file_exists($CFG->dirroot.'/local/elisprogram/pix/certificate/templates/'.$template)) {
         include($CFG->dirroot.'/local/elisprogram/pix/certificate/templates/'.$template);
@@ -368,9 +329,9 @@ function cm_certificate_email_random_number_fail($tableobj = null) {
     $a->sitename = $DB->get_field('course', 'fullname', array('id' => SITEID));
     $a->url      = $CFG->wwwroot;
 
-    $message_text  = get_string('certificate_code_fail', 'elis_proram', $a) . "\n\n";
-    $message_text .= get_string('certificate_code_fail_text', 'elis_proram') . "\n";
-    $message_text .= get_string('certificate_code_fail_text_data', 'elis_proram', $tableobj) . "\n";
+    $message_text  = get_string('certificate_code_fail', 'local_elisprogram', $a)."\n\n";
+    $message_text .= get_string('certificate_code_fail_text', 'local_elisprogram')."\n";
+    $message_text .= get_string('certificate_code_fail_text_data', 'local_elisprogram', $tableobj)."\n";
 
     $message_html = nl2br($message_text);
 
@@ -394,7 +355,7 @@ function cm_certificate_email_random_number_fail($tableobj = null) {
     $userobj->email      = 'development@remote-learner.net'; // TBD!?!
     $userobj->mailformat = FORMAT_HTML;
 
-    email_to_user($userobj, get_admin(), get_string('certificate_code_fail', 'elis_proram', $a), $message_text, $message_html);
+    email_to_user($userobj, get_admin(), get_string('certificate_code_fail', 'local_elisprogram', $a), $message_text, $message_html);
 
     // Output to screen if possible
     if (!empty($output_to_screen)) { // TBD???
@@ -496,6 +457,22 @@ function certificate_get_entity_metadata($certsetting, $certissued, $student) {
 }
 
 /**
+ * Strip tags from paramter values.
+ * @param mixed $val input value to strip tags from - can be array.
+ * @return mixed the input w/o any tags.
+ */
+function certificate_strip_tags($val) {
+    if (is_array($val)) {
+        array_walk($val, function(&$item, $key) {
+                $item = certificate_strip_tags($item);
+        });
+    } else if (is_string($val) && strpos($val, '<') !== false) {
+        $val = strip_tags(format_string($val));
+    }
+    return $val;
+}
+
+/**
  * This function does the work of retrieving the course entity metadata
  * @param object $certsetting: a certificatesettings data class object
  * @param object $certissued: a certificateissued data class object
@@ -570,4 +547,103 @@ function certificate_get_course_entity_metadata($certsetting, $certissued, $stud
     }
 
     return false;
+}
+
+/**
+ * This function does the work of retrieving the program entity metadata
+ * @param object $curass a curriculumstudent data class object
+ * @return array program metadata parameter array for template.
+ */
+function certificate_get_program_entity_metadata($curass) {
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
+    require_once(elispm::lib('data/usertrack.class.php'));
+    $pmcertdateformat = get_string((strtoupper(substr(PHP_OS, 0, 3)) == 'WIN') ? 'pm_certificate_date_format_win'
+            : 'pm_certificate_date_format', 'local_elisprogram');
+    $params = [];
+    $prg = new curriculum($curass->curriculumid);
+    $prg->load();
+    $prgparams = $prg->to_array();
+    foreach ($prgparams as $key => $val) {
+        $val = certificate_strip_tags($val);
+        if ($key != 'timetocomplete' && is_numeric($val) && (strpos($key, 'date') !== false || strpos($key, 'time') !== false)) {
+            $params['program_'.$key] = userdate($val, $pmcertdateformat);
+        } else {
+            if (empty($val) && !is_numeric($val)) {
+                $val = '';
+            } else if (is_array($val)) {
+                $val = implode(', ', $val);
+            }
+            $params['program_'.$key] = $val;
+        }
+    }
+    unset($prgparams);
+
+    $certuser = new user($curass->userid);
+    $certuser->load();
+    $params['person_fullname'] = $certuser->moodle_fullname(); // TBD: $curass->user->__toString();
+    $params['entity_name'] = $curass->curriculum->__toString(); // TBD?
+    $params['certificatecode'] = $curass->certificatecode;
+    $params['curriculum_frequency'] = $curass->curriculum->frequency; // backward compat.
+    $params['datecomplete'] = userdate($curass->timecompleted, $pmcertdateformat); // WAS: date("F j, Y", $curass->timecompleted);
+    $params['date_string'] = $params['datecomplete'];
+
+    $params['expirydate'] = '';
+    if (!empty(elis::$config->local_elisprogram->enable_curriculum_expiration) && !empty($curass->timeexpired)) {
+        $params['expirydate'] = userdate($curass->timeexpired, $pmcertdateformat); // WAS: date("F j, Y", $curass->timeexpired);
+    }
+
+    $trkclssql = 'SELECT stu.classid AS id, trk.id AS trackid
+                    FROM {'.track::TABLE.'} trk
+                    JOIN {'.usertrack::TABLE.'} usrtrk ON trk.id = usrtrk.trackid AND usrtrk.userid = ?
+                    JOIN {'.trackassignment::TABLE.'} trkass ON trk.id = trkass.trackid
+                    JOIN {'.student::TABLE.'} stu ON stu.classid = trkass.classid AND stu.completestatusid = ? AND stu.userid = ?
+                   WHERE trk.curid = ?
+                ORDER BY trk.id';
+    $trkclsparams = [$curass->userid, STUSTATUS_PASSED, $curass->userid, $curass->curriculumid];
+    $recs = $DB->get_recordset_sql($trkclssql, $trkclsparams);
+    $trkparams = [];
+    $allins = [];
+    $lasttrk = 0;
+    foreach ($recs as $rec) {
+        if ($rec->trackid != $lasttrk) {
+            $lasttrk = $rec->trackid;
+            $trk = new track($lasttrk);
+            $trk->load();
+            $trackdata = $trk->to_array();
+            foreach ($trackdata as $key => $val) {
+                if (!isset($trkparams[$key])) {
+                    $trkparams[$key] = [];
+                }
+                $val = certificate_strip_tags($val);
+                if (is_numeric($val) && (strpos($key, 'date') !== false || strpos($key, 'time') !== false)) {
+                    $trkparams[$key][] = userdate($val, $pmcertdateformat);
+                } else if (!empty($val) && is_array($val)) {
+                    $trkparams[$key] = array_merge($trkparams[$key], $val);
+                } else if (!empty($val) || is_numeric($val)) {
+                    $trkparams[$key][] = $val;
+                }
+            }
+        }
+
+        foreach (instructor::get_instructors($rec->id) as $ins) {
+            $user = new user($ins->id);
+            $user->load();
+            $allins[] = $user->moodle_fullname();
+        }
+    }
+
+    // Strip non-unique track data entries and concat them into params array.
+    foreach ($trkparams as $key => $dataarray) {
+        $dataarray = array_unique($dataarray);
+        $params['track_'.$key] = implode(', ', $dataarray);
+    }
+
+    // Strip non-unique instructor entries and concat them into params array.
+    if (!empty($allins)) {
+        $allins = array_unique($allins);
+        $params['instructors'] = implode(', ', $allins);
+    }
+
+    return $params;
 }
