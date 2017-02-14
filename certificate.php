@@ -53,13 +53,7 @@ if (!isset($curass->user) || !isset($curass->curriculum)) {
 } else if (0 == (int)($curass->timecompleted)) {
     print_string('error_curriculum_incomplete', 'local_elisprogram');
 } else {
-    $datecomplete = date("F j, Y", $curass->timecompleted);
-
-    $dateexpired = '';
-    if (!empty(elis::$config->local_elisprogram->enable_curriculum_expiration) && !empty($curass->timeexpired)) {
-        $dateexpired  =  date("F j, Y", $curass->timeexpired);
-    }
-
+    $templateparams = certificate_get_program_entity_metadata($curass);
     $borderimage = (isset(elis::$config->local_elisprogram->certificate_border_image))
             ? elis::$config->local_elisprogram->certificate_border_image
             : 'Fancy1-blue.jpg';
@@ -72,6 +66,5 @@ if (!isset($curass->user) || !isset($curass->curriculum)) {
             ? elis::$config->local_elisprogram->certificate_template_file
             : 'default.php';
 
-    certificate_output_completion($curass->user->__toString(), $curass->curriculum->__toString(), $curass->certificatecode,
-            $datecomplete, $dateexpired, $curass->curriculum->frequency, $borderimage, $sealimage, $templates);
+    certificate_output_entity_completion($templateparams, $borderimage, $sealimage, $templates);
 }
