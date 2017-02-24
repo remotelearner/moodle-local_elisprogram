@@ -259,12 +259,15 @@ function results_engine_get_students($class) {
             $fields[$key] = 'g.'. $value;
         }
 
-        $sql = 'SELECT DISTINCT '. implode(',', $fields)
-             .' FROM {'. $table .'} g'
-             .' LEFT JOIN {local_elisprogram_res_clslog} c ON c.classid = g.classid'
-             .' LEFT JOIN {local_elisprogram_res_stulog} l ON l.userid=g.userid AND l.classlogid=c.id'
-             .' WHERE '. implode(' AND ', $criteria) .' AND l.action IS NULL';
-        $students = $DB->get_records_sql($sql);
+        $sql = 'SELECT DISTINCT '.implode(',', $fields).'
+                  FROM {'.$table.'} g
+                 WHERE '.implode(' AND ', $criteria).'
+                       AND NOT EXISTS (SELECT \'x\'
+                                         FROM {local_elisprogram_res_clslog} c
+                                         JOIN {local_elisprogram_res_stulog} l ON l.classlogid = c.id
+                                        WHERE l.userid = g.userid
+                                              AND c.classid = ?)';
+        $students = $DB->get_records_sql($sql, [$class->id]);
 
         if ($class->lockedgrade) {
             foreach ($students as $key => $student) {
@@ -391,12 +394,9 @@ function results_engine_process($class) {
                     field_data::set_for_context_and_field($context, $userfields[$do->fieldid], $do->fielddata);
                     */
 
-                    //set field
-                    $filter = new select_filter('id = :userid', array('userid' => $student->userid));
-                    if (user::exists($filter)) {
+                    if (user::exists(new field_filter('id', $student->userid))) {
                         //get user
-                        $user = user::find($filter);
-                        $user = $user->current();
+                        $user = new user($student->userid);
 
                         //set field
                         $field = 'field_'.$userfields[$do->fieldid]->shortname;
