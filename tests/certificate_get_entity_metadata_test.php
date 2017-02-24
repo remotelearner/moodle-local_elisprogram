@@ -285,4 +285,125 @@ class certificate_get_entity_metadata_testcase extends elis_database_test {
         phpunit_util::reset_debugging();
         $this->assertEquals(false, $result);
     }
+
+    /**
+     * Test retrieving program metadata.
+     */
+    public function test_retrieve_metadata_for_program_entity() {
+        global $CFG;
+        require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
+        require_once(elispm::lib('data/usertrack.class.php'));
+        $certdateformat = get_string('pm_certificate_date_format', 'local_elisprogram'); // Win?
+        $curdate = time();
+        $olddate = $curdate - 300000; // arb.
+        $ins = [];
+        $users = [[], [], [], []];
+        foreach ($users as $key => $user) {
+            $user['username'] = 'testuser'.$key;
+            $user['idnumber'] = 'testuser'.$key;
+            $user['firstname'] = 'Test';
+            $user['lastname'] = 'User'.$key;
+            $user['email'] = 'tu'.$key.'@noreply.com';
+            $user['city'] = '*';
+            $user['country'] = 'CA';
+            $newuser = new user($user);
+            $newuser->save();
+            $users[$key]['id'] = $newuser->id;
+            if ($key) {
+                $ins[] = $newuser->moodle_fullname();
+            }
+        }
+        $courses = [[], []];
+        foreach ($courses as $key => $course) {
+            $cdnum = $key + 1;
+            $course['name'] = "CD-{$cdnum} Name";
+            $course['code'] = "CD-{$cdnum} Code";
+            $course['idnumber'] = "CD-{$cdnum} ID";
+            $course['syllabus'] = "CD-{$cdnum} Syllabus";
+            $course['credits'] = 0.755;
+            $course['completion_grade'] = 55;
+            $newcrs = new course($course);
+            $newcrs->save();
+            $courses[$key]['id'] = $newcrs->id;
+        }
+        $program = new curriculum([
+            'idnumber' => 'PRG-1 ID',
+            'name' => 'PRG-1 Name',
+            'description' => 'PRG-1 Description',
+            'reqcredits' => 1.51,
+            'priority' => 3,
+        ]);
+        $program->save();
+        $track = new track([
+            'curid' => $program->id,
+            'idnumber' => 'TRK-PRG-1 ID',
+            'name' => 'TRK-PRG-1 Name',
+            'description' => 'TRK-PRG-1 Description',
+        ]);
+        $track->save();
+        $classes = [[], []];
+        foreach ($classes as $key => $pmclass) {
+            $cinum = $key + 1;
+            $pmclass['idnumber'] = 'CI-'.$cinum.'01';
+            $pmclass['courseid'] = $courses[$key]['id'];
+            $newclass = new pmclass($pmclass);
+            $newclass->save();
+            $classes[$key]['id'] = $newclass->id;
+            $trkass = new trackassignment([
+                'trackid' => $track->id,
+                'classid' => $newclass->id,
+                'courseid' => $courses[$key]['id']
+            ]);
+            $trkass->save();
+            foreach ($users as $ukey => $user) {
+                if ($ukey) { // instructor
+                    $instructor = new instructor(['classid' => $newclass->id, 'userid' => $user['id']]);
+                    $instructor->save();
+                } else { // student: passes, 90.87, passed, locked
+                    $stu = new student([
+                        'classid' => $newclass->id,
+                        'userid' => $user['id'],
+                        'enrolmenttime' => $olddate,
+                        'completetime' => $curdate,
+                        'completestatusid' => 2,
+                        'grade' => 90.87,
+                        'credits' => 0.755,
+                        'locked' => 1
+                    ]);
+                    $stu->save();
+                }
+            }
+        }
+        $usrtrk = new usertrack(['userid' => $users[0]['id'], 'trackid' => $track->id]);
+        $usrtrk->save();
+        $curass = new curriculumstudent(['userid' => $users[0]['id'], 'curriculumid' => $program->id]);
+        $curass->save();
+        $curass->complete($curdate, 1.51, true);
+        $stu->users->load();
+        $expected = [
+            'program_idnumber' => $program->idnumber,
+            'program_name' => $program->name,
+            'program_description' => $program->description,
+            'program_reqcredits' => $program->reqcredits,
+            'program_iscustom' => 0,
+            'program_timetocomplete' => $program->timetocomplete,
+            'program_frequency' => $program->frequency,
+            'program_priority' => $program->priority,
+            'person_fullname' => $stu->users->moodle_fullname(),
+            'entity_name' => $program->__toString(),
+            'certificatecode' => $curass->certificatecode,
+            'curriculum_frequency' => $program->frequency,
+            'datecomplete' => userdate($curass->timecompleted, $certdateformat),
+            'date_string' => userdate($curass->timecompleted, $certdateformat),
+            'expirydate' => !empty($curass->timeexpired) ? userdate($curass->timeexpired, $certdateformat) : '',
+            'track_idnumber' => $track->idnumber,
+            'track_name' => $track->name,
+            'track_description' => $track->description,
+            'instructors' => implode(', ', array_unique($ins))
+        ];
+        $result = certificate_get_program_entity_metadata($curass);
+        foreach ($expected as $key => $val) {
+            $this->assertEquals($val, $result[$key]);
+        }
+    }
 }
