@@ -109,7 +109,7 @@ class student extends elis_data_object {
                 throw new unsatisfied_prerequisites_exception($this);
 
                 /*
-                $status = new Object();
+                $status = new stdClass();
                 $status->message = get_string('unsatisfiedprereqs', self::LANG_FILE);
                 $status->code = 'unsatisfiedprereqs';
                 //error_log('student.class::add() - student missing prereqs!');
@@ -2220,7 +2220,7 @@ class student extends elis_data_object {
         $replace = array($user->moodle_fullname(), $pmclass->idnumber, $pmcourse->name);
         $text = str_replace($search, $replace, $text);
 
-        $eventlog = new Object();
+        $eventlog = new stdClass();
         $eventlog->event = 'class_notstarted';
         $eventlog->instance = $student->classid;
         $eventlog->fromuserid = $user->id;
@@ -2316,7 +2316,7 @@ class student extends elis_data_object {
         $replace = array($user->moodle_fullname(), $pmclass->idnumber, $pmcourse->name);
         $text = str_replace($search, $replace, $text);
 
-        $eventlog = new Object();
+        $eventlog = new stdClass();
         $eventlog->event = 'class_notcompleted';
         $eventlog->instance = $student->classid;
         $eventlog->fromuserid = $user->id;
