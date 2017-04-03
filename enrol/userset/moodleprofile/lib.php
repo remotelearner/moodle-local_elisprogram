@@ -309,13 +309,16 @@ function cluster_profile_update_handler($userdata) {
         return true;
     }
 
-    // make sure a CM user exists
-    pm_moodle_user_to_pm($userdata, true);
-
     if (!isset($userdata->id)) {
         return true;
     }
+
+    // Make sure a CM user exists.
     $cuid = pm_get_crlmuserid($userdata->id);
+    if (empty($cuid)) {
+        pm_moodle_user_to_pm($userdata, true);
+        $cuid = pm_get_crlmuserid($userdata->id);
+    }
 
     if (empty($cuid)) {
         // not a curriculum user -- (guest?)
