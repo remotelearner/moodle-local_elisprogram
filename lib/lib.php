@@ -487,7 +487,7 @@ function pm_moodle_user_to_pm($mu, $ineventhandler = false) {
 	            $cmuser = new user();
 	            $cmuser->id = $um->cuserid;
 	            $cmuser->idnumber = $mu->idnumber;
-	            $cmuser->save();
+	            $cmuser->save(true, false);
 
 	            // update the association table with the new idnumber
 	            $um->idnumber = $mu->idnumber;
@@ -573,7 +573,7 @@ function pm_moodle_user_to_pm($mu, $ineventhandler = false) {
     //specifically tell the user save not to use the local_elisprogram_usr_mdl for syncing
     //because the record hasn't been inserted yet (see below)
     try {
-        $cu->save(false);
+        $cu->save(false, false);
     } catch (Exception $ex) {
         if ($ineventhandler || in_cron()) {
             mtrace(get_string('record_not_created_reason', 'local_elisprogram',
