@@ -314,8 +314,10 @@ class user extends data_object_with_custom_fields {
      *
      * @param boolean $strict_match Whether we should use the association table rather
      *                              than just check idnumbers when comparing to Moodle users
+     * @param boolean $synctomoodle Whether we should sync user to moodle - default: true.
+     * @see ELIS-9454
      */
-    public function save($strict_match = true) {
+    public function save($strict_match = true, $synctomoodle = true) {
         $isnew = empty($this->id);
 
         $now = time();
@@ -328,7 +330,7 @@ class user extends data_object_with_custom_fields {
         parent::save();
 
         /// Synchronize Moodle data with this data.
-        $this->synchronize_moodle_user(true, $isnew, $strict_match);
+        $this->synchronize_moodle_user($synctomoodle, $isnew, $strict_match);
     }
 
     /**
