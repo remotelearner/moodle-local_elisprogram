@@ -110,5 +110,30 @@ function xmldb_local_elisprogram_upgrade($oldversion=0) {
         upgrade_plugin_savepoint($result, '2015102204', 'local', 'elisprogram');
     }
 
+    if ($result && $oldversion < 2016052301) {
+        // Add indexes for better programs report performance.
+        $indexestocreate = [
+            'local_elisprogram_cls_enrol' => [
+                new \xmldb_index('any_classid_userid_ix', XMLDB_INDEX_NOTUNIQUE, ['classid', 'userid'])
+            ],
+            'local_elisprogram_pgm_assign' => [
+                new \xmldb_index('any_curriculumid_ix', XMLDB_INDEX_NOTUNIQUE, ['curriculumid']),
+                new \xmldb_index('any_userid_ix', XMLDB_INDEX_NOTUNIQUE, ['userid']),
+            ],
+        ];
+        foreach ($indexestocreate as $table => $indexes) {
+            $table = new \xmldb_table($table);
+            if ($dbman->table_exists($table)) {
+                foreach ($indexes as $index) {
+                    if (!$dbman->index_exists($table, $index)) {
+                        $dbman->add_index($table, $index);
+                    }
+                }
+            }
+        }
+
+        upgrade_plugin_savepoint($result, '2016052301', 'local', 'elisprogram');
+    }
+
     return $result;
 }
