@@ -363,7 +363,7 @@ function results_engine_process($class) {
         }
 
         if ($do != null) {
-            $obj = new object();
+            $obj = new stdClass();
 
             switch($do->actiontype) {
 

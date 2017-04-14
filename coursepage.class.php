@@ -286,7 +286,7 @@ class coursepage extends managementpage {
             return;
         }
         if (!$form->is_cancelled()) {
-            $elemrecord = new Object();
+            $elemrecord = new stdClass();
             $elemrecord->id                = optional_param('elemid', 0, PARAM_INT);
             $elemrecord->idnumber          = optional_param('idnumber', '', PARAM_CLEAN);
             $elemrecord->name              = optional_param('name', '', PARAM_CLEAN);

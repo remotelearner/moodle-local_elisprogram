@@ -145,7 +145,7 @@ class generalized_filter_custom_field_multiselect_values extends generalized_fil
         // Modified to give acceptable label for scheduling
         //$value = $data['value'];
 
-        $a = new object();
+        $a = new stdClass();
         $a->label    = $this->_label;
         if (empty($data['value'])) {
             $a->value    = ': none selected';

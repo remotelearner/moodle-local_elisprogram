@@ -250,7 +250,7 @@ class notification extends message {
     /// Insert a notification log if we have data for it.
         if ($logevent !== false) {
             if (!empty($logevent->event)) {
-                $newlog = new Object();
+                $newlog = new stdClass();
                 $newlog->event = $logevent->event;
                 if (isset($logevent->userid)) {
                     $newlog->userid = $logevent->userid;
@@ -522,7 +522,7 @@ function pm_assign_student_from_mdl($eventdata) {
         $class = current($classes);
         if (!$DB->get_record(student::TABLE, array('classid' => $class->classid,
                                                    'userid'  => $pmuserid))) {
-            $sturec = new Object();
+            $sturec = new stdClass();
             $sturec->classid = $class->classid;
             $sturec->userid = $pmuserid;
             /// determine enrolment time (ELIS-2972)

@@ -224,7 +224,7 @@ class deepsight_action_enrol extends deepsight_action_standard {
             // Perform actions.
             try {
                 if ($action === 'waitlist') {
-                    $waitrecord = new object();
+                    $waitrecord = new stdClass();
                     $waitrecord->userid = $userid;
                     $waitrecord->classid = $classid;
                     $waitrecord->timecreated = $now;

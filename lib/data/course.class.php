@@ -224,7 +224,7 @@ class course extends data_object_with_custom_fields {
         if ($elemid != 0) {
             $elem = $this->_db->get_record(coursecompletion::TABLE, array('id'=>$elemid));
         } else {
-            $elem = new Object();
+            $elem = new stdClass();
             $elem->idnumber = '';
             $elem->name = '';
             $elem->description = '';
@@ -625,7 +625,7 @@ class course extends data_object_with_custom_fields {
         $replace = array($enroluser->moodle_fullname(), $user->coursename);
         $text = str_replace($search, $replace, $text);
 
-        $eventlog = new Object();
+        $eventlog = new stdClass();
         $eventlog->event = 'course_recurrence';
         $eventlog->instance = $user->enrolmentid;
         $eventlog->fromuserid = $enroluser->id;
@@ -768,7 +768,7 @@ class course extends data_object_with_custom_fields {
      *   associate the clones with (default: none)
      * @return array array of array of object IDs created.  Key in outer array
      * is type of object (plural).  Key in inner array is original object ID,
-     * value is new object ID.  Outer array also has an entry called 'errors',
+     * value is new stdClass ID.  Outer array also has an entry called 'errors',
      * which is an array of any errors encountered when duplicating the
      * object.
      */

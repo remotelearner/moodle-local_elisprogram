@@ -91,7 +91,7 @@ class generalized_filter_display_table extends generalized_filter_type {
             }
         }
 
-        $a = new object();
+        $a = new stdClass();
         $a->label    = $this->_label;
         $a->value    = implode(",<br />\n", $list);
         $a->operator = get_string('isequalto','filters');

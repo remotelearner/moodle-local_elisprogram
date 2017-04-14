@@ -99,7 +99,7 @@ class generalized_filter_custom_field_multiselect extends generalized_filter_typ
      */
     function get_label($data) {
 
-        $a = new object();
+        $a = new stdClass();
         $a->label    = $this->_label;
         $a->value    = ': ';
         $a->operator = '';

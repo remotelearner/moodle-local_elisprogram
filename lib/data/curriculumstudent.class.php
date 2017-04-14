@@ -187,7 +187,7 @@ class curriculumstudent extends elis_data_object {
         $replace = array($enroluser->moodle_fullname(), $program->name);
         $text = str_replace($search, $replace, $text);
 
-        $eventlog = new Object();
+        $eventlog = new stdClass();
         $eventlog->event = 'curriculum_completed';
         $eventlog->instance = $this->id;    /// Store the assignment id.
         if ($sendtouser) {
@@ -280,7 +280,7 @@ class curriculumstudent extends elis_data_object {
         $replace = array($user->moodle_fullname(), $program->name);
         $text = str_replace($search, $replace, $text);
 
-        $eventlog = new Object();
+        $eventlog = new stdClass();
         $eventlog->event = 'curriculum_notcompleted';
         $eventlog->instance = $curstudent->id;    /// Store the assignment id.
         $eventlog->fromuserid = $user->id;
