@@ -146,7 +146,30 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Validate existence.
         $exists = $DB->record_exists(\student::TABLE, $params);
+        if (!$exists) {
+            ob_start();
+            echo 'assert_student_exists - params:', "\n";
+            var_dump($params);
+            echo 'assert_student_exists - student table:', "\n";
+            var_dump($DB->get_records(\student::TABLE));
+            $tmp = ob_get_contents();
+            ob_end_clean();
+            error_log($tmp);
+        }
         $this->assertTrue($exists);
+    }
+
+    /**
+     * Unlock student record
+     * @param int $classid The id of the appropriate class
+     * @param int $userid  The id of the appropriate PM user
+     */
+    protected static function unlock_student_record($classid, $userid) {
+        global $DB;
+        $stuid = $DB->get_field(student::TABLE, 'id', ['classid' => $classid, 'userid' => $userid]);
+        if (!empty($stuid)) {
+            $DB->update_record(student::TABLE, (object)['id' => $stuid, 'locked' => 0]);
+        }
     }
 
     /**
@@ -1260,6 +1283,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Update credits.
         $DB->execute("UPDATE {".\course::TABLE."} SET credits = 2");
+        static::unlock_student_record(100, 103); // Unlock the student record.
 
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
@@ -1337,6 +1361,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
 
         // Update credits.
         $DB->execute("UPDATE {".\course::TABLE."} SET credits = 2");
+        static::unlock_student_record(100, 103); // Unlock the student record.
 
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
@@ -1385,7 +1410,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
         $this->assert_student_exists(100, 103, 0, STUSTATUS_NOTCOMPLETE, null, null, 1);
-        $DB->execute("UPDATE {".\student::TABLE."} SET locked = 0");
+        static::unlock_student_record(100, 103); // Unlock the student record.
 
         // Call and validate that unlocked record is changed.
         $sync = new \local_elisprogram\moodle\synchronize;
@@ -1395,8 +1420,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $count = $DB->count_records(\student::TABLE, array('completestatusid' => STUSTATUS_PASSED));
         $this->assertEquals(1, $count);
 
-        // NOTE: this method does not lock enrolments.
-        $this->assert_student_exists(100, 103, 100, STUSTATUS_PASSED, null, null, 0);
+        $this->assert_student_exists(100, 103, 100, STUSTATUS_PASSED, null, null, 1);
     }
 
     /**
@@ -1443,7 +1467,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
         $this->assert_student_exists(100, 103, 0, STUSTATUS_NOTCOMPLETE, null, null, 1);
-        $DB->execute("UPDATE {".\student::TABLE."} SET locked = 0");
+        static::unlock_student_record(100, 103); // Unlock the student record.
 
         // Call and validate that unlocked record is changed.
         $sync = new \local_elisprogram\moodle\synchronize;
@@ -1453,8 +1477,7 @@ class synchronizemoodleclassgrades_testcase extends \elis_database_test {
         $count = $DB->count_records(\student::TABLE, array('completestatusid' => STUSTATUS_PASSED));
         $this->assertEquals(1, $count);
 
-        // NOTE: this method does not lock enrolments.
-        $this->assert_student_exists(100, 103, 100, STUSTATUS_PASSED, null, null, 0);
+        $this->assert_student_exists(100, 103, 100, STUSTATUS_PASSED, null, null, 1);
     }
 
     /**

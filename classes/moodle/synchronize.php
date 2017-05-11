@@ -43,6 +43,114 @@ define('DEFAULT_USER_CHUNK', 250);
 define('DEFAULT_SYNC_SECS', 200);
 
 /**
+ * Wrapper class for grade_grades to overload get_dategraded.
+ */
+class grade_grade extends \grade_grade {
+
+    const ENABLE_USER_GRADED_EVENT = 0; // Too slow and not that crucial (?).
+
+    private static $elisoptions = [];
+
+    /**
+     * Get & save global ELIS options.
+     * @param int $syncstarttime The sync start time.
+     */
+    public static function init_elis_options($syncstarttime) {
+        static::$elisoptions['syncstarttime'] = $syncstarttime;
+        $gradesyncdateorder = get_config('local_elisprogram', 'gradesyncdateorder');
+        if (!empty($gradesyncdateorder)) {
+            static::$elisoptions['gradesyncdateorder'] = explode(',', $gradesyncdateorder);
+        }
+        $gradesyncdebug = get_config('local_elisprogram', 'gradesyncdebug');
+        if (!empty($gradesyncdebug) && debugging('', DEBUG_DEVELOPER)) {
+            static::$elisoptions['gradesyncdebug'] = 1;
+        }
+    }
+
+    /**
+     * Grade debug output.
+     * @param string $msg The message to output.
+     */
+    public static function gradesync_debug_out($msg) {
+        if (!empty(static::$elisoptions['gradesyncdebug'])) {
+            error_log("local_elisprogram::GradeSyncDebug: {$msg}");
+        }
+    }
+
+    /**
+     * Returns timestamp when last graded, null if no grade present
+     *
+     * @return int
+     */
+    public function get_dategraded() {
+        // TODO: HACK - create new fields (MDL-31379).
+        global $DB;
+        $gradetime = parent::get_dategraded();
+        if (is_null($this->finalgrade) and is_null($this->feedback)) {
+            return $gradetime;
+        } else if ($this->overridden) {
+            static::gradesync_debug_out("Grade overridden");
+            return $gradetime;
+        } else {
+            // Check for other configured gradesyncdateorder options.
+            if (!empty(static::$elisoptions['gradesyncdateorder']) && is_array(static::$elisoptions['gradesyncdateorder']) &&
+                    $gradetime >= static::$elisoptions['syncstarttime']) {
+                foreach (static::$elisoptions['gradesyncdateorder'] as $dateoption) {
+                    switch ($dateoption) {
+                        case 'event':
+                            $gradeitem = $DB->get_record('grade_items', ['id' => $this->itemid]);
+                            // Check for grade event in log.
+                            if ($gradeitem->itemtype == 'course') {
+                                if (($logsstime = $DB->get_field('logstore_standard_log', 'MIN(timecreated)', [
+                                    'eventname' => '\\core\\event\\course_completed', 'relateduserid' => $this->userid,
+                                    'courseid' => $gradeitem->courseid])) && $logsstime < $gradetime) {
+                                    $gradetime = $logsstime;
+                                    static::gradesync_debug_out('Got time from old log course_completed event: '.userdate($gradetime));
+                                    break 2;
+                                }
+                            } else if (self::ENABLE_USER_GRADED_EVENT) {
+                                $other = ['itemid' => $this->itemid, 'overridden' => false, 'finalgrade' => $this->finalgrade];
+                                if (($logsstime = $DB->get_field_select('logstore_standard_log', 'MIN(timecreated)',
+                                        'eventname = :eventname AND objectid = :objectid AND '.
+                                        $DB->sql_compare_text('other', 100).' = '.$DB->sql_compare_text(':other', 100), [
+                                        'eventname' => '\\core\\event\\user_graded', 'objectid' => $this->id, 'other' => @serialize($other)])) &&
+                                        $logsstime < $gradetime) {
+                                    $gradetime = $logsstime;
+                                    static::gradesync_debug_out('Got time from old log user_graded event: '.userdate($gradetime));
+                                    break 2;
+                                }
+                            }
+                            break;
+                        case 'history':
+                            // Check for oldest grade_grades_history record with same finalgrade.
+                            if (($gghtime = $DB->get_field('grade_grades_history', 'MIN(timemodified)', ['userid' => $this->userid,
+                                'itemid' => $this->itemid, 'finalgrade' => $this->finalgrade])) && $gghtime < $gradetime) {
+                                $gradetime = $gghtime;
+                                static::gradesync_debug_out('Got time from old grade history: '.userdate($gradetime));
+                                break 2;
+                            }
+                            break;
+                        case 'creation':
+                            // Since timemodified was set after sync start just use grade_grades timecreated???
+                            if ($this->timecreated < $gradetime) {
+                                $gradetime = $this->timecreated;
+                                static::gradesync_debug_out('Got time from timecreated: '.userdate($gradetime));
+                                break 2;
+                            }
+                            break;
+                        default:
+                            // Invalid option.
+                            static::gradesync_debug_out("Invalid gradesyncdateorder option: {$dateoption}");
+                            break;
+                    }
+                }
+            }
+        }
+        return $gradetime;
+    }
+}
+
+/**
  * Handles Moodle - ELIS synchronization.
  */
 class synchronize {
@@ -451,10 +559,16 @@ class synchronize {
             $sturec->grade = $this->get_scaled_grade($coursegradegrade, $coursegradeitem->grademax);
 
             // Update completion status if all that is required is a course grade.
+            // We could possibly add check for non-locked completion elements:
+            // Eg. if ((($hascompelement === false ||
+            //             !\student_grade::count([ new \field_filter('classid', $sturec->classid), new
+            //             \field_filter('userid', $sturec->userid, new \field_filter('locked', 0)])) && ...
             if ($hascompelements === false && $sturec->grade >= $completiongrade) {
                 $sturec->completetime = $coursegradegrade->get_dategraded();
                 $sturec->completestatusid = \student::STUSTATUS_PASSED;
                 $sturec->credits = floatval($credits);
+                $sturec->locked = 1;
+                grade_grade::gradesync_debug_out('No compelements, using course item dategraded: '.userdate($sturec->completetime));
             } else {
                 $sturec->completetime = 0;
                 $sturec->completestatusid = \student::STUSTATUS_NOTCOMPLETE;
@@ -468,12 +582,38 @@ class synchronize {
                 || $oldsturec->completetime < $sturec->completetime
                 || $oldsturec->completestatusid != $sturec->completestatusid
                 || $oldsturec->credits != $sturec->credits) {
-
+                $stuobj = new \student($sturec);
                 if ($sturec->completestatusid == \student::STUSTATUS_PASSED && empty($sturec->completetime)) {
                     // Make sure we have a valid complete time, if we passed.
-                    $sturec->completetime = $timenow;
+                    $maxtimegraded = $DB->get_field(\student_grade::TABLE, 'MAX(timegraded)', ['classid' => $sturec->classid,
+                        'userid' => $sturec->userid]);
+                    if (empty($maxtimegraded)) {
+                        // Check for Moodle course_completion record.
+                        $mdlcourseid = false;
+                        $mdlcourses = $stuobj->pmclass->classmoodle;
+                        if ($mdlcourses && $mdlcourses->valid()) {
+                            foreach ($mdlcourses as $mdlcourse) {
+                                $mdlcourseid = $mdlcourse->moodlecourseid;
+                                break;
+                            }
+                        }
+                        if ($mdlcourseid && \classmoodlecourse::count(new \field_filter('moodlecourseid', $mdlcourseid)) == 1 &&
+                                ($muserid = $DB->get_field(\usermoodle::TABLE, 'muserid', ['cuserid' => $sturec->userid]))) {
+                            $maxtimegraded = $DB->get_field('course_completions', 'timecompleted',
+                                    ['course' => $mdlcourseid, 'userid' => $muserid]);
+                            if (!empty($maxtimegraded)) {
+                                grade_grade::gradesync_debug_out('Got course_completion timecompleted: '.userdate($maxtimegraded));
+                            }
+                        }
+                        if (empty($maxtimegraded)) {
+                            $maxtimegraded = $timenow;
+                            grade_grade::gradesync_debug_out('No completion, using timenow.');
+                        }
+                    } else {
+                        grade_grade::gradesync_debug_out('Got LO MAX(timegraded): '.userdate($maxtimegraded));
+                    }
+                    $stuobj->completetime = $maxtimegraded;
                 }
-                $stuobj = new \student($sturec);
                 try {
                     $stuobj->save();
                 } catch (\Exception $e) { // Enrolment rec exists - this shouldn't happen ...
@@ -490,11 +630,11 @@ class synchronize {
     /**
      * Convert a grade_grade's finalgrade into a percent based on the associated grade_item's maxgrade.
      *
-     * @param \grade_grade $gradegrade The grade_grade object.
+     * @param grade_grade $gradegrade The grade_grade object.
      * @param int $grademax The maximum grade for the grade_item.
      * @return float The resulting percent grade.
      */
-    public function get_scaled_grade(\grade_grade $gradegrade, $grademax) {
+    public function get_scaled_grade(grade_grade $gradegrade, $grademax) {
         // Ignore mingrade for now... Don't really know what to do with it.
         if ($gradegrade->finalgrade >= $grademax) {
             $gradepercent = 100;
@@ -512,7 +652,7 @@ class synchronize {
      * @param object $causer The current user information being processed (w/ associated info). (@see get_syncable_users)
      * @param array $gis Array of moodle grade_item information. (@see get_grade_and_completion_elements)
      * @param array $compelements Array of ELIS coursecompletion information. (@see get_grade_and_completion_elements)
-     * @param array $moodlegrades Array of moodle grade_grade objects, indexed by associated grade_item id.
+     * @param array $moodlegrades Array of grade_grade objects, indexed by associated grade_item id.
      * @param array $cmgrades Array of ELIS student_grade information.
      * @param int $timenow The current time.
      */
@@ -605,9 +745,9 @@ class synchronize {
         $grades = array();
         foreach ($gis as $gradeitem) {
             if (isset($graderecords[$gradeitem->id])) {
-                $grades[$gradeitem->id] = new \grade_grade($graderecords[$gradeitem->id], false);
+                $grades[$gradeitem->id] = new grade_grade($graderecords[$gradeitem->id], false);
             } else {
-                $grades[$gradeitem->id] = new \grade_grade(array('userid' => $muserid, 'itemid' => $gradeitem->id), false);
+                $grades[$gradeitem->id] = new grade_grade(['userid' => $muserid, 'itemid' => $gradeitem->id], false);
             }
         }
         return $grades;
@@ -630,6 +770,8 @@ class synchronize {
 
         $lastrun = null;
         $useincgsync = false;
+
+        grade_grade::init_elis_options($timenow);
 
         // We only use incremental sync when running for all users. Otherwise running for a single user would record
         // a new lastrun time and prevent other users from syncing.
