@@ -187,6 +187,11 @@ if ($ADMIN->fulltree) {
     $strincgsyncdesc = get_string('incrementalgradesync_help', 'local_elisprogram');
     $settings->add(new \admin_setting_configcheckbox('local_elisprogram/incrementalgradesync', $strincgsync, $strincgsyncdesc, 0));
 
+    $strsyncdateorder = get_string('gradesyncdateorder_setting', 'local_elisprogram');
+    $strsyncdateorderdesc  = get_string('gradesyncdateorder_help', 'local_elisprogram');
+    $settings->add(new \admin_setting_configtext('local_elisprogram/gradesyncdateorder', $strsyncdateorder, $strsyncdateorderdesc,
+            'event,history'));
+
     // ***Curriculum Administration Block Settings
     $settings->add(new admin_setting_heading('crlm_admin_blk_settings', get_string('crlm_admin_blk_settings', 'local_elisprogram'), '' /* get_string('crlm_admin_blk_settings_info', 'local_elisprogram') */));
 

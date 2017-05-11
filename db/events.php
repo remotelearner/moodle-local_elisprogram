@@ -142,4 +142,10 @@ $observers = array(
             'callback'    => 'moodle_course_deleted_handler',
             'internal'    => false
         ),
+        array (
+            'eventname'   => '\core\event\user_graded',
+            'includefile' => '/local/elisprogram/lib/data/student.class.php',
+            'callback'    => 'pm_user_graded_event_handler',
+            'internal'    => false
+        ),
 );
