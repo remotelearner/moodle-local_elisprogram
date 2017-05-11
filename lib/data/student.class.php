@@ -2780,3 +2780,106 @@ function student_get_class_from_course($crsid, $userid, $sort = 'cls.idnumber', 
             ORDER BY '.$sort.' '.$dir;
     return $DB->get_recordset_sql($sql, array($userid, $crsid));
 }
+
+/**
+ * Convert a grade_grade's finalgrade into a percent based on the associated grade_item's maxgrade.
+ *
+ * @param grade_grade $gradegrade The grade_grade object.
+ * @param int $grademax The maximum grade for the grade_item.
+ * @return float The resulting percent grade.
+ */
+function student_get_scaled_grade(grade_grade $gradegrade, $grademax) {
+    // Ignore mingrade for now... Don't really know what to do with it.
+    if ($gradegrade->finalgrade >= $grademax) {
+        $gradepercent = 100;
+    } else if ($gradegrade->finalgrade <= 0) {
+        $gradepercent = 0;
+    } else {
+        $gradepercent = (($gradegrade->finalgrade / $grademax) * 100.0);
+    }
+    return $gradepercent;
+}
+
+/**
+ * \core\event\user_graded event handler
+ *
+ * @param object $eventdata the event data detailed below:
+ *          'context'       => \context_course::instance($grade->grade_item->courseid),
+ *          'objectid'      => $grade->id,
+ *          'relateduserid' => $grade->userid,
+ *          'other'         => array(
+ *              'itemid'     => $grade->itemid,
+ *              'overridden' => !empty($grade->overridden),
+ *              'finalgrade' => $grade->finalgrade),
+ *          )
+ *          ->grade => $grade - protected, must use method  ->get_grade()
+ * where $grade in the above represents the grade_grade object
+ */
+function pm_user_graded_event_handler($eventdata) {
+    global $DB;
+    $gsdbug = get_config('local_elisprogram', 'gradesyncdebug');
+    if (!empty($gsdbug) && debugging('', DEBUG_DEVELOPER)) {
+        ob_start();
+        var_dump($eventdata);
+        $tmp = ob_get_contents();
+        ob_end_clean();
+        error_log("student::pm_user_graded_event_handler(): eventdata = {$tmp}");
+    }
+    $gradegrade = $eventdata->get_grade();
+    if (!isset($gradegrade->finalgrade) || $gradegrade->grade_item->grademax <= 0 ||
+            !($pmuser = pm_get_crlmuserid($eventdata->relateduserid))) {
+        return;
+    }
+    $timenow = $gradegrade->timemodified; // TBD: $eventdata->timecreated; - not testable?
+    $gradepcnt = student_get_scaled_grade($gradegrade, $gradegrade->grade_item->grademax);
+    $classids = $DB->get_records(classmoodlecourse::TABLE, ['moodlecourseid' => $gradegrade->grade_item->courseid], '', 'classid');
+    $userclasses = student::find([new field_filter('userid', $pmuser), new in_list_filter('classid', array_keys($classids))]);
+    if ($userclasses && $userclasses->valid()) {
+        foreach ($userclasses as $userclass) {
+            // error_log("student::pm_user_graded_event_handler(): userclass: {$userclass->classid}");
+            if ($gradegrade->grade_item->itemtype == 'course') { // Course grade.
+                $userclass->load();
+                if (empty($userclass->locked) && $userclass->grade < $gradepcnt) { // TBD.
+                    $userclass->grade = $gradepcnt;
+                    if ($gradepcnt > $userclass->pmclass->course->completion_grade) { // TBD: && empty completion elements?
+                        $userclass->completestatusid = student::STUSTATUS_PASSED;
+                        $userclass->credits = floatval($userclass->pmclass->course->credits);
+                        $userclass->locked = 1;
+                        $userclass->completetime = $timenow;
+                    }
+                    $userclass->save();
+                }
+            } else if (($crscomps = coursecompletion::find([new field_filter('courseid', $userclass->pmclass->courseid),
+                    new field_filter('idnumber', $gradegrade->grade_item->idnumber)])) && $crscomps->valid()) {
+                // Course Completion element(s) found.
+                $crscomp = $crscomps->current();
+                $locked = ($gradepcnt >= $crscomp->completion_grade) ? 1 : 0;
+                if (($compelems = student_grade::find([
+                        new field_filter('classid', $userclass->classid),
+                        new field_filter('userid', $userclass->userid),
+                        new field_filter('completionid', $crscomp->id)])) && $compelems->valid()) { // Existing grade record.
+                    $compelem = $compelems->current();
+                    $compelem->load();
+                    if (empty($compelem->locked)) {
+                        $compelem->timegraded = $timenow;
+                        $compelem->grade = $gradepcnt;
+                        $compelem->locked = $locked;
+                        $compelem->save();
+                    }
+                } else { // New record.
+                    $compelem = new student_grade([
+                        'classid' => $userclass->classid,
+                        'userid' => $userclass->userid,
+                        'completionid' => $crscomp->id,
+                        'timegraded' => $timenow,
+                        'grade' => $gradepcnt,
+                        'locked' => $locked,
+                    ]);
+                    $compelem->save();
+                }
+            }
+        }
+        $userclasses->close();
+    }
+}
+

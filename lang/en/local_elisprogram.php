@@ -774,6 +774,8 @@ $string['frequency'] = 'Frequency';
 
 $string['grade'] = 'Grade';
 $string['grade_element'] = 'Grade Element';
+$string['gradesyncdateorder_setting'] = 'Grade sync date order';
+$string['gradesyncdateorder_help'] = 'ELIS grade sync options for date completed order are: <ul><li>event - attempts to retrieve date completed from course_completed event date.</li><li>history - attempts to retrieve date completed from grades history.</li><li>creation - if grade\'s timemodified is current time, use timecreated instead.</li></ul>';
 $string['grade_update_warning'] = '<div><strong>Note:</strong> updating grades for individual learning objectives on this screen will not automatically update the class instance grade or completion status.</div>';
 
 $string['health_checking'] = "Checking...\n<ul>\n";
