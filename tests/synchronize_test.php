@@ -28,6 +28,7 @@ global $CFG;
 require_once($CFG->dirroot.'/local/elisprogram/lib/setup.php');
 require_once($CFG->dirroot.'/local/elisprogram/lib/data/classmoodlecourse.class.php');
 require_once($CFG->dirroot.'/local/elisprogram/tests/other/datagenerator.php');
+require_once($CFG->dirroot.'/local/elisprogram/classes/moodle/synchronize.php');
 
 /**
  * Tests the Synchronize class's individual methods.
@@ -1431,7 +1432,8 @@ class synchronize_testcase extends \elis_database_test {
                             'completetime' => (string)$timenow,
                             'completestatusid' => (string)STUSTATUS_PASSED,
                             'grade' => '75.00000',
-                            'credits' => '12.00'
+                            'credits' => '12.00',
+                            'locked' => '1'
                         ),
                 ),
                 // A course with completion elements and a student with a grade below the completiongrade.
@@ -1614,7 +1616,8 @@ class synchronize_testcase extends \elis_database_test {
                             'completetime' => (string)$timenow,
                             'completestatusid' => (string)STUSTATUS_PASSED,
                             'grade' => '75.00000',
-                            'credits' => '12.00'
+                            'credits' => '12.00',
+                            'locked' => '1'
                         ),
                 ),
         );
@@ -1639,6 +1642,8 @@ class synchronize_testcase extends \elis_database_test {
         $crs = new \course(array(
             'idnumber' => 'CRS1',
             'name' => 'Course 1',
+            'completion_grade' => $completiongrade,
+            'credits' => $credits,
             'syllabus' => '',
         ));
         $crs->save();
@@ -1674,7 +1679,7 @@ class synchronize_testcase extends \elis_database_test {
 
         $coursegradegrade['userid'] = $musr->id;
         $coursegradegrade['itemid'] = $coursegradeitem->id;
-        $coursegradegrade = new \grade_grade($coursegradegrade, false);
+        $coursegradegrade = new \local_elisprogram\moodle\grade_grade($coursegradegrade, false);
         $coursegradegrade->insert();
 
         foreach ($compelements as $i => $compelement) {
@@ -2043,7 +2048,7 @@ class synchronize_testcase extends \elis_database_test {
 
         $gradegrade['itemid'] = $gradeitem->id;
         $gradegrade['userid'] = $musr->id;
-        $gradegrade = new \grade_grade($gradegrade, false);
+        $gradegrade = new \local_elisprogram\moodle\grade_grade($gradegrade, false);
         $gradegrade->insert();
 
         $coursecompletion['courseid'] = $crs->id;
@@ -2222,7 +2227,7 @@ class synchronize_testcase extends \elis_database_test {
         foreach ($gradeitems[$courseid] as $item) {
             $this->assertArrayHasKey($item->id, $moodlegrades);
 
-            $this->assertTrue($moodlegrades[$item->id] instanceof \grade_grade);
+            $this->assertTrue($moodlegrades[$item->id] instanceof \local_elisprogram\moodle\grade_grade);
             $this->assertEquals($userid, $moodlegrades[$item->id]->userid);
 
             if ($item->idnumber === 'optionalexam') {

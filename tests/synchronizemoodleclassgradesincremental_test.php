@@ -146,7 +146,30 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
 
         // Validate existence.
         $exists = $DB->record_exists(\student::TABLE, $params);
+        if (!$exists) {
+            ob_start();
+            echo 'assert_student_exists - params:', "\n";
+            var_dump($params);
+            echo 'assert_student_exists - student table:', "\n";
+            var_dump($DB->get_records(\student::TABLE));
+            $tmp = ob_get_contents();
+            ob_end_clean();
+            error_log($tmp);
+        }
         $this->assertTrue($exists);
+    }
+
+    /**
+     * Unlock student record
+     * @param int $classid The id of the appropriate class
+     * @param int $userid  The id of the appropriate PM user
+     */
+    protected static function unlock_student_record($classid, $userid) {
+        global $DB;
+        $stuid = $DB->get_field(student::TABLE, 'id', ['classid' => $classid, 'userid' => $userid]);
+        if (!empty($stuid)) {
+            $DB->update_record(student::TABLE, (object)['id' => $stuid, 'locked' => 0]);
+        }
     }
 
     /**
@@ -198,13 +221,14 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
      *
      * @param string $idnumber The grade item's idnumber
      * @param int $grademax The max grade (100 if not specified);
+     * @param string $itemtype The grade item's itemtype (default: 'manual').
      * @return int Grade item ID
      */
-    protected function create_grade_item($idnumber = 'manualitem', $grademax = null) {
+    protected function create_grade_item($idnumber = 'manualitem', $grademax = null, $itemtype = 'manual') {
         // Required fields.
         $data = array(
             'courseid' => 2,
-            'itemtype' => 'manual',
+            'itemtype' => $itemtype,
             'idnumber' => $idnumber,
             'needsupdate' => false,
             'locked' => true
@@ -228,19 +252,70 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
      * @param int $finalgrade The student's final grade
      * @param int $rawgrademax The maximum grade
      * @param int $timemodified The graded time
+     * @param int $timecreated The grade_grade creation time.
+     * @param object& $gg The grade_grade to return if required.
+     * @return int The new grade_grade id.
      */
-    protected function create_grade_grade($itemid, $userid, $finalgrade, $rawgrademax = 100, $timemodified = null) {
+    protected function create_grade_grade($itemid, $userid, $finalgrade, $rawgrademax = 100, $timemodified = null, $timecreated = null, &$gg = null) {
         if (empty($timemodified)) {
             $timemodified = time();
+        }
+        if (empty($timecreated)) {
+            $timecreated = time();
         }
         $gradegrade = new \grade_grade(array(
             'itemid' => $itemid,
             'userid' => $userid,
             'finalgrade' => $finalgrade,
             'rawgrademax' => $rawgrademax,
-            'timemodified' => $timemodified
+            'timemodified' => $timemodified,
+            'timecreated' => $timecreated
         ));
-        $gradegrade->insert();
+        if (!is_null($gg)) {
+            $gg = $gradegrade;
+        }
+        return $gradegrade->insert();
+    }
+
+    /**
+     * Create a new grade history entry.
+     *
+     * @param array $params Of values.
+     * @return object The grade object.
+     */
+    protected function create_grade_history($params) {
+        global $DB;
+        $params = (array)$params;
+
+        if (!isset($params['itemid'])) {
+            throw new coding_exception('Missing itemid key.');
+        }
+        if (!isset($params['userid'])) {
+            throw new coding_exception('Missing userid key.');
+        }
+
+        // Default object.
+        $grade = new stdClass;
+        $grade->itemid = 0;
+        $grade->userid = 0;
+        $grade->oldid = 123;
+        $grade->rawgrade = 50;
+        $grade->finalgrade = 50;
+        $grade->timecreated = time();
+        $grade->timemodified = time();
+        $grade->information = '';
+        $grade->informationformat = FORMAT_PLAIN;
+        $grade->feedback = '';
+        $grade->feedbackformat = FORMAT_PLAIN;
+        $grade->usermodified = 2;
+
+        // Merge with data passed.
+        $grade = (object)array_merge((array)$grade, $params);
+
+        // Insert record.
+        $grade->id = $DB->insert_record('grade_grades_history', $grade);
+
+        return $grade;
     }
 
     /**
@@ -1442,6 +1517,8 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
         // Update completetime.
         set_config('incrementalgradesync_lastrun', 12345, 'local_elisprogram');
         $DB->execute("UPDATE {grade_grades} SET timemodified = 12347");
+        // Unlock the student record.
+        static::unlock_student_record(100, 103);
 
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
@@ -1451,6 +1528,8 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
         // Update credits.
         set_config('incrementalgradesync_lastrun', 12345, 'local_elisprogram');
         $DB->execute("UPDATE {".\course::TABLE."} SET credits = 2");
+        // Unlock the student record.
+        static::unlock_student_record(100, 103);
 
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades();
@@ -1529,6 +1608,8 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
         // Update completetime.
         set_config('incrementalgradesync_lastrun', 12345, 'local_elisprogram');
         $DB->execute("UPDATE {grade_grades} SET timemodified = 12347");
+        // Unlock the student record.
+        static::unlock_student_record(100, 103);
 
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
@@ -1538,6 +1619,8 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
         // Update credits.
         set_config('incrementalgradesync_lastrun', 12345, 'local_elisprogram');
         $DB->execute("UPDATE {".\course::TABLE."} SET credits = 2");
+        // Unlock the student record.
+        static::unlock_student_record(100, 103);
 
         $sync = new \local_elisprogram\moodle\synchronize;
         $sync->synchronize_moodle_class_grades(100);
@@ -1598,8 +1681,7 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
         $count = $DB->count_records(\student::TABLE, array('completestatusid' => STUSTATUS_PASSED));
         $this->assertEquals(1, $count);
 
-        // NOTE: this method does not lock enrolments.
-        $this->assert_student_exists(100, 103, 100, STUSTATUS_PASSED, null, null, 0);
+        $this->assert_student_exists(100, 103, 100, STUSTATUS_PASSED, null, null, 1);
     }
 
     /**
@@ -1660,8 +1742,7 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
         $count = $DB->count_records(\student::TABLE, ['completestatusid' => STUSTATUS_PASSED]);
         $this->assertEquals(1, $count);
 
-        // NOTE: this method does not lock enrolments.
-        $this->assert_student_exists(100, 103, 100, STUSTATUS_PASSED, null, null, 0);
+        $this->assert_student_exists(100, 103, 100, STUSTATUS_PASSED, null, null, 1);
     }
 
     /**
@@ -2557,5 +2638,480 @@ class synchronizemoodleclassgradesincremental_testcase extends \elis_database_te
         $this->assertNotEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_lastrun'));
         $this->assertEquals($timenow, get_config('local_elisprogram', 'incrementalgradesync_prevrun'));
         $this->assertGreaterThan(0, get_config('local_elisprogram', 'incrementalgradesync_nextuser'));
+    }
+
+    /**
+     * Validate that enrolments are successfully updated according to dategraded settings: history.
+     *        /
+    public function test_methodupdatesenrolmentusinggradehistory() {
+        global $DB;
+
+        $this->load_csv_data();
+        $ecourse = new course(100);
+        $ecourse->completion_grade = 51;
+        $ecourse->save();
+
+        // Enable incremental sync.
+        set_config('incrementalgradesync', 1, 'local_elisprogram');
+        set_config('incrementalgradesync_lastrun', 12340, 'local_elisprogram');
+        set_config('gradesyncdateorder', 'event,history', 'local_elisprogram');
+        // set_config('gradesyncdebug', '1', 'local_elisprogram');
+
+        // Set up course.
+        $this->make_course_enrollable();
+        enrol_try_internal_enrol(2, 100, 1);
+        $DB->execute('UPDATE {user_enrolments} SET timecreated = 12346');
+
+        // Set up grades.
+        $gradeitem1 = $this->create_grade_item('');
+        $gradeitem1->update();
+        $this->create_grade_grade($gradeitem1->id, 100, 75, 100, time() + 100);
+
+        $gradeitem2 = $DB->get_record('grade_items', ['courseid' => 2, 'itemtype' => 'course']);
+        $this->create_grade_grade($gradeitem2->id, 100, 75, 100, time() + 101);
+
+        // Setup some grade history.
+        $this->create_grade_history(['itemid' => $gradeitem2->id, 'userid' => 100, 'finalgrade' => 65, 'timemodified' => 12347]);
+        $this->create_grade_history(['itemid' => $gradeitem2->id, 'userid' => 100, 'finalgrade' => 75, 'timemodified' => 12348]);
+        $this->create_grade_history(['itemid' => $gradeitem2->id, 'userid' => 100, 'finalgrade' => 75, 'timemodified' => 12349]);
+
+        // Set up PM enrolments.
+        $student = new \student(['userid' => 103, 'classid' => 100, 'grade' => 25]);
+        $student->save();
+
+        // Validate setup.
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+
+        // Call and validate.
+        $sync = new \local_elisprogram\moodle\synchronize;
+        $sync->synchronize_moodle_class_grades();
+        $this->assert_num_students(1);
+        $count = $DB->count_records(\student::TABLE, ['grade' => 75]);
+        $this->assertEquals(1, $count);
+        $this->assert_student_exists(100, 103, 75);
+
+        $enrolment = $DB->get_record(\student::TABLE, ['classid' => 100, 'userid' => 103]);
+        // var_dump($enrolment);
+        $this->assertEquals(12348, $enrolment->completetime);
+    }
+
+    /**
+     * Validate that enrolments are successfully updated according to dategraded settings: event.
+     */
+    public function test_methodupdatesenrolmentusinggradeevent() {
+        global $DB;
+
+        $this->load_csv_data();
+        $ecourse = new course(100);
+        $ecourse->completion_grade = 51;
+        $ecourse->save();
+
+        // Enable incremental sync.
+        set_config('incrementalgradesync', 1, 'local_elisprogram');
+        set_config('incrementalgradesync_lastrun', 12340, 'local_elisprogram');
+        set_config('gradesyncdateorder', 'event,history', 'local_elisprogram');
+        // set_config('gradesyncdebug', '1', 'local_elisprogram');
+
+        // Set up course.
+        $this->make_course_enrollable();
+        enrol_try_internal_enrol(2, 100, 1);
+        $DB->execute('UPDATE {user_enrolments} SET timecreated = 12346');
+
+        // Set up grades.
+        $gradeitem1 = $this->create_grade_item('');
+        $gradeitem1->update();
+        $this->create_grade_grade($gradeitem1->id, 100, 75, 100, time() + 100);
+
+        // Setup a bogus course_completed event with known timcreated.
+        $ctx = context_course::instance(2);
+        $mdlcompid = $DB->insert_record('logstore_standard_log', (object)['eventname' => '\core\event\course_completed',
+            'relateduserid' => 100, 'courseid' => 2, 'timecreated' => 12348, 'component' => 'core', 'action' => 'completed',
+            'userid' => 2, 'target' => 'course', 'crud' => 'u', 'edulevel' => 2, 'contextid' => $ctx->id,
+            'contextlevel' => CONTEXT_COURSE, 'contextinstanceid' => 2]);
+
+        // Set up PM enrolments.
+        $student = new \student(['userid' => 103, 'classid' => 100, 'grade' => 25]);
+        $student->save();
+
+        // Validate setup.
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+
+        // Call and validate.
+        $sync = new \local_elisprogram\moodle\synchronize;
+        $sync->synchronize_moodle_class_grades();
+        $this->assert_num_students(1);
+        $count = $DB->count_records(\student::TABLE, ['grade' => 75]);
+        $this->assertEquals(1, $count);
+        $this->assert_student_exists(100, 103, 75);
+
+        $enrolment = $DB->get_record(\student::TABLE, ['classid' => 100, 'userid' => 103]);
+        // var_dump($enrolment);
+        $this->assertEquals(12348, $enrolment->completetime);
+    }
+
+    /**
+     * Validate that enrolments are successfully updated according to dategraded settings: creation.
+     */
+    public function test_methodupdatesenrolmentusinggradecreation() {
+        global $DB;
+
+        $this->load_csv_data();
+        $ecourse = new course(100);
+        $ecourse->completion_grade = 51;
+        $ecourse->save();
+
+        // Enable incremental sync.
+        set_config('incrementalgradesync', 1, 'local_elisprogram');
+        set_config('incrementalgradesync_lastrun', 12340, 'local_elisprogram');
+        set_config('gradesyncdateorder', 'creation,history', 'local_elisprogram');
+        // set_config('gradesyncdebug', '1', 'local_elisprogram');
+
+        // Set up course.
+        $this->make_course_enrollable();
+        enrol_try_internal_enrol(2, 100, 1);
+        $DB->execute('UPDATE {user_enrolments} SET timecreated = 12346');
+
+        // Set up PM enrolments.
+        $student = new \student(['userid' => 103, 'classid' => 100, 'grade' => 25]);
+        $student->save();
+
+        // Validate setup.
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+
+        // Set up grades.
+        $gradeitem1 = $this->create_grade_item('');
+        $gradeitem1->update();
+        $this->create_grade_grade($gradeitem1->id, 100, 75, 100, time() + 100, 12347);
+        $gradeitem2 = $DB->get_record('grade_items', ['courseid' => 2, 'itemtype' => 'course']);
+        $this->create_grade_grade($gradeitem2->id, 100, 75, 100, time() + 100, 12348);
+
+        // Call and validate.
+        $sync = new \local_elisprogram\moodle\synchronize;
+        $sync->synchronize_moodle_class_grades();
+        $this->assert_num_students(1);
+        $count = $DB->count_records(\student::TABLE, ['grade' => 75]);
+        $this->assertEquals(1, $count);
+        $this->assert_student_exists(100, 103, 75);
+
+        $enrolment = $DB->get_record(\student::TABLE, ['classid' => 100, 'userid' => 103]);
+        // var_dump($enrolment);
+        $this->assertEquals(12348, $enrolment->completetime);
+    }
+
+    /**
+     * Validate that enrolments are correctly updated from user_graded events.
+     */
+    public function test_methodupdatesenrolmentusingusergradedevent() {
+        global $DB;
+
+        $this->load_csv_data();
+        $ecourse = new course(100);
+        $ecourse->completion_grade = 51;
+        $ecourse->save();
+
+        // set_config('gradesyncdebug', '1', 'local_elisprogram');
+
+        // Set up course.
+        $this->make_course_enrollable();
+        enrol_try_internal_enrol(2, 100, 1);
+        $DB->execute('UPDATE {user_enrolments} SET timecreated = 12346');
+
+        // Set up grades.
+        $gradeitem1 = $this->create_grade_item('auto', null, 'course');
+        $gg = 1;
+        $this->create_grade_grade($gradeitem1->id, 100, 75, 100, 12348, null, $gg);
+        $gg->grade_item = $gradeitem1; // TBD?
+        $gg->timecreated = $gg->timemodified = 12348;
+        // var_dump($gg);
+
+        // Set up PM enrolments.
+        $student = new \student(['userid' => 103, 'classid' => 100, 'grade' => 25]);
+        $student->save();
+
+        // Validate setup.
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+
+        // Call and validate.
+        $ugevent = \core\event\user_graded::create_from_grade($gg);
+        pm_user_graded_event_handler($ugevent);
+
+        $this->assert_num_students(1);
+        $count = $DB->count_records(\student::TABLE, ['grade' => 75]);
+        $this->assertEquals(1, $count);
+        $this->assert_student_exists(100, 103, 75);
+
+        $enrolment = $DB->get_record(\student::TABLE, ['classid' => 100, 'userid' => 103]);
+        // var_dump($enrolment);
+        $this->assertEquals(12348, $enrolment->completetime);
+        $this->assertEquals(1, $enrolment->locked);
+    }
+
+    /**
+     * Validate that locked enrolments are not updated from user_graded events.
+     */
+    public function test_methodskipslockedenrolmentusingusergradedevent() {
+        global $DB;
+
+        $this->load_csv_data();
+        $ecourse = new course(100);
+        $ecourse->completion_grade = 51;
+        $ecourse->save();
+
+        // set_config('gradesyncdebug', '1', 'local_elisprogram');
+
+        // Set up course.
+        $this->make_course_enrollable();
+        enrol_try_internal_enrol(2, 100, 1);
+        $DB->execute('UPDATE {user_enrolments} SET timecreated = 12346');
+
+        // Set up grades.
+        $gradeitem1 = $this->create_grade_item('auto', null, 'course');
+        $gg = 1;
+        $this->create_grade_grade($gradeitem1->id, 100, 75, 100, 12355, null, $gg);
+        $gg->grade_item = $gradeitem1; // TBD?
+        $gg->timecreated = $gg->timemodified = 12355;
+        // var_dump($gg);
+
+        // Set up a locked PM enrolment.
+        $student = new \student(['userid' => 103, 'classid' => 100, 'grade' => 55, 'locked' => 1, 'completetime' => 12348,
+            'completestatusid' => 2]);
+        $student->save();
+
+        // Validate setup.
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 55, 2, 12348);
+
+        // Call and validate.
+        $ugevent = \core\event\user_graded::create_from_grade($gg);
+        pm_user_graded_event_handler($ugevent);
+
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 55, 2, 12348);
+    }
+
+    /**
+     * Validate that completions are correctly created from user_graded events.
+     */
+    public function test_methodcreatescompletionusingusergradedevent() {
+        global $DB;
+
+        $this->load_csv_data();
+        $ecourse = new course(100);
+        $ecourse->completion_grade = 51;
+        $ecourse->save();
+
+        // set_config('gradesyncdebug', '1', 'local_elisprogram');
+
+        // Set up course.
+        $this->make_course_enrollable();
+        enrol_try_internal_enrol(2, 100, 1);
+        $DB->execute('UPDATE {user_enrolments} SET timecreated = 12346');
+
+        // Set up grades.
+        $gradeitem1 = $this->create_grade_item('x123');
+        $compid = $this->create_course_completion('x123', 51.0);
+        $gg = 1;
+        $this->create_grade_grade($gradeitem1->id, 100, 75, 100, 12348, null, $gg);
+        $gg->grade_item = $gradeitem1; // TBD?
+        $gg->timecreated = $gg->timemodified = 12348;
+        // var_dump($gg);
+
+        // Set up PM enrolments.
+        $student = new \student(['userid' => 103, 'classid' => 100, 'grade' => 25]);
+        $student->save();
+
+        // Validate setup.
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+
+        // Call and validate.
+        $ugevent = \core\event\user_graded::create_from_grade($gg);
+        pm_user_graded_event_handler($ugevent);
+
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+        $this->assert_student_grade_exists(100, 103, $compid, 75, 1);
+        $enrolment = $DB->get_record(\student::TABLE, ['classid' => 100, 'userid' => 103]);
+        // var_dump($enrolment);
+        $this->assertEquals(0, $enrolment->completetime);
+        $this->assertEquals(0, $enrolment->locked);
+    }
+
+    /**
+     * Validate that completions are correctly updated from user_graded events.
+     */
+    public function test_methodupdatescompletionusingusergradedevent() {
+        global $DB;
+
+        $this->load_csv_data();
+        $ecourse = new course(100);
+        $ecourse->completion_grade = 51;
+        $ecourse->save();
+
+        // set_config('gradesyncdebug', '1', 'local_elisprogram');
+
+        // Set up course.
+        $this->make_course_enrollable();
+        enrol_try_internal_enrol(2, 100, 1);
+        $DB->execute('UPDATE {user_enrolments} SET timecreated = 12346');
+
+        // Set up grades.
+        $gradeitem1 = $this->create_grade_item('x123');
+        $compid = $this->create_course_completion('x123', 51.0);
+        // Create LO grade.
+        $studentgrade = new \student_grade([
+            'userid' => 103,
+            'classid' => 100,
+            'completionid' => $compid,
+            'grade' => 25,
+            'locked' => 0,
+            'timegraded' => 1,
+        ]);
+        $studentgrade->save();
+        $gg = 1;
+        $this->create_grade_grade($gradeitem1->id, 100, 75, 100, 12348, null, $gg);
+        $gg->grade_item = $gradeitem1; // TBD?
+        $gg->timecreated = $gg->timemodified = 12348;
+        // var_dump($gg);
+
+        // Set up PM enrolments.
+        $student = new \student(['userid' => 103, 'classid' => 100, 'grade' => 25]);
+        $student->save();
+
+        // Validate setup.
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+
+        // Call and validate.
+        $ugevent = \core\event\user_graded::create_from_grade($gg);
+        pm_user_graded_event_handler($ugevent);
+
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+        $this->assert_student_grade_exists(100, 103, $compid, 75, 1);
+        $enrolment = $DB->get_record(\student::TABLE, ['classid' => 100, 'userid' => 103]);
+        // var_dump($enrolment);
+        $this->assertEquals(0, $enrolment->completetime);
+        $this->assertEquals(0, $enrolment->locked);
+    }
+
+    /**
+     * Validate that locked completions are _not_ updated from user_graded events.
+     */
+    public function test_methodskipslockedcompletionusingusergradedevent() {
+        global $DB;
+
+        $this->load_csv_data();
+        $ecourse = new course(100);
+        $ecourse->completion_grade = 51;
+        $ecourse->save();
+
+        // set_config('gradesyncdebug', '1', 'local_elisprogram');
+
+        // Set up course.
+        $this->make_course_enrollable();
+        enrol_try_internal_enrol(2, 100, 1);
+        $DB->execute('UPDATE {user_enrolments} SET timecreated = 12346');
+
+        // Set up grades.
+        $gradeitem1 = $this->create_grade_item('x123');
+        $compid = $this->create_course_completion('x123', 51.0);
+        // Create LO grade.
+        $studentgrade = new \student_grade([
+            'userid' => 103,
+            'classid' => 100,
+            'completionid' => $compid,
+            'grade' => 25,
+            'locked' => 1,
+            'timegraded' => 1,
+        ]);
+        $studentgrade->save();
+        $gg = 1;
+        $this->create_grade_grade($gradeitem1->id, 100, 75, 100, 12348, null, $gg);
+        $gg->grade_item = $gradeitem1; // TBD?
+        $gg->timecreated = $gg->timemodified = 12348;
+        // var_dump($gg);
+
+        // Set up PM enrolments.
+        $student = new \student(['userid' => 103, 'classid' => 100, 'grade' => 25]);
+        $student->save();
+
+        // Validate setup.
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+
+        // Call and validate.
+        $ugevent = \core\event\user_graded::create_from_grade($gg);
+        pm_user_graded_event_handler($ugevent);
+
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+        $this->assert_student_grade_exists(100, 103, $compid, 25);
+        $enrolment = $DB->get_record(\student::TABLE, ['classid' => 100, 'userid' => 103]);
+        // var_dump($enrolment);
+        $this->assertEquals(0, $enrolment->completetime);
+        $this->assertEquals(0, $enrolment->locked);
+    }
+
+    /**
+     * Validate that 'failed' completions are _not_ locked when updated from user_graded events.
+     */
+    public function test_methoddoesnotlockfailedcompletionusingusergradedevent() {
+        global $DB;
+
+        $this->load_csv_data();
+        $ecourse = new course(100);
+        $ecourse->completion_grade = 51;
+        $ecourse->save();
+
+        // set_config('gradesyncdebug', '1', 'local_elisprogram');
+
+        // Set up course.
+        $this->make_course_enrollable();
+        enrol_try_internal_enrol(2, 100, 1);
+        $DB->execute('UPDATE {user_enrolments} SET timecreated = 12346');
+
+        // Set up grades.
+        $gradeitem1 = $this->create_grade_item('x123');
+        $compid = $this->create_course_completion('x123', 51.0);
+        // Create LO grade.
+        $studentgrade = new \student_grade([
+            'userid' => 103,
+            'classid' => 100,
+            'completionid' => $compid,
+            'grade' => 25,
+            'locked' => 0,
+            'timegraded' => 1,
+        ]);
+        $studentgrade->save();
+        $gg = 1;
+        $this->create_grade_grade($gradeitem1->id, 100, 50, 100, 12348, null, $gg);
+        $gg->grade_item = $gradeitem1; // TBD?
+        $gg->timecreated = $gg->timemodified = 12348;
+        // var_dump($gg);
+
+        // Set up PM enrolments.
+        $student = new \student(['userid' => 103, 'classid' => 100, 'grade' => 25]);
+        $student->save();
+
+        // Validate setup.
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+
+        // Call and validate.
+        $ugevent = \core\event\user_graded::create_from_grade($gg);
+        pm_user_graded_event_handler($ugevent);
+
+        $this->assert_num_students(1);
+        $this->assert_student_exists(100, 103, 25);
+        $this->assert_student_grade_exists(100, 103, $compid, 50, 0);
+        $enrolment = $DB->get_record(\student::TABLE, ['classid' => 100, 'userid' => 103]);
+        // var_dump($enrolment);
+        $this->assertEquals(0, $enrolment->completetime);
+        $this->assertEquals(0, $enrolment->locked);
     }
 }
