@@ -71,12 +71,6 @@ $observers = array(
             'internal'    => false
         ),
         array (
-            'eventname'   => '\local_elisprogram\event\curriculum_completed',
-            'includefile' => '/local/elisprogram/lib/data/curriculumstudent.class.php',
-            'callback'    => 'curriculumstudent::curriculum_completed_handler',
-            'internal'    => false
-        ),
-        array (
             'eventname'   => '\local_elisprogram\event\curriculum_notcompleted',
             'includefile' => '/local/elisprogram/lib/data/curriculumstudent.class.php',
             'callback'    => 'curriculumstudent::curriculum_notcompleted_handler',

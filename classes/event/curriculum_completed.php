@@ -83,8 +83,8 @@ class curriculum_completed extends \core\event\base {
      */
     protected function get_legacy_eventdata() {
         global $CFG;
-        require_once($CFG->dirroot.'/local/elisprogram/lib/data/student.class.php');
-        $legacyeventdata = is_array($this->other) ? new \student($this->other) : null;
+        require_once($CFG->dirroot.'/local/elisprogram/lib/data/curriculumstudent.class.php');
+        $legacyeventdata = is_array($this->other) ? new \curriculumstudent($this->other) : null;
         return $legacyeventdata;
     }
 }
