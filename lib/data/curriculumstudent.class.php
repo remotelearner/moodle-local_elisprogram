@@ -142,6 +142,12 @@ class curriculumstudent extends elis_data_object {
         $this->save();
 
         // Send notifications
+        $eventdata = array(
+            'context' => context_system::instance(),
+            'other' => $this->to_array(true)
+        );
+        $event = \local_elisprogram\event\curriculum_completed::create($eventdata);
+        $event->trigger();
 
         /// Does the user receive a notification?
         $sendtouser = (!empty(elis::$config->local_elisprogram->notify_curriculumcompleted_user)) ? true : false;
@@ -232,19 +238,6 @@ class curriculumstudent extends elis_data_object {
      * These functions handle specific student events.
      *
      */
-
-    /**
-     * Function to handle curriculum completed events.
-     *
-     * @param   curriculumstudent  $student  The curriculum-student entry to mark as completed
-     *
-     * @return  boolean                      TRUE is successful, otherwise FALSE
-     */
-    public static function curriculum_completed_handler($student) {
-        $student = new student($student->other);
-        $student->load();
-        return $student->complete();
-    }
 
     /**
      * Function to handle curriculum not completed events.
