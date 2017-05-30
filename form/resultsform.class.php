@@ -654,10 +654,10 @@ class cmEngineForm extends cmform {
                 //use the custom delete function to delete rows (custom-delete.js)
                 'onclick' => "customDeleteRow(this); return false;"
             );
-            $group[] = $mform->createElement('link', 'delete', '', "#", '', $attributes);
+            $group[] = $mform->createElement('link', 'delete', '', "#", '&nbsp;&nbsp;', $attributes);
 
             // Add minimum, maximum and delete to field group
-            $mform->addGroup($group, "{$prefix}{$i}_score", '', '', false);
+            $mform->addGroup($group, "{$prefix}{$i}_score", '', ' &nbsp;', false);
             $mform->setType("{$prefix}{$i}_min", PARAM_TEXT);
             $mform->setType("{$prefix}{$i}_max", PARAM_TEXT);
 
