@@ -73,6 +73,11 @@ if ($ADMIN->fulltree) {
                            get_string('auto_collapse_setting', 'local_elisprogram'),
                            '' /* get_string('auto_collapse_help', 'local_elisprogram') */, 4, PARAM_INT)); // TBD
 
+    // ELIS-9467: Add setting to force class enrolment is after program enrolment to qualify.
+    $settings->add(new \admin_setting_configcheckbox('local_elisprogram/clsenrolafterprgenrol',
+            get_string('clsenrolafterprgenrol_setting', 'local_elisprogram'),
+            get_string('clsenrolafterprgenrol_help', 'local_elisprogram'), 0));
+
     // Enable curriculum expiration
     $setting = new admin_setting_configcheckbox('local_elisprogram/enable_curriculum_expiration',
                            get_string('crlm_expire_setting', 'local_elisprogram'),
