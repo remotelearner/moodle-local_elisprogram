@@ -165,99 +165,116 @@ class curriculum extends data_object_with_custom_fields {
     public static function check_for_completed_nags() {
         global $CFG, $DB;
 
-        // Completed curricula:
-        $select  = 'SELECT cce.id as id, cce.credits AS curcredits, cce.completetime AS clscomplete,
-                    cur.id as curid, cur.reqcredits as reqcredits,
-                    cca.id as curassid, cca.userid, cca.curriculumid, cca.completed, cca.timecompleted,
-                    cca.credits, cca.locked, cca.timecreated, cca.timemodified, cca.timeexpired,
-                    cco.id as courseid, ccc.required AS crsrequired ';
-        // >* This will return ALL class enrolment records for a user's curriculum assignment.
-        $from    = 'FROM {'.curriculumstudent::TABLE.'} cca ';
-        $join    = 'INNER JOIN {'.user::TABLE.'} cu ON cu.id = cca.userid
-                    INNER JOIN {'.curriculum::TABLE.'} cur ON cca.curriculumid = cur.id
-                     LEFT JOIN {'.curriculumcourse::TABLE.'} ccc ON ccc.curriculumid = cur.id
-                     LEFT JOIN {'.programcrsset::TABLE.'} pcs ON pcs.prgid = cur.id
-                     LEFT JOIN {'.crssetcourse::TABLE.'} csc ON csc.crssetid = pcs.crssetid
-                    INNER JOIN {'.course::TABLE.'} cco ON (cco.id = ccc.courseid OR cco.id = csc.courseid)
-                    INNER JOIN {'.pmclass::TABLE.'} ccl ON ccl.courseid = cco.id
-                    INNER JOIN {'.student::TABLE.'} cce ON (cce.classid = ccl.id) AND (cce.userid = cca.userid) ';
-        // >*
-        $where   = 'WHERE (cca.completed = 0) AND (cce.completestatusid != '.STUSTATUS_NOTCOMPLETE.') ';
-        $order   = 'ORDER BY cur.id, cca.id ASC ';
-        $sql     = $select.$from.$join.$where.$order;
-
-        $curassid = 0;
         $curid = 0;
-        $numcredits = 0;
         $reqcredits = 10000; // Initially so a completion event is not triggered.
-        $requiredcourseids = array();
-        $checkcourses = $requiredcourseids;
-        $crssetscomplete = true;
-        $context = false;
-        $timenow = 0;
-        $timerun = time();
-        $secondsinaday = 60 * 60 * 24;
+        $curreqcourses = [];
+        $curcourses = [];
+        $curcrssets = [];
 
-        $rs = $DB->get_recordset_sql($sql);
+        // Completed curricula:
+        $select = 'timecompleted = 0 AND completed = ?';
+        $rs = $DB->get_recordset_select(curriculumstudent::TABLE, $select, [STUSTATUS_NOTCOMPLETE], 'curriculumid');
         if ($rs && $rs->valid()) {
+            $clsenrolafterprgenrol = !empty(elis::$config->local_elisprogram->clsenrolafterprgenrol);
             foreach ($rs as $rec) {
-                // Loop through enrolment records grouped by curriculum and curriculum assignments,
-                // counting the credits achieved and looking for all required courses to be complete.
-                // Load a new curriculum assignment.
-                if ($curassid != $rec->curassid) {
-                    // Check for completion - all credits have been earned and all required courses completed.
-                    if ($curassid && $crssetscomplete && ($numcredits >= $reqcredits) && empty($checkcourses)) {
-                        $currstudent->complete($timenow ? $timenow : $timerun, $numcredits, 1);
-                        $timenow = 0;
-                    }
-
-                    $curassid = $rec->curassid;
-                    $currstudent = new curriculumstudent($rec->curassid);
-                    $currstudent->load();
-
-                    $numcredits = 0;
-                    $crssetscomplete = true;
-                }
-
-                if (!empty($rec->crsrequired) && $rec->clscomplete > $timenow) {
-                    $timenow = $rec->clscomplete;
-                }
-
-                // Get a new list of required courses.
-                if ($curid != $rec->curid) {
-                    $curid = $rec->curid;
-                    $reqcredits = $rec->reqcredits;
-                    $select = 'curriculumid = '.$curid.' AND required = 1';
-                    if (!($requiredcourseids = $DB->get_records_select(curriculumcourse::TABLE, $select, null, '', 'courseid,required'))) {
-                        $requiredcourseids = array();
-                    }
-                    $checkcourses = $requiredcourseids;
-                    // Check for any courseset requirements
-                    $select = 'prgid = ? AND (reqcredits > 0.0 OR reqcourses > 0)';
-                    if (($requiredcrssets = $DB->get_recordset_select(programcrsset::TABLE, $select, array($curid), '', 'id')) && $requiredcrssets->valid()) {
-                        foreach ($requiredcrssets as $requiredcrsset) {
-                            $prgcrsset = new programcrsset($requiredcrsset->id);
-                            $prgcrsset->load();
-                            if (!$prgcrsset->is_complete($rec->userid)) {
-                                $crssetscomplete = false;
-                                break;
+                if ($curid != $rec->curriculumid) {
+                    $curid = $rec->curriculumid;
+                    // Get all courses in program, including courseset courses.
+                    $curcrssql = 'SELECT DISTINCT crs.id
+                                    FROM {'.course::TABLE.'} crs
+                               LEFT JOIN {'.curriculumcourse::TABLE.'} curcrs ON curcrs.curriculumid = ?
+                                         AND curcrs.courseid = crs.id
+                               LEFT JOIN {'.programcrsset::TABLE.'} pcs ON pcs.prgid = ?
+                               LEFT JOIN {'.crssetcourse::TABLE.'} csc ON pcs.crssetid = csc.crssetid
+                                         AND crs.id = csc.courseid
+                                   WHERE curcrs.id IS NOT NULL
+                                         OR (pcs.id IS NOT NULL AND csc.id IS NOT NULL)';
+                    $curcourses = $DB->get_records_sql($curcrssql, [$curid, $curid]);
+                    if (!empty($curcourses)) {
+                        // Get required courses in program.
+                        $curreqcrssql = 'SELECT curcrs.courseid
+                                           FROM {'.curriculumcourse::TABLE.'} curcrs
+                                          WHERE curcrs.required = 1
+                                                AND curcrs.curriculumid = ?';
+                        $curreqcourses = $DB->get_records_sql($curreqcrssql, [$curid]);
+                        $reqcrsparams = [];
+                        if (!empty($curreqcourses)) {
+                            list($reqcrsinorequal, $reqcrsparams) = $DB->get_in_or_equal(array_keys($curreqcourses));
+                            $reqsql = 'SELECT COUNT(DISTINCT cls.courseid)
+                                         FROM {'.student::TABLE.'} stu
+                                         JOIN {'.pmclass::TABLE."} cls ON stu.classid = cls.id
+                                        WHERE cls.courseid {$reqcrsinorequal}
+                                              AND stu.userid = ?
+                                              AND stu.completestatusid = ?
+                                              AND stu.locked = 1
+                                              AND stu.completetime > 0";
+                            if ($clsenrolafterprgenrol) {
+                                $reqsql .= ' AND stu.enrolmenttime >= ?';
                             }
                         }
+                        list($crsinorequal, $crsparams) = $DB->get_in_or_equal(array_keys($curcourses));
+                        $stusql = 'SELECT MAX(stu.completetime) AS maxcompletetime, SUM(stu.credits) as totalcredits
+                                     FROM {'.student::TABLE.'} stu
+                                     JOIN {'.pmclass::TABLE."} cls ON stu.classid = cls.id
+                                    WHERE cls.courseid {$crsinorequal}
+                                          AND stu.userid = ?
+                                          AND stu.completestatusid = ?
+                                          AND stu.locked = 1
+                                          AND stu.completetime > 0";
+                        if ($clsenrolafterprgenrol) {
+                            $stusql .= ' AND stu.enrolmenttime >= ?';
+                        }
+
+                        // Get all CourseSets in Program.
+                        $select = 'prgid = ? AND (reqcredits > 0.0 OR reqcourses > 0)';
+                        $curcrssets = $DB->get_records_select(programcrsset::TABLE, $select, [$curid], '', 'id');
+                        $cur = new curriculum($curid);
+                        $reqcredits = $cur->reqcredits;
+                    }
+                }
+                if (empty($curcourses)) {
+                    continue;
+                }
+                // Check for incomplete Program CourseSets ...
+                if (!empty($curcrssets)) {
+                    $crssetscomplete = true;
+                    foreach ($curcrssets as $curcrsset) {
+                        $prgcrsset = new programcrsset($curcrsset->id);
+                        $prgcrsset->load();
+                        if (!$prgcrsset->is_complete($rec->userid)) {
+                            $crssetscomplete = false;
+                            break;
+                        }
+                    }
+                    if (!$crssetscomplete) {
+                        continue;
                     }
                 }
 
-                // Track data for completion...
-                $numcredits += $rec->curcredits;
-                if (isset($checkcourses[$rec->courseid])) {
-                    unset($checkcourses[$rec->courseid]);
+                // Check enrolments in Program Classes for completeness ...
+                if (!empty($reqcrsparams)) {
+                    $reqparams = [$rec->userid, STUSTATUS_PASSED];
+                    if ($clsenrolafterprgenrol) {
+                        $reqparams[] = $rec->timecreated;
+                    }
+                    $reqcount = $DB->get_field_sql($reqsql, array_merge($reqcrsparams, $reqparams));
+                    if ($reqcount < count($reqcrsparams)) {
+                        // error_log("curriculum::check_for_completed_nags(): reqcount = {$reqcount}; required = ".count($reqcrsparams));
+                        continue;
+                    }
+                }
+                $stuparams = [$rec->userid, STUSTATUS_PASSED];
+                if ($clsenrolafterprgenrol) {
+                    $stuparams[] = $rec->timecreated;
+                }
+                $studata = $DB->get_record_sql($stusql, array_merge($crsparams, $stuparams));
+                if (!empty($studata) && $studata->totalcredits >= $reqcredits) {
+                    $curstu = new curriculumstudent($rec->id);
+                    $curstu->load();
+                    $curstu->complete($studata->maxcompletetime, $studata->totalcredits, true);
                 }
             }
             $rs->close();
-        }
-
-        // Check for last record completion - all credits have been earned and all required courses completed.
-        if ($curassid && $crssetscomplete && ($numcredits >= $reqcredits) && empty($checkcourses)) {
-            $currstudent->complete($timenow ? $timenow : $timerun, $numcredits, 1);
         }
 
         $sendtouser       = elis::$config->local_elisprogram->notify_curriculumnotcompleted_user;
