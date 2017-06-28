@@ -106,13 +106,12 @@ class curriculumstudent_testcase extends elis_database_test {
 
         // Set the completion time to a month ago and status to completed on the class enrolment.
         $completetime = time() - 2592000;
-        $sql = 'UPDATE {'.student::TABLE.'} SET completetime = '.$completetime.', completestatusid = 2 WHERE userid = 103 AND classid = 100';
+        $sql = 'UPDATE {'.student::TABLE.'} SET completetime = '.$completetime.
+                ', completestatusid = 2, locked = 1 WHERE userid = 103 AND classid = 100';
         $DB->execute($sql);
 
         // Execute check_for_completed_nags.
-        $curriculum = new curriculum(1);
-        $curriculum->load();
-        $result = $curriculum->check_for_completed_nags();
+        $result = curriculum::check_for_completed_nags();
 
         // Verify completion time in program assignment table.
         $recordset = curriculumstudent::get_curricula(103);
