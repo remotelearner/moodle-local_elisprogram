@@ -502,7 +502,7 @@ abstract class managementpage extends pm_page {
                         'alt' => $tab['name'],
                         'class' => $iconmap[$tab['image']].' managementicon elisicon'
                     );
-                    $buttons[] = html_writer::link($target->url, '', $iconattrs);
+                    $buttons[] = html_writer::link($target->url, '&#8202;', $iconattrs);
                 }
             }
         }
