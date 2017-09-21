@@ -183,7 +183,8 @@ function userset_groups_role_assigned_handler($roleassevent) {
  * @return bool true
  */
 function userset_groups_pm_userset_groupings_enabled($event) {
-    global $DB;
+    global $CFG, $DB;
+    require_once elispm::lib('data/userset.class.php');
 
     $result = true;
 
@@ -220,6 +221,8 @@ function userset_groups_update_site_course($clusterid = 0, $add_members = false,
     global $CFG, $DB;
 
     require_once elispm::lib('data/usermoodle.class.php');
+    require_once elispm::lib('data/userset.class.php');
+
     $enabled = get_config('elisprogram_usetgroups', 'site_course_userset_groups');
 
     //make sure this functionality is even enabled
@@ -330,6 +333,7 @@ function userset_groups_update_site_course($clusterid = 0, $add_members = false,
  */
 function userset_groups_grouping_helper($clusterid, $name) {
     global $CFG, $DB;
+    require_once elispm::lib('data/userset.class.php');
 
     $enabled = get_config('elisprogram_usetgroups', 'userset_groupings');
 
@@ -377,7 +381,8 @@ function userset_groups_grouping_helper($clusterid, $name) {
  * @return  boolean              Returns true to satisfy event handling
  */
 function userset_groups_update_user_site_course($userid, $clusterid) {
-    global $DB;
+    global $CFG, $DB;
+    require_once elispm::lib('data/userset.class.php');
 
     $enabled = get_config('elisprogram_usetgroups', 'site_course_userset_groups');
 
@@ -438,6 +443,10 @@ function userset_groups_update_groups($attributes = array()) {
     global $DB;
 
     require_once elispm::lib('data/usermoodle.class.php');
+    require_once elispm::lib('data/userset.class.php');
+    require_once elispm::lib('data/usertrack.class.php');
+    require_once elispm::lib('data/pmclass.class.php');
+
     $enabled = get_config('elisprogram_usetgroups', 'userset_groups');
 
     //nothing to do if global setting is off
@@ -545,6 +554,7 @@ function userset_groups_update_groups($attributes = array()) {
  */
 function userset_groups_update_grouping_closure($clusterid, $include_children = false) {
     global $CFG;
+    require_once elispm::lib('data/userset.class.php');
 
     $enabled = get_config('elisprogram_usetgroups', 'userset_groupings');
 
@@ -610,7 +620,8 @@ function userset_groups_update_grouping_closure($clusterid, $include_children = 
  * @return  boolean              Whether the cluster allows groups or not
  */
 function userset_groups_userset_allows_groups($clusterid) {
-    global $DB;
+    global $CFG, $DB;
+    require_once elispm::lib('data/userset.class.php');
 
     //retrieve the config field
     if($fieldid = $DB->get_field(field::TABLE, 'id', array('shortname' => 'userset_group'))) {
@@ -644,6 +655,7 @@ function userset_groups_userset_allows_groups($clusterid) {
  */
 function userset_groups_grouping_allowed($clusterid) {
     global $CFG, $DB;
+    require_once elispm::lib('data/userset.class.php');
 
     $enabled = get_config('elisprogram_usetgroups', 'userset_groupings');
 
@@ -712,7 +724,8 @@ function userset_groups_add_member($groupid, $userid) {
  * @return  int array              The list of cluster id
  */
 function userset_groups_get_child_usersets($clusterid) {
-    global $DB;
+    global $CFG, $DB;
+    require_once elispm::lib('data/userset.class.php');
 
     $result = array($clusterid);
 
