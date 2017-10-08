@@ -52,18 +52,37 @@ define('RESULTS_ENGINE_UPDATE_PROFILE', 2);
  */
 function results_engine_cron() {
     $rununtil = time() + RESULTS_ENGINE_USERACT_TIME_LIMIT;
+    $cnt = 0;
+    $tot = 0;
+    $tout = false;
+    $activetypes = [
+            ['triggertype' => RESULTS_ENGINE_SCHEDULED, 'context' => CONTEXT_ELIS_CLASS],
+            ['triggertype' => RESULTS_ENGINE_SCHEDULED, 'context' => CONTEXT_ELIS_COURSE],
+            ['triggertype' => RESULTS_ENGINE_GRADE_SET, 'context' => CONTEXT_ELIS_CLASS],
+            ['triggertype' => RESULTS_ENGINE_GRADE_SET, 'context' => CONTEXT_ELIS_COURSE]
+    ];
+    $randkeys = array_rand($activetypes, 4);
+    foreach ($randkeys as $randkey) {
+        $activetype = $activetypes[$randkey];
+        $actives = results_engine_get_active($activetype['triggertype'], $activetype['context']);
+        foreach ($actives as $active) {
+            ++$tot;
+            $active = results_engine_check($active);
+            if ($active->proceed) {
+                $active->cron = true;
+                results_engine_process($active);
+                ++$cnt;
+            }
 
-    $actives = results_engine_get_active();
-    foreach ($actives as $active) {
-        $active = results_engine_check($active);
-        if ($active->proceed) {
-            $active->cron = true;
-            results_engine_process($active);
+            if (time() > $rununtil) {
+                mtrace("... timeout: {$cnt} of {$tot} processed.");
+                $tout = true;
+                break 2;
+            }
         }
-
-        if (time() >= $rununtil) {
-            break;
-        }
+    }
+    if (!$tout && $tot) {
+        mtrace("... complete: {$cnt} of {$tot} processed.");
     }
     unset($actives);
 }
@@ -181,44 +200,53 @@ function results_engine_check($class) {
  *   days             - number of days to offset triggerstartdate
  *   criteriatype     - what mark to look at, 0 for final mark, anything else is an element id
  *
+ * @param int $triggertype Either RESULTS_ENGINE_SCHEDULED or RESULTS_ENGINE_GRADE_SET
+ * @param int $context Either CONTEXT_ELIS_COURSE or CONTEXT_ELIS_CLASS
  * @return array A recordset of class objects
  * @uses $DB
  */
-function results_engine_get_active() {
+function results_engine_get_active($triggertype, $context) {
     global $DB;
 
     $courselevel = CONTEXT_ELIS_COURSE;
     $classlevel  = CONTEXT_ELIS_CLASS;
 
-    $fields = array('cls.id', 'cls.idnumber', 'cls.startdate', 'cls.enddate',  'cr.id as engineid',
-                    'cr.eventtriggertype', 'cr.triggerstartdate', 'cr.criteriatype',
-                    'cr.lockedgrade', 'cr.days');
-
-    // Get course level instances that have not been overriden or already run.
-    $sql = 'SELECT '. implode(', ', $fields)
-         .' FROM {local_elisprogram_res} cr'
-         .' JOIN {context} c ON c.id = cr.contextid AND c.contextlevel=?'
-         .' JOIN {local_elisprogram_crs} cou ON cou.id = c.instanceid'
-         .' JOIN {local_elisprogram_cls} cls ON cls.courseid = cou.id'
-         .' JOIN {context} c2 on c2.instanceid=cls.id AND c2.contextlevel=?'
-         .' LEFT JOIN {local_elisprogram_res} cr2 ON cr2.contextid=c2.id AND cr2.active=1'
-         .' LEFT JOIN {local_elisprogram_res_clslog} crcl ON crcl.classid=cls.id'
-         .' WHERE cr.active=1'
-         .  ' AND ((cr.eventtriggertype = ? AND crcl.daterun IS NULL) OR cr.eventtriggertype=?)'
-         .  ' AND cr2.active IS NULL'
-         .' UNION'
-    // Get class level instances that have not been already run.
-         .' SELECT '. implode(', ', $fields)
-         .' FROM {local_elisprogram_res} cr'
-         .' JOIN {context} c ON c.id = cr.contextid AND c.contextlevel=?'
-         .' JOIN {local_elisprogram_cls} cls ON cls.id = c.instanceid'
-         .' LEFT JOIN {local_elisprogram_res_clslog} crcl ON crcl.classid=cls.id'
-         .' WHERE cr.active=1'
-         .  ' AND ((cr.eventtriggertype = ? AND crcl.daterun IS NULL) OR cr.eventtriggertype=?)';
-
-    $params = array($courselevel, $classlevel, RESULTS_ENGINE_SCHEDULED, RESULTS_ENGINE_GRADE_SET,
-                    $classlevel, RESULTS_ENGINE_SCHEDULED, RESULTS_ENGINE_GRADE_SET);
-
+    $fields = ['cls.id', 'cls.idnumber', 'cls.startdate', 'cls.enddate',  'cr.id AS engineid', 'cr.eventtriggertype',
+            'cr.triggerstartdate', 'cr.criteriatype', 'cr.lockedgrade', 'cr.days'];
+    $conditions = [
+            'cr.active = 1',
+            'cr.eventtriggertype = '.$triggertype
+    ];
+    if ($triggertype == RESULTS_ENGINE_SCHEDULED) {
+        $conditions[] = 'NOT EXISTS (SELECT \'x\'
+                                       FROM {local_elisprogram_res_clslog} crcl
+                                      WHERE crcl.classid = cls.id
+                                            AND crcl.daterun IS NOT NULL)';
+    }
+    if ($context == CONTEXT_ELIS_COURSE) {
+        $conditions[] = "NOT EXISTS (SELECT 'x'
+                                      FROM {context} c2
+                                      JOIN {local_elisprogram_res} cr2 ON cr2.contextid = c2.id
+                                           AND cr2.active = 1
+                                     WHERE c2.instanceid = cls.id
+                                           AND c2.contextlevel = {$classlevel})";
+        // Get course level instances that have not been overriden or already run.
+        $sql = 'SELECT '.implode(', ', $fields).'
+                  FROM {local_elisprogram_res} cr
+                  JOIN {context} c ON c.id = cr.contextid AND c.contextlevel = ?
+                  JOIN {local_elisprogram_crs} cou ON cou.id = c.instanceid
+                  JOIN {local_elisprogram_cls} cls ON cls.courseid = cou.id
+                 WHERE '.implode(' AND ', $conditions);
+        $params = [$courselevel];
+    } else { // CONTEXT_ELIS_CLASS
+        // Get pmclass level instances that have not already run.
+        $sql = 'SELECT '.implode(', ', $fields).'
+                  FROM {local_elisprogram_res} cr
+                  JOIN {context} c ON c.id = cr.contextid AND c.contextlevel = ?
+                  JOIN {local_elisprogram_cls} cls ON cls.id = c.instanceid
+                 WHERE '.implode(' AND ', $conditions);
+        $params = [$classlevel];
+    }
     return $DB->get_recordset_sql($sql, $params);
 }
 
