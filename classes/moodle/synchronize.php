@@ -508,7 +508,7 @@ class synchronize {
                   JOIN {'.\pmclass::TABLE.'} cls ON cls.courseid = cmp.courseid
                   JOIN {'.\classmoodlecourse::TABLE.'} cmc ON cmc.classid = cls.id
                        AND cmc.moodlecourseid > 0 '.$courseidssql.'
-             LEFT JOIN {course_modules} crsmod ON crsmod.idnumber = cmp.idnumber
+             LEFT JOIN {course_modules} crsmod ON crsmod.idnumber = cmp.idnumber AND crsmod.course = cmc.moodlecourseid
              LEFT JOIN {grade_items} gi
                            ON gi.courseid = cmc.moodlecourseid
                            AND (gi.idnumber = cmp.idnumber OR gi.idnumber = crsmod.id)';
